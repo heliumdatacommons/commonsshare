@@ -418,6 +418,28 @@ def send_verification_mail_for_password_reset(request, user):
                        context=context)
 
 
+def cs_oauth(request):
+    code = request.GET.get('code', None)
+    if not code:
+        error = request.GET.get('error', 'No error and no code is returned from globus oauth.')
+        messages.error(request, error)
+        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
+    post_data = {'code': code,
+                 'redirect_uri': '/cs-oauth',
+                 'grant_type': 'authorization_code'}
+    response = requests.post('https://auth.globus.org/v2/oauth2/token', data=post_data)
+
+    if response.status_code != status.HTTP_200_OK:
+        return HttpResponseBadRequest(content=response.text)
+
+    return_data = loads(response.content)
+    atoken = return_data['access_token']
+
+    messages.info(request, atoken)
+    return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
+
 def login(request, template="accounts/account_login.html",
           form_class=LoginForm, extra_context=None):
     """
