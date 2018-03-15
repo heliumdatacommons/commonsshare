@@ -288,6 +288,7 @@ INSTALLED_APPS = (
     "crispy_forms",
     "mezzanine.accounts",
     "mezzanine.mobile",
+    'social_django',
     "haystack",
     "jquery_ui",
     "rest_framework",
@@ -339,6 +340,8 @@ APPS_TO_NOT_RUN = (
 TEMPLATE_CONTEXT_PROCESSORS = (
     "django.contrib.auth.context_processors.auth",
     "django.contrib.messages.context_processors.messages",
+    'social_django.context_processors.backends',
+    'social_django.context_processors.login_redirect',
     "django.core.context_processors.debug",
     "django.core.context_processors.i18n",
     "django.core.context_processors.static",
@@ -371,9 +374,27 @@ MIDDLEWARE_CLASSES = (
     # "mezzanine.core.middleware.SSLRedirectMiddleware",
     "mezzanine.pages.middleware.PageMiddleware",
     "mezzanine.core.middleware.FetchFromCacheMiddleware",
+    'social_django.middleware.SocialAuthExceptionMiddleware',
     "hs_core.robots.RobotFilter",
     "hs_tracking.middleware.Tracking",
 )
+
+AUTHENTICATION_BACKENDS = (
+    'theme.backends.globus.GlobusOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+SOCIAL_AUTH_GLOBUS_KEY = '38e5e3ac-d5a6-4214-9a97-0a806b16b939'
+SOCIAL_AUTH_GLOBUS_SECRET = 'Zo7IKt9GFMPMt0ThwbrV4B8vGkVrd9I52nXxeTQp4ec='
+SOCIAL_AUTH_SANITIZE_REDIRECTS = False
+SOCIAL_AUTH_GLOBUS_AUTH_EXTRA_ARGUMENTS = {
+    'access_type': 'offline',
+}
+
+LOGIN_URL = 'login'
+LOGOUT_URL = 'logout'
+LOGIN_REDIRECT_URL = 'oauth'
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/oauth/'
 
 # security settings
 USE_SECURITY = False

@@ -139,7 +139,7 @@
                         </li>
                     {% else %}
                     <!-- <li id="signup-menu"><a href="{% url 'signup' %}">Sign Up</a></li> -->
-                    <li id="signin-menu"><a href="{% url 'login' %}"><span class="glyphicon glyphicon-log-in"></span> Sign In</a></li>
+                    <li id="signin-menu"><a href="{% url 'social:begin' 'globus' %}?next={{ request.path }}"><span class="glyphicon glyphicon-log-in"></span> Sign In with Globus</a></li>
                     {% endif %}
                     {% endifinstalled %}
                     {% comment %}

@@ -9,6 +9,7 @@ RUN pip install \
   django-test-without-migrations \
   django-rest-swagger \
   jsonschema \
+  social-auth-app-django \
   nameparser
 ### End - HydroShare Development Image Additions ###
 
