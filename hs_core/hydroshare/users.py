@@ -11,6 +11,8 @@ from django.db.models import Q
 
 from hs_core.models import BaseResource, Contributor, Creator, Subject, Description, Title, \
     Coverage, Relation
+from hs_access_control.models import UserAccess
+from hs_labels.models import UserLabels
 from .utils import user_from_id, group_from_id, get_profile
 from theme.models import UserQuota, UserProfile
 from hs_dictionary.models import University, UncategorizedTerm
@@ -23,6 +25,27 @@ PUBLIC = 'public'
 log = logging.getLogger(__name__)
 
 
+def create_oauth_user_associations(u):
+    """
+    Create needed foreign key relationships for the OAuth user if the relationship is not established yet
+    :param u: User object
+    :return:
+    """
+    if u.groups.filter(name='CommonsShare Author'):
+        # association already established for the oauth user
+        return
+
+    u.groups.add(Group.objects.get(name='CommonsShare Author'))
+
+    user_access = UserAccess(user=u)
+    user_access.save()
+    user_labels = UserLabels(user=u)
+    user_labels.save()
+    # create default UserQuota object for the new user
+    uq = UserQuota.objects.create(user=u)
+    uq.save()
+
+
 def create_account(
         email, username=None, first_name=None, last_name=None, superuser=None, groups=None,
         password=None, active=True, organization=None
@@ -33,10 +56,6 @@ def create_account(
     Returns: The user that was created
 
     """
-
-    from django.contrib.auth.models import User, Group
-    from hs_access_control.models import UserAccess
-    from hs_labels.models import UserLabels
 
     username = username if username else email
 

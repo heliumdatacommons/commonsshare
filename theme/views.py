@@ -37,6 +37,7 @@ from mezzanine.utils.views import render
 
 from hs_core.views.utils import run_ssh_command, authorize, ACTION_TO_AUTHORIZE
 from hs_core.hydroshare.utils import get_file_from_irods, user_from_id
+from hs_core.hydroshare.users import create_oauth_user_associations
 from hs_core.models import ResourceFile, get_user
 from hs_access_control.models import GroupMembershipRequest
 from hs_dictionary.models import University, UncategorizedTerm
@@ -418,26 +419,17 @@ def send_verification_mail_for_password_reset(request, user):
                        context=context)
 
 
-def cs_oauth(request):
-    code = request.GET.get('code', None)
-    if not code:
-        error = request.GET.get('error', 'No error and no code is returned from globus oauth.')
-        messages.error(request, error)
-        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+def home(request):
+    if request.user.is_authenticated():
+        login_msg = "Successfully logged in"
+        info(request, _(login_msg))
+        create_oauth_user_associations(request.user)
+        # uuid = request.user.social_auth.get(provider='globus').uid
+        # social = request.user.social_auth
+        # access_token = social.get(provider='globus').extra_data['access_token']
+        # refresh_token = social.get(provider='globus').extra_data['refresh_token']
 
-    post_data = {'code': code,
-                 'redirect_uri': '/cs-oauth',
-                 'grant_type': 'authorization_code'}
-    response = requests.post('https://auth.globus.org/v2/oauth2/token', data=post_data)
-
-    if response.status_code != status.HTTP_200_OK:
-        return HttpResponseBadRequest(content=response.text)
-
-    return_data = loads(response.content)
-    atoken = return_data['access_token']
-
-    messages.info(request, atoken)
-    return HttpResponseRedirect(request.META['HTTP_REFERER'])
+    return TemplateResponse(request, 'pages/homepage.html')
 
 
 def login(request, template="accounts/account_login.html",
