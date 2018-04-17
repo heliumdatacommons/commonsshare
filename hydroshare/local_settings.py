@@ -169,6 +169,9 @@ HS_IRODS_LOCAL_ZONE_DEF_RES = 'hydroshareLocalResc'
 HS_WWW_IRODS_ZONE = ''
 HS_USER_IRODS_ZONE = 'hydroshareuserZone'
 
+OAUTH_MS_URL = ''
+OAUTH_APP_KEY = ''
+
 # Email configuration
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 #EMAIL_HOST_USER = ''

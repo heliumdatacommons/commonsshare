@@ -159,8 +159,6 @@ TEMPLATE_LOADERS = (
 # is not that great for our project use case
 FILE_UPLOAD_MAX_MEMORY_SIZE = 0
 
-AUTHENTICATION_BACKENDS = ("mezzanine.core.auth_backends.MezzanineBackend",)
-
 # List of finder classes that know how to find static files in
 # various locations.
 STATICFILES_FINDERS = (
@@ -288,7 +286,6 @@ INSTALLED_APPS = (
     "crispy_forms",
     "mezzanine.accounts",
     "mezzanine.mobile",
-    'social_django',
     "haystack",
     "jquery_ui",
     "rest_framework",
@@ -340,8 +337,6 @@ APPS_TO_NOT_RUN = (
 TEMPLATE_CONTEXT_PROCESSORS = (
     "django.contrib.auth.context_processors.auth",
     "django.contrib.messages.context_processors.messages",
-    'social_django.context_processors.backends',
-    'social_django.context_processors.login_redirect',
     "django.core.context_processors.debug",
     "django.core.context_processors.i18n",
     "django.core.context_processors.static",
@@ -374,23 +369,15 @@ MIDDLEWARE_CLASSES = (
     # "mezzanine.core.middleware.SSLRedirectMiddleware",
     "mezzanine.pages.middleware.PageMiddleware",
     "mezzanine.core.middleware.FetchFromCacheMiddleware",
-    'social_django.middleware.SocialAuthExceptionMiddleware',
     "hs_core.robots.RobotFilter",
     "hs_tracking.middleware.Tracking",
 )
 
+
 AUTHENTICATION_BACKENDS = (
     'theme.backends.globus.GlobusOAuth2',
-    'django.contrib.auth.backends.ModelBackend',
+    'mezzanine.core.auth_backends.MezzanineBackend',
 )
-
-SOCIAL_AUTH_GLOBUS_KEY = '38e5e3ac-d5a6-4214-9a97-0a806b16b939'
-SOCIAL_AUTH_GLOBUS_SECRET = 'Zo7IKt9GFMPMt0ThwbrV4B8vGkVrd9I52nXxeTQp4ec='
-SOCIAL_AUTH_SANITIZE_REDIRECTS = False
-# Access type needed to get a refresh token
-SOCIAL_AUTH_GLOBUS_AUTH_EXTRA_ARGUMENTS = {
-    'access_type': 'offline',
-}
 
 # security settings
 USE_SECURITY = False
@@ -529,6 +516,7 @@ OAUTH2_PROVIDER = {
    # 30 days
    'ACCESS_TOKEN_EXPIRE_SECONDS': 2592000,
 }
+
 
 ####################
 # LOGGING SETTINGS #

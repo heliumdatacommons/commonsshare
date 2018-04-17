@@ -1,61 +1,41 @@
 """
-Globus Auth backend, docs at:
-    https://docs.globus.org/api/auth
+Globus Auth backend that authenticates user created using info returned from oauth service, docs at:
+    https://docs.globus.org/api/auth and https://github.com/heliumdatacommons/auth_microservice/wiki/API-and-Use
 """
 
-from social_core.backends.oauth import BaseOAuth2
-from social_core.exceptions import AuthTokenError
-from six.moves.urllib_parse import urlencode, unquote
-from jwt import DecodeError, ExpiredSignature, decode as jwt_decode
+import requests
+
+from json import loads
+from rest_framework import status
+
+from django.contrib.auth.models import User
 
 
-class GlobusOAuth2(BaseOAuth2):
-    name = 'globus'
-    AUTHORIZATION_URL = 'https://auth.globus.org/v2/oauth2/authorize'
-    ACCESS_TOKEN_URL = 'https://auth.globus.org/v2/oauth2/token'
-    DEFAULT_SCOPE = [
-        'openid',
-        'email',
-        'profile',
-    ]
-    REDIRECT_STATE = False
-    ACCESS_TOKEN_METHOD = 'POST'
-    EXTRA_DATA = [
-        ('access_token', 'access_token', True),
-        ('expires_in', 'expires_in', True),
-        ('refresh_token', 'refresh_token', True),
-        ('id_token', 'id_token', True),
-        ('other_tokens', 'other_tokens', True),
-    ]
+class GlobusOAuth2:
+    def authenticate(self, request, username=None, access_token=None):
+        AUTH_URL = 'https://auth.globus.org/v2/oauth2/userinfo'
+        if not access_token or not username:
+            return None
 
+        response = requests.get(AUTH_URL,
+                                headers={'Authorization': 'Bearer ' + access_token})
 
-    # extract user info from id_token (OpenID Connect)
-    def user_data(self, access_token, *args, **kwargs):
-        response = kwargs.get('response')
-        id_token = response.get('id_token')
+        if response.status_code != status.HTTP_200_OK:
+            return None
+
+        return_data = loads(response.content)
+        preferred_username = return_data['preferred_username']
+        if username == preferred_username:
+            try:
+                user = User.objects.get(username=username)
+                return user
+            except User.DoesNotExist:
+                return None
+        else:
+            return None
+
+    def get_user(self, user_id):
         try:
-            decoded_id_token = jwt_decode(id_token, verify=False)
-        except (DecodeError, ExpiredSignature) as de:
-            raise AuthTokenError(self, de)
-        return {'uid': decoded_id_token.get('sub'),
-                'username': decoded_id_token.get('preferred_username'),
-                'name': decoded_id_token.get('name'),
-                'email': decoded_id_token.get('email')
-                }
-
-
-    def get_user_details(self, response):
-        name = response.get('name') or ''
-        fullname, first_name, last_name = self.get_user_names(name)
-        return {'username': response.get('username'),
-                'email': response.get('email'),
-                'fullname': fullname,
-                'first_name': first_name,
-                'last_name': last_name}
-
-
-    def get_user_id(self, details, response):
-        return response['uid']
-
-
-
+            return User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return None

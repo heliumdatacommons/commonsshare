@@ -37,7 +37,7 @@ from mezzanine.utils.views import render
 
 from hs_core.views.utils import run_ssh_command, authorize, ACTION_TO_AUTHORIZE
 from hs_core.hydroshare.utils import get_file_from_irods, user_from_id
-from hs_core.hydroshare.users import create_oauth_user_associations
+from hs_core.hydroshare.users import create_account
 from hs_core.models import ResourceFile, get_user
 from hs_access_control.models import GroupMembershipRequest
 from hs_dictionary.models import University, UncategorizedTerm
@@ -419,17 +419,60 @@ def send_verification_mail_for_password_reset(request, user):
                        context=context)
 
 
-def home(request):
-    if request.user.is_authenticated():
-        login_msg = "Successfully logged in"
-        info(request, _(login_msg))
-        create_oauth_user_associations(request.user)
-        # uuid = request.user.social_auth.get(provider='globus').uid
-        # social = request.user.social_auth
-        # access_token = social.get(provider='globus').extra_data['access_token']
-        # refresh_token = social.get(provider='globus').extra_data['refresh_token']
+def oauth_request(request):
+    # note that trailing slash should not be added to return_to url since
+    return_url = '&return_to={}://{}/oauth_return'.format(request.scheme, request.get_host())
+    url = '{}authorize?provider=globus&scope=openid%20email%20profile{}'.format(settings.OAUTH_MS_URL, return_url)
+    auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
+    response = requests.get(url,
+                            headers={'Authorization': auth_header_str},
+                            verify=False)
+    if response.status_code != status.HTTP_200_OK:
+        return HttpResponseBadRequest(content=response.text)
+    return_data = loads(response.content)
 
-    return TemplateResponse(request, 'pages/homepage.html')
+    auth_url = return_data['authorization_url']
+
+    return HttpResponseRedirect(auth_url)
+
+
+def oauth_return(request):
+    token = request.GET.get('access_token', None)
+    uid = request.GET.get('uid', None)
+    uname = request.GET.get('user_name', None)
+
+    if not token or not uid or not uname:
+        return HttpResponseBadRequest('Bad request - no valid access_token or uid or user_name is provided')
+
+    try:
+        tgt_user = User.objects.get(username=uname)
+    except ObjectDoesNotExist:
+        name = request.GET.get('name', '')
+        if name:
+            namestrs = name.split(' ')
+            fname = namestrs[0]
+            lname = namestrs[-1]
+        else:
+            fname = ''
+            lname = ''
+
+        tgt_user = create_account(email=uname, username=uname, first_name=fname, last_name=lname, superuser=False,
+                                  active=True)
+
+    kwargs = {}
+    kwargs['request'] = request
+    kwargs['username'] = uname
+    kwargs['access_token'] = token
+    # authticate against globus oauth with username and access_token
+    tgt_user = authenticate(**kwargs)
+
+    if tgt_user:
+        login_msg = "Successfully logged in"
+        auth_login(request, tgt_user)
+        info(request, _(login_msg))
+        return login_redirect(request)
+    else:
+        return HttpResponseBadRequest('Bad request - provided access_token is not valid')
 
 
 def login(request, template="accounts/account_login.html",
