@@ -10,9 +10,11 @@ from rest_framework import status
 
 from django.contrib.auth.models import User
 
+from hs_core.hydroshare.users import create_account
+
 
 class GlobusOAuth2:
-    def authenticate(self, request, username=None, access_token=None):
+    def authenticate(self, request, username=None, access_token=None, first_name=None, last_name=None):
         AUTH_URL = 'https://auth.globus.org/v2/oauth2/userinfo'
         if not access_token or not username:
             return None
@@ -30,7 +32,9 @@ class GlobusOAuth2:
                 user = User.objects.get(username=username)
                 return user
             except User.DoesNotExist:
-                return None
+                user = create_account(email=username, username=username, first_name=first_name, last_name=last_name,
+                                      superuser=False, active=True)
+                return user
         else:
             return None
 

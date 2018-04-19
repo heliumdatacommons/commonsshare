@@ -2,6 +2,7 @@ from json import dumps, loads, load
 import requests
 import time
 import os
+import hashlib
 from urllib2 import urlopen, URLError
 
 from django.contrib.auth.decorators import login_required
@@ -37,7 +38,6 @@ from mezzanine.utils.views import render
 
 from hs_core.views.utils import run_ssh_command, authorize, ACTION_TO_AUTHORIZE
 from hs_core.hydroshare.utils import get_file_from_irods, user_from_id
-from hs_core.hydroshare.users import create_account
 from hs_core.models import ResourceFile, get_user
 from hs_access_control.models import GroupMembershipRequest
 from hs_dictionary.models import University, UncategorizedTerm
@@ -422,7 +422,7 @@ def send_verification_mail_for_password_reset(request, user):
 def oauth_request(request):
     # note that trailing slash should not be added to return_to url since
     return_url = '&return_to={}://{}/oauth_return'.format(request.scheme, request.get_host())
-    url = '{}authorize?provider=globus&scope=openid%20email%20profile{}'.format(settings.OAUTH_MS_URL, return_url)
+    url = '{}authorize?provider=globus&scope=openid%20email%20profile{}'.format(settings.SERVICE_SERVER_URL, return_url)
     auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
     response = requests.get(url,
                             headers={'Authorization': auth_header_str},
@@ -444,29 +444,42 @@ def oauth_return(request):
     if not token or not uid or not uname:
         return HttpResponseBadRequest('Bad request - no valid access_token or uid or user_name is provided')
 
-    try:
-        tgt_user = User.objects.get(username=uname)
-    except ObjectDoesNotExist:
-        name = request.GET.get('name', '')
-        if name:
-            namestrs = name.split(' ')
-            fname = namestrs[0]
-            lname = namestrs[-1]
-        else:
-            fname = ''
-            lname = ''
-
-        tgt_user = create_account(email=uname, username=uname, first_name=fname, last_name=lname, superuser=False,
-                                  active=True)
+    name = request.GET.get('name', '')
+    if name:
+        namestrs = name.split(' ')
+        fname = namestrs[0]
+        lname = namestrs[-1]
+    else:
+        fname = ''
+        lname = ''
 
     kwargs = {}
     kwargs['request'] = request
     kwargs['username'] = uname
     kwargs['access_token'] = token
-    # authticate against globus oauth with username and access_token
+    kwargs['first_name'] = fname
+    kwargs['last_name'] = lname
+
+    # authticate against globus oauth with username and access_token and create linked user in CommonsShare if
+    # authenticated with globus
     tgt_user = authenticate(**kwargs)
 
     if tgt_user:
+        # create corresponding iRODS account with same username via OAuth if not exist already
+        url = '{}registration/create_account?username={}&zone={}&auth_name={}'.format(settings.SERVICE_SERVER_URL,
+                                                                                      uname, settings.IRODS_ZONE,
+                                                                                      uid)
+        response = requests.get(url, verify=False)
+        if response.status_code != status.HTTP_200_OK:
+            return HttpResponseBadRequest(content=response.text)
+
+        hashed_token = hashlib.sha256(token)
+        url = '{}registration/add_user_oids?username={}&subjectid={}&sessionid={}'.format(settings.SERVICE_SERVER_URL,
+                                                                                          uname, uid, hashed_token)
+        response = requests.get(url, verify=False)
+        if response.status_code != status.HTTP_200_OK:
+            return HttpResponseBadRequest(content=response.text)
+
         login_msg = "Successfully logged in"
         auth_login(request, tgt_user)
         info(request, _(login_msg))
