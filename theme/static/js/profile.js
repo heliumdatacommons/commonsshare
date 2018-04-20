@@ -131,67 +131,6 @@ function irods_status_info(alert_type, status, title) {
             "<strong>" + title + "</strong><div>" + status + "</div></div></div>"
 }
 
-function create_irods_account() {
-    var url = $("#url-create-irods-account").val();
-
-    $.ajax({
-        url: url,
-        type: "POST",
-        data: {
-            password: $('#id_irods_password').val()
-        },
-        success: function(json) {
-            if(json.success) {
-                $('#create-irods-account-dialog').modal('hide');
-                var irodsContainer = $("#irods-account-container");
-                irodsContainer.empty();
-                irodsContainer.append(irods_account_link("#delete-irods-account-dialog", "Delete your iRODS user account"));
-                irodsContainer.append(irods_status_info('alert-success', json.success, 'Success'));
-            }
-            if(json.error) {
-                $('#create-irods-account-dialog').modal('hide');
-                var irodsContainer = $("#irods-account-container");
-                irodsContainer.append(irods_status_info('alert-danger', json.error, 'Failure'));
-            }
-        },
-        error: function(xhr, errmsg, err) {
-            err_info = xhr.status + ": " + xhr.responseText + ". Error message: " + errmsg;
-            $('#create-irods-account-dialog').modal('hide');
-            var irodsContainer = $("#irods-account-container");
-            irodsContainer.append(irods_status_info('alert-danger', err_info, 'Failure'));
-        }
-    });
-    return false;
-}
-
-function delete_irods_account() {
-    var url = $("#url-delete-irods-account").val();
-    $.ajax({
-        url: url,
-        type: "POST",
-        data: {},
-        success: function(json) {
-            if(json.success) {
-                var irodsContainer = $("#irods-account-container");
-                irodsContainer.empty();
-                irodsContainer.append(irods_account_link("#create-irods-account-dialog", "Create your iRODS user account"));
-                irodsContainer.append(irods_status_info('alert-success', json.success, 'Success'));
-            }
-            if(json.error) {
-                var irodsContainer = $("#irods-account-container");
-                irodsContainer.append(irods_status_info('alert-warning', json.error, 'Failure'));
-            }
-            $('#delete-irods-account-dialog').modal('hide');
-        },
-        error: function(xhr, errmsg, err) {
-            err_info = xhr.status + ": " + xhr.responseText + ". Error message: " + errmsg;
-            $('#delete-irods-account-dialog').modal('hide');
-            var irodsContainer = $("#irods-account-container");
-            irodsContainer.append(irods_status_info('alert-warning', err_info, 'Failure'));
-        }
-    });
-}
-
 $(document).ready(function () {
     // Change country first empty option to 'Unspecified'
     var option = $("select[name='country'] option:first-child");
