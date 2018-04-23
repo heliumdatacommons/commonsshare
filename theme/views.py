@@ -2,7 +2,6 @@ from json import dumps, loads, load
 import requests
 import time
 import os
-import hashlib
 from urllib2 import urlopen, URLError
 
 from django.contrib.auth.decorators import login_required
@@ -36,7 +35,7 @@ from mezzanine.utils.urls import login_redirect, next_url
 from mezzanine.accounts.forms import LoginForm
 from mezzanine.utils.views import render
 
-from hs_core.views.utils import run_ssh_command, authorize, ACTION_TO_AUTHORIZE
+from hs_core.views.utils import authorize, ACTION_TO_AUTHORIZE
 from hs_core.hydroshare.utils import get_file_from_irods, user_from_id
 from hs_core.models import ResourceFile, get_user
 from hs_access_control.models import GroupMembershipRequest
@@ -459,33 +458,19 @@ def oauth_return(request):
     kwargs['access_token'] = token
     kwargs['first_name'] = fname
     kwargs['last_name'] = lname
+    kwargs['uid'] = uid
 
     # authticate against globus oauth with username and access_token and create linked user in CommonsShare if
     # authenticated with globus
     tgt_user = authenticate(**kwargs)
 
     if tgt_user:
-        # create corresponding iRODS account with same username via OAuth if not exist already
-        url = '{}registration/create_account?username={}&zone={}&auth_name={}'.format(settings.SERVICE_SERVER_URL,
-                                                                                      uname, settings.IRODS_ZONE,
-                                                                                      uid)
-        response = requests.get(url, verify=False)
-        if response.status_code != status.HTTP_200_OK:
-            return HttpResponseBadRequest(content=response.text)
-
-        hashed_token = hashlib.sha256(token)
-        url = '{}registration/add_user_oids?username={}&subjectid={}&sessionid={}'.format(settings.SERVICE_SERVER_URL,
-                                                                                          uname, uid, hashed_token)
-        response = requests.get(url, verify=False)
-        if response.status_code != status.HTTP_200_OK:
-            return HttpResponseBadRequest(content=response.text)
-
         login_msg = "Successfully logged in"
         auth_login(request, tgt_user)
         info(request, _(login_msg))
         return login_redirect(request)
     else:
-        return HttpResponseBadRequest('Bad request - provided access_token is not valid')
+        return HttpResponseBadRequest('Bad request - invalid access_token or failed to create linked user')
 
 
 def login(request, template="accounts/account_login.html",

@@ -4,17 +4,19 @@ Globus Auth backend that authenticates user created using info returned from oau
 """
 
 import requests
+import hashlib
 
 from json import loads
 from rest_framework import status
 
 from django.contrib.auth.models import User
+from django.conf import settings
 
 from hs_core.hydroshare.users import create_account
 
 
 class GlobusOAuth2:
-    def authenticate(self, request, username=None, access_token=None, first_name=None, last_name=None):
+    def authenticate(self, request, username=None, access_token=None, first_name=None, last_name=None, uid=None):
         AUTH_URL = 'https://auth.globus.org/v2/oauth2/userinfo'
         if not access_token or not username:
             return None
@@ -34,6 +36,20 @@ class GlobusOAuth2:
             except User.DoesNotExist:
                 user = create_account(email=username, username=username, first_name=first_name, last_name=last_name,
                                       superuser=False, active=True)
+                # create corresponding iRODS account with same username via OAuth if not exist already
+                url = '{}registration/create_account?username={}&zone={}&auth_name={}'.format(
+                    settings.SERVICE_SERVER_URL, username, settings.IRODS_ZONE, uid)
+                response = requests.get(url, verify=False)
+                if response.status_code != status.HTTP_200_OK:
+                    return None
+
+                hashed_token = hashlib.sha256(access_token)
+                url = '{}registration/add_user_oids?username={}&subjectid={}&sessionid={}'.format(
+                    settings.SERVICE_SERVER_URL,
+                    username, uid, hashed_token)
+                response = requests.get(url, verify=False)
+                if response.status_code != status.HTTP_200_OK:
+                    return None
                 return user
         else:
             return None
