@@ -10,6 +10,7 @@ from json import loads
 from rest_framework import status
 
 from django.contrib.auth.models import User
+from django.core.exceptions import PermissionDenied
 from django.conf import settings
 
 from hs_core.hydroshare.users import create_account
@@ -41,7 +42,11 @@ class GlobusOAuth2:
                     settings.SERVICE_SERVER_URL, username, settings.IRODS_ZONE, uid)
                 response = requests.get(url, verify=False)
                 if response.status_code != status.HTTP_200_OK:
-                    return None
+                    if 'already exists' not in response.content:
+                        # iRODS user account does not exist and fails to be created, needs to delete the created
+                        # linked account for next level of default user authentication
+                        user.delete()
+                        return None
 
                 hashed_token = hashlib.sha256(access_token)
                 url = '{}registration/add_user_oids?username={}&subjectid={}&sessionid={}'.format(
@@ -49,7 +54,7 @@ class GlobusOAuth2:
                     username, uid, hashed_token)
                 response = requests.get(url, verify=False)
                 if response.status_code != status.HTTP_200_OK:
-                    return None
+                    raise PermissionDenied(response.content)
                 return user
         else:
             return None
