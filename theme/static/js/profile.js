@@ -138,18 +138,6 @@ $(document).ready(function () {
     option.text("Unspecified");
 
     // TODO: TESTING
-    $("#btn-create-irods-account").click(create_irods_account);
-    // TODO: TESTING
-    $("#btn-delete-irods-account").click(delete_irods_account);
-
-    // Only enable Confirm button when input password is longer than 8 characters
-    $("#id_irods_password").keyup(function () {
-        pwdlen = $("input#id_irods_password").val().length;
-        if (pwdlen >= 8)
-            $('#btn-create-irods-account').removeAttr('disabled');
-        else
-            $('#btn-create-irods-account').attr('disabled', 'disabled');
-    });
 
     // File name preview for Add CV
     $('.btn-primary.btn-file :file').on('fileselect', function (event, numFiles, label) {

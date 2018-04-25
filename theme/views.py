@@ -419,7 +419,7 @@ def send_verification_mail_for_password_reset(request, user):
 
 
 def oauth_request(request):
-    # note that trailing slash should not be added to return_to url since
+    # note that trailing slash should not be added to return_to url
     return_url = '&return_to={}://{}/oauth_return'.format(request.scheme, request.get_host())
     url = '{}authorize?provider=globus&scope=openid%20email%20profile{}'.format(settings.SERVICE_SERVER_URL, return_url)
     auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
