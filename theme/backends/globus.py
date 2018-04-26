@@ -42,11 +42,10 @@ class GlobusOAuth2:
                     settings.SERVICE_SERVER_URL, username, settings.IRODS_ZONE, uid)
                 response = requests.get(url, verify=False)
                 if response.status_code != status.HTTP_200_OK:
-                    if 'already exists' not in response.content:
-                        # iRODS user account does not exist and fails to be created, needs to delete the created
-                        # linked account for next level of default user authentication
-                        user.delete()
-                        return None
+                    # iRODS user account does not exist and fails to be created, needs to delete the created
+                    # linked account for next level of default user authentication
+                    user.delete()
+                    return None
 
                 hashed_token = hashlib.sha256(access_token)
                 url = '{}registration/add_user_oids?username={}&subjectid={}&sessionid={}'.format(
