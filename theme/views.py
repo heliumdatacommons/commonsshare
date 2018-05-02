@@ -570,34 +570,10 @@ def create_scidas_virtual_app(request, res_id, cluster):
                         p_data = jdata
 
     url = settings.PIVOT_URL
-    app_id = user.username + '_cs_app_id'
     preset_url = ''
     if not p_data:
-        p_data = {
-            "id": app_id,
-             "containers": [
-                {
-                  "id": app_id,
-                  "image": "scidas/irods-jupyter-hydroshare",
-                  "resources": {
-                    "cpus": 2,
-                    "mem": 2048
-                  },
-                  "port_mappings": [
-                    {
-                      "container_port": 8888,
-                      "host_port": 0,
-                      "protocol": "tcp"
-                    }
-                  ],
-                  "args": [
-                    "--ip=0.0.0.0",
-                    "--NotebookApp.token=\"\""
-                  ],
-                  "data": file_data_list
-                }
-            ]
-        }
+        messages.error(request, "The resource must include the JSON request file in order to launch PIVOT")
+        return HttpResponseRedirect(request.META['HTTP_REFERER'])
     else:
         app_id = p_data['id']
         p_data['containers'][0]['data'] = file_data_list
@@ -662,7 +638,7 @@ def create_scidas_virtual_app(request, res_id, cluster):
 
     # make sure the new directed url is loaded and working before redirecting.
     # Since scidas will install dependencies included in requirements.txt, it will take some time
-    # before the app_url is ready to go after the appliance is provisioned, hence wait for up to 30 seconds
+    # before the app_url is ready to go after the appliance is provisioned, hence wait for up to 10 seconds
     # before erroring out if connection to the url keeps being refused.
     idx = 0
     while True:
@@ -673,7 +649,7 @@ def create_scidas_virtual_app(request, res_id, cluster):
             errmsg = ex.reason if hasattr(ex, 'reason') else 'URLError'
             idx += 1
             time.sleep(5)
-        
+
         if idx > 6:
             messages.error(request, errmsg)
             return HttpResponseRedirect(request.META['HTTP_REFERER'])
