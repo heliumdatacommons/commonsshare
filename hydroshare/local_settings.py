@@ -171,6 +171,7 @@ HS_USER_IRODS_ZONE = 'hydroshareuserZone'
 
 SERVICE_SERVER_URL = ''
 OAUTH_APP_KEY = ''
+DATA_REG_API_KEY = ''
 
 # Email configuration
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

@@ -40,7 +40,10 @@ class GlobusOAuth2:
                 # create corresponding iRODS account with same username via OAuth if not exist already
                 url = '{}registration/create_account?username={}&zone={}&auth_name={}'.format(
                     settings.SERVICE_SERVER_URL, username, settings.IRODS_ZONE, uid)
-                response = requests.get(url, verify=False)
+                auth_header_str = 'Basic {}'.format(settings.DATA_REG_API_KEY)
+                response = requests.get(url,
+                                        headers={'Authorization': auth_header_str},
+                                        verify=False)
                 if response.status_code != status.HTTP_200_OK:
                     # iRODS user account does not exist and fails to be created, needs to delete the created
                     # linked account for next level of default user authentication
@@ -51,7 +54,9 @@ class GlobusOAuth2:
                 url = '{}registration/add_user_oids?username={}&subjectid={}&sessionid={}'.format(
                     settings.SERVICE_SERVER_URL,
                     username, uid, hashed_token)
-                response = requests.get(url, verify=False)
+                response = requests.get(url,
+                                        headers={'Authorization': auth_header_str},
+                                        verify=False)
                 if response.status_code != status.HTTP_200_OK:
                     raise PermissionDenied(response.content)
                 return user
