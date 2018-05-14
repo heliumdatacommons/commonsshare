@@ -159,8 +159,6 @@ TEMPLATE_LOADERS = (
 # is not that great for our project use case
 FILE_UPLOAD_MAX_MEMORY_SIZE = 0
 
-AUTHENTICATION_BACKENDS = ("mezzanine.core.auth_backends.MezzanineBackend",)
-
 # List of finder classes that know how to find static files in
 # various locations.
 STATICFILES_FINDERS = (
@@ -375,6 +373,12 @@ MIDDLEWARE_CLASSES = (
     "hs_tracking.middleware.Tracking",
 )
 
+
+AUTHENTICATION_BACKENDS = (
+    'theme.backends.globus.GlobusOAuth2',
+    'mezzanine.core.auth_backends.MezzanineBackend',
+)
+
 # security settings
 USE_SECURITY = False
 if USE_SECURITY:
@@ -512,6 +516,7 @@ OAUTH2_PROVIDER = {
    # 30 days
    'ACCESS_TOKEN_EXPIRE_SECONDS': 2592000,
 }
+
 
 ####################
 # LOGGING SETTINGS #

@@ -6,8 +6,6 @@
 {% block main %}
     <div class="container">
         {% with profile_user.userprofile as profile %}
-            <input type="hidden" id="url-create-irods-account" value="{% url 'create_irods_account' %}">
-            <input type="hidden" id="url-delete-irods-account" value="{% url 'delete_irods_account' %}">
             {% if profile_user.id == user.id %}
                 <form id="profile-form" action="{% url 'update_profile' %}" class="account-form" method="post"
                       enctype="multipart/form-data" onsubmit="return validateForm()">
@@ -67,21 +65,8 @@
                             <div data-page-mode="edit">
                                 <hr>
                                 <div class="profile-picture-controls text-center">
-                                    <div><a href="/accounts/update">Change password</a></div>
-
                                     {#        Account deactivation       #}
                                     <div><a data-toggle="modal" data-target="#deactivate-account-dialog">Deactivate account</a></div>
-
-                                    {# Account creation/deletion in iRODS user zone #}
-                                    <div id="irods-account-container">
-                                        {% if profile.create_irods_user_account %}
-                                            {# an iRODS account already exists #}
-                                            <a data-toggle="modal" data-target="#delete-irods-account-dialog">Delete your iRODS user account</a>
-                                        {% else %}
-                                            {# an iRODS account does not exist #}
-                                            <a data-toggle="modal" data-target="#create-irods-account-dialog">Create your iRODS user account</a>
-                                        {% endif %}
-                                    </div>
                                 </div>
                             </div>
                             {% endif %}
@@ -337,12 +322,6 @@
                                                 </tbody>
                                             </table>
                                             {% if profile_user.id == user.id %}
-                                                <br>
-                                                {% if profile.create_irods_user_account %}
-                                                    <div class="alert alert-success">You have created an associated iRODS account (username: <strong>{{ profile_user.username }}</strong>) in CommonsShare user zone (<strong>users.hydroshare.org</strong>). </div>
-                                                {% else %}
-                                                    <div class="alert alert-warning">You have not created an associated iRODS account in CommonsShare user zone (<strong>users.hydroshare.org</strong>). </div>
-                                                {% endif %}
                                                 {% if quota_message %}<div class="alert alert-info">{{ quota_message }}</div>{% endif %}
                                             {% endif %}    
                                         </div>

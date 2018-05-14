@@ -35,7 +35,7 @@ from mezzanine.utils.urls import login_redirect, next_url
 from mezzanine.accounts.forms import LoginForm
 from mezzanine.utils.views import render
 
-from hs_core.views.utils import run_ssh_command, authorize, ACTION_TO_AUTHORIZE
+from hs_core.views.utils import authorize, ACTION_TO_AUTHORIZE
 from hs_core.hydroshare.utils import get_file_from_irods, user_from_id
 from hs_core.models import ResourceFile, get_user
 from hs_access_control.models import GroupMembershipRequest
@@ -418,6 +418,61 @@ def send_verification_mail_for_password_reset(request, user):
                        context=context)
 
 
+def oauth_request(request):
+    # note that trailing slash should not be added to return_to url
+    return_url = '&return_to={}://{}/oauth_return'.format(request.scheme, request.get_host())
+    url = '{}authorize?provider=globus&scope=openid%20email%20profile{}'.format(settings.SERVICE_SERVER_URL, return_url)
+    auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
+    response = requests.get(url,
+                            headers={'Authorization': auth_header_str},
+                            verify=False)
+    if response.status_code != status.HTTP_200_OK:
+        return HttpResponseBadRequest(content=response.text)
+    return_data = loads(response.content)
+
+    auth_url = return_data['authorization_url']
+
+    return HttpResponseRedirect(auth_url)
+
+
+def oauth_return(request):
+    token = request.GET.get('access_token', None)
+    uid = request.GET.get('uid', None)
+    uname = request.GET.get('user_name', None)
+
+    if not token or not uid or not uname:
+        return HttpResponseBadRequest('Bad request - no valid access_token or uid or user_name is provided')
+
+    name = request.GET.get('name', '')
+    if name:
+        namestrs = name.split(' ')
+        fname = namestrs[0]
+        lname = namestrs[-1]
+    else:
+        fname = ''
+        lname = ''
+
+    kwargs = {}
+    kwargs['request'] = request
+    kwargs['username'] = uname
+    kwargs['access_token'] = token
+    kwargs['first_name'] = fname
+    kwargs['last_name'] = lname
+    kwargs['uid'] = uid
+
+    # authticate against globus oauth with username and access_token and create linked user in CommonsShare if
+    # authenticated with globus
+    tgt_user = authenticate(**kwargs)
+
+    if tgt_user:
+        login_msg = "Successfully logged in"
+        auth_login(request, tgt_user)
+        info(request, _(login_msg))
+        return login_redirect(request)
+    else:
+        return HttpResponseBadRequest('Bad request - invalid access_token or failed to create linked user')
+
+
 def login(request, template="accounts/account_login.html",
           form_class=LoginForm, extra_context=None):
     """
@@ -484,71 +539,6 @@ def deactivate_user(request):
     messages.success(request, "Your account has been successfully deactivated.")
     return HttpResponseRedirect('/accounts/logout/')
 
-@login_required
-def delete_irods_account(request):
-    if request.method == 'POST':
-        user = request.user
-        try:
-            exec_cmd = "{0} {1}".format(settings.HS_USER_ZONE_PROXY_USER_DELETE_USER_CMD, user.username)
-            output = run_ssh_command(host=settings.HS_USER_ZONE_HOST, uname=settings.HS_USER_ZONE_PROXY_USER, pwd=settings.HS_USER_ZONE_PROXY_USER_PWD,
-                            exec_cmd=exec_cmd)
-            if output:
-                if 'ERROR:' in output.upper():
-                    # there is an error from icommand run, report the error
-                    return HttpResponse(
-                        dumps({"error": 'iRODS server failed to delete this iRODS account {0}. Check the server log for details.'.format(user.username)}),
-                        content_type = "application/json"
-                    )
-
-            user_profile = UserProfile.objects.filter(user=user).first()
-            user_profile.create_irods_user_account = False
-            user_profile.save()
-            return HttpResponse(
-                    dumps({"success": "iRODS account {0} is deleted successfully".format(user.username)}),
-                    content_type = "application/json"
-            )
-        except Exception as ex:
-            return HttpResponse(
-                    dumps({"error": ex.message}),
-                    content_type = "application/json"
-            )
-
-
-@login_required
-def create_irods_account(request):
-    if request.method == 'POST':
-        try:
-            user = request.user
-            pwd = str(request.POST.get('password'))
-            exec_cmd = "{0} {1} {2}".format(settings.HS_USER_ZONE_PROXY_USER_CREATE_USER_CMD, user.username, pwd)
-            output = run_ssh_command(host=settings.HS_USER_ZONE_HOST, uname=settings.HS_USER_ZONE_PROXY_USER, pwd=settings.HS_USER_ZONE_PROXY_USER_PWD,
-                            exec_cmd=exec_cmd)
-            if output:
-                if 'ERROR:' in output.upper():
-                    # there is an error from icommand run, report the error
-                    return HttpResponse(
-                        dumps({"error": 'iRODS server failed to create this iRODS account {0}. Check the server log for details.'.format(user.username)}),
-                        content_type = "application/json"
-                    )
-
-            user_profile = UserProfile.objects.filter(user=user).first()
-            user_profile.create_irods_user_account = True
-            user_profile.save()
-            return HttpResponse(
-                    dumps({"success": "iRODS account {0} is created successfully".format(user.username)}),
-                    content_type = "application/json"
-            )
-        except Exception as ex:
-            return HttpResponse(
-                    dumps({"error": ex.message + ' - iRODS server failed to create this iRODS account.'}),
-                    content_type = "application/json"
-            )
-    else:
-        return HttpResponse(
-            dumps({"error": "Not POST request"}),
-            content_type="application/json"
-        )
-
 
 @login_required
 def create_scidas_virtual_app(request, res_id, cluster):
@@ -580,34 +570,10 @@ def create_scidas_virtual_app(request, res_id, cluster):
                         p_data = jdata
 
     url = settings.PIVOT_URL
-    app_id = user.username + '_cs_app_id'
     preset_url = ''
     if not p_data:
-        p_data = {
-            "id": app_id,
-             "containers": [
-                {
-                  "id": app_id,
-                  "image": "scidas/irods-jupyter-hydroshare",
-                  "resources": {
-                    "cpus": 2,
-                    "mem": 2048
-                  },
-                  "port_mappings": [
-                    {
-                      "container_port": 8888,
-                      "host_port": 0,
-                      "protocol": "tcp"
-                    }
-                  ],
-                  "args": [
-                    "--ip=0.0.0.0",
-                    "--NotebookApp.token=\"\""
-                  ],
-                  "data": file_data_list
-                }
-            ]
-        }
+        messages.error(request, "The resource must include the JSON request file in order to launch PIVOT")
+        return HttpResponseRedirect(request.META['HTTP_REFERER'])
     else:
         app_id = p_data['id']
         p_data['containers'][0]['data'] = file_data_list
@@ -672,7 +638,7 @@ def create_scidas_virtual_app(request, res_id, cluster):
 
     # make sure the new directed url is loaded and working before redirecting.
     # Since scidas will install dependencies included in requirements.txt, it will take some time
-    # before the app_url is ready to go after the appliance is provisioned, hence wait for up to 30 seconds
+    # before the app_url is ready to go after the appliance is provisioned, hence wait for up to 10 seconds
     # before erroring out if connection to the url keeps being refused.
     idx = 0
     while True:
@@ -683,7 +649,7 @@ def create_scidas_virtual_app(request, res_id, cluster):
             errmsg = ex.reason if hasattr(ex, 'reason') else 'URLError'
             idx += 1
             time.sleep(5)
-        
+
         if idx > 6:
             messages.error(request, errmsg)
             return HttpResponseRedirect(request.META['HTTP_REFERER'])

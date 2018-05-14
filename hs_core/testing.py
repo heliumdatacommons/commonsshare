@@ -56,47 +56,6 @@ class TestCaseCommonUtilities(object):
         else:
             return True
 
-    def create_irods_user_in_user_zone(self):
-        """Create corresponding irods account in user zone."""
-        try:
-            exec_cmd = "{0} {1} {2}".format(settings.HS_USER_ZONE_PROXY_USER_CREATE_USER_CMD,
-                                            self.user.username, self.user.username)
-            output = run_ssh_command(host=settings.HS_USER_ZONE_HOST,
-                                     uname=settings.HS_USER_ZONE_PROXY_USER,
-                                     pwd=settings.HS_USER_ZONE_PROXY_USER_PWD,
-                                     exec_cmd=exec_cmd)
-            if output:
-                if 'ERROR:' in output.upper():
-                    # irods account failed to create
-                    self.assertRaises(SessionException(-1, output, output))
-
-            user_profile = UserProfile.objects.filter(user=self.user).first()
-            user_profile.create_irods_user_account = True
-            user_profile.save()
-        except Exception as ex:
-            self.assertRaises(SessionException(-1, ex.message, ex.message))
-
-    def delete_irods_user_in_user_zone(self):
-        """Delete irods test user in user zone."""
-        try:
-            exec_cmd = "{0} {1}".format(settings.HS_USER_ZONE_PROXY_USER_DELETE_USER_CMD,
-                                        self.user.username)
-            output = run_ssh_command(host=settings.HS_USER_ZONE_HOST,
-                                     uname=settings.HS_USER_ZONE_PROXY_USER,
-                                     pwd=settings.HS_USER_ZONE_PROXY_USER_PWD,
-                                     exec_cmd=exec_cmd)
-            if output:
-                if 'ERROR:' in output.upper():
-                    # there is an error from icommand run, report the error
-                    self.assertRaises(SessionException(-1, output, output))
-
-            user_profile = UserProfile.objects.filter(user=self.user).first()
-            user_profile.create_irods_user_account = False
-            user_profile.save()
-        except Exception as ex:
-            # there is an error from icommand run, report the error
-            self.assertRaises(SessionException(-1, ex.message, ex.message))
-
     def save_files_to_user_zone(self, file_name_to_target_name_dict):
         """Save a list of files to iRODS user zone using the same IrodsStorage() object.
 

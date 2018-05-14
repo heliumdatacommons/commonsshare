@@ -3520,7 +3520,7 @@ class GroupAccess(models.Model):
                                  editable=False,
                                  help_text='whether group members can be listed by everyone')
 
-    shareable = models.BooleanField(default=True,
+    shareable = models.BooleanField(default=False,
                                     editable=False,
                                     help_text='whether group can be shared by non-owners')
 
@@ -3722,7 +3722,7 @@ class ResourceAccess(models.Model):
                                        help_text='whether resource is discoverable by everyone')
     public = models.BooleanField(default=False,
                                  help_text='whether resource data can be viewed by everyone')
-    shareable = models.BooleanField(default=True,
+    shareable = models.BooleanField(default=False,
                                     help_text='whether resource can be shared by non-owners')
     # these are for resources only
     published = models.BooleanField(default=False,

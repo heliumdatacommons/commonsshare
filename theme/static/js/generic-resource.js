@@ -542,7 +542,6 @@ $(document).ready(function () {
         }
     });
 
-    $("#btn-shareable").on("change", shareable_ajax_submit);
     $("#btn-lic-agreement").on("change", license_agreement_ajax_submit);
     $("#btnMyResources").click(label_ajax_submit);
 

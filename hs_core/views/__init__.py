@@ -779,8 +779,14 @@ def _share_resource(request, shortkey, privilege, user_or_group_id, user_or_grou
         try:
             if user_or_group == 'user':
                 user.uaccess.share_resource_with_user(res, user_to_share_with, access_privilege)
+                # set iRODS read permission accordingly
+                res.set_irods_access_control(user_or_group_name=user_to_share_with.username)
             else:
                 user.uaccess.share_resource_with_group(res, group_to_share_with, access_privilege)
+                # give all users in the group iRODS read permission accordingly
+                for gu in group_to_share_with.gaccess.members:
+                    res.set_irods_access_control(user_or_group_name=gu.username)
+
         except PermissionDenied as exp:
             status = 'error'
             err_message = exp.message
@@ -831,6 +837,8 @@ def unshare_resource_with_user(request, shortkey, user_id, *args, **kwargs):
     ajax_response_data = {'status': 'success'}
     try:
         user.uaccess.unshare_resource_with_user(res, user_to_unshare_with)
+        # set iRODS null permission accordingly
+        res.set_irods_access_control(user_or_group_name=user_to_unshare_with.username, perm='null')
         if user not in res.raccess.view_users:
             # user has no explict access to the resource - redirect to resource listing page
             ajax_response_data['redirect_to'] = '/my-resources/'
@@ -850,6 +858,10 @@ def unshare_resource_with_group(request, shortkey, group_id, *args, **kwargs):
     ajax_response_data = {'status': 'success'}
     try:
         user.uaccess.unshare_resource_with_group(res, group_to_unshare_with)
+        # give all users in the group iRODS null permission accordingly
+        for gu in group_to_unshare_with.gaccess.members:
+            res.set_irods_access_control(user_or_group_name=gu.username, perm='null')
+
         if user not in res.raccess.view_users:
             # user has no explicit access to the resource - redirect to resource listing page
             ajax_response_data['redirect_to'] = '/my-resources/'
@@ -877,6 +889,9 @@ def undo_share_resource_with_user(request, shortkey, user_id, *args, **kwargs):
             undo_user_privilege = "owner"
         else:
             undo_user_privilege = 'none'
+            # set iRODS permission to null accordingly
+            res.set_irods_access_control(user_or_group_name=user_to_unshare_with.username, perm='null')
+
         ajax_response_data['undo_user_privilege'] = undo_user_privilege
 
         if user not in res.raccess.view_users:
@@ -904,6 +919,10 @@ def undo_share_resource_with_group(request, shortkey, group_id, *args, **kwargs)
             undo_group_privilege = 'view'
         else:
             undo_group_privilege = 'none'
+            # set iRODS permission to null accordingly
+            for ug in group_to_unshare_with.gaccess.members:
+                res.set_irods_access_control(user_or_group_name=ug.username, perm='null')
+
         ajax_response_data['undo_group_privilege'] = undo_group_privilege
 
         if user not in res.raccess.view_users:
@@ -1063,7 +1082,6 @@ def my_resources(request, page):
 @processor_for(GenericResource)
 def add_generic_context(request, page):
     user = request.user
-    in_production, user_zone_account_exist = utils.get_user_zone_status_info(user)
 
     class AddUserForm(forms.Form):
         user = forms.ModelChoiceField(User.objects.filter(is_active=True).all(),
@@ -1079,7 +1097,6 @@ def add_generic_context(request, page):
         'add_edit_user_form': AddUserForm(),
         'add_view_group_form': AddGroupForm(),
         'add_edit_group_form': AddGroupForm(),
-        'user_zone_account_exist': user_zone_account_exist,
     }
 
 
@@ -1457,16 +1474,6 @@ def act_on_group_membership_request(request, membership_request_id, action, *arg
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
 
-@login_required
-def get_file(request, *args, **kwargs):
-    from django_irods.icommands import RodsSession
-    name = kwargs['name']
-    session = RodsSession("./", "/usr/bin")
-    session.runCmd("iinit")
-    session.runCmd('iget', [ name, 'tempfile.' + name ])
-    return HttpResponse(open(name), content_type='x-binary/octet-stream')
-
-
 processor_for(GenericResource)(resource_processor)
 
 
@@ -1555,47 +1562,6 @@ def _send_email_on_group_membership_acceptance(membership_request):
               html_message=email_msg,
               from_email=settings.DEFAULT_FROM_EMAIL,
               recipient_list=[membership_request.request_from.email])
-
-
-def _share_resource_with_user(request, frm, resource, requesting_user, privilege):
-    if frm.is_valid():
-        try:
-            requesting_user.uaccess.share_resource_with_user(resource, frm.cleaned_data['user'], privilege)
-        except PermissionDenied as exp:
-            messages.error(request, exp.message)
-    else:
-        messages.error(request, frm.errors.as_json())
-
-
-def _unshare_resource_with_users(request, requesting_user, users_to_unshare_with, resource, privilege):
-    users_to_keep = User.objects.in_bulk(users_to_unshare_with).values()
-    owners = set(resource.raccess.owners.all())
-    editors = set(resource.raccess.edit_users.all()) - owners
-    viewers = set(resource.raccess.view_users.all()) - editors - owners
-
-    if privilege == 'owner':
-        all_shared_users = owners
-    elif privilege == 'edit':
-        all_shared_users = editors
-    elif privilege == 'view':
-        all_shared_users = viewers
-    else:
-        all_shared_users = []
-
-    go_to_resource_listing_page = False
-    for user in all_shared_users:
-        if user not in users_to_keep:
-            try:
-                # requesting user is the resource owner or requesting_user is self unsharing
-                # COUCH: no need for undo_share; doesn't do what is intended 11/19/2016
-                requesting_user.uaccess.unshare_resource_with_user(resource, user)
-
-                if requesting_user == user and not resource.raccess.public:
-                    go_to_resource_listing_page = True
-            except PermissionDenied as exp:
-                messages.error(request, exp.message)
-                break
-    return go_to_resource_listing_page
 
 
 def _set_resource_sharing_status(request, user, resource, flag_to_set, flag_value):
