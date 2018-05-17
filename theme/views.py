@@ -48,6 +48,35 @@ from theme.utils import get_quota_message
 from .forms import SignupForm
 
 
+def get_user_profile_context_data(pu, request=None):
+    # get all resources the profile user owns
+    resources = pu.uaccess.owned_resources
+    # get a list of groupmembershiprequests
+    group_membership_requests = GroupMembershipRequest.objects.filter(invitation_to=pu).all()
+
+    # if requesting user is not the profile user, then show only resources that the requesting user has access
+    if request and request.user != pu:
+        if request.user.is_authenticated():
+            if request.user.is_superuser:
+                # admin can see all resources owned by profile user
+                pass
+            else:
+                # filter out any resources the requesting user doesn't have access
+                resources = resources.filter(Q(pk__in=request.user.uaccess.view_resources) |
+                                             Q(raccess__public=True) | Q(raccess__discoverable=True))
+
+        else:
+            # for anonymous requesting user show only resources that are either public or discoverable
+            resources = resources.filter(Q(raccess__public=True) | Q(raccess__discoverable=True))
+
+    return {
+        'profile_user': pu,
+        'resources': resources,
+        'quota_message': get_quota_message(pu),
+        'group_membership_requests': group_membership_requests,
+    }
+
+
 class UserProfileView(TemplateView):
     template_name='accounts/profile.html'
 
@@ -64,32 +93,7 @@ class UserProfileView(TemplateView):
             except:
                 u = User.objects.get(username=self.request.GET['user'])
 
-        # get all resources the profile user owns
-        resources = u.uaccess.owned_resources
-        # get a list of groupmembershiprequests
-        group_membership_requests = GroupMembershipRequest.objects.filter(invitation_to=u).all()
-
-        # if requesting user is not the profile user, then show only resources that the requesting user has access
-        if self.request.user != u:
-            if self.request.user.is_authenticated():
-                if self.request.user.is_superuser:
-                    # admin can see all resources owned by profile user
-                    pass
-                else:
-                    # filter out any resources the requesting user doesn't have access
-                    resources = resources.filter(Q(pk__in=self.request.user.uaccess.view_resources) |
-                                                 Q(raccess__public=True) | Q(raccess__discoverable=True))
-
-            else:
-                # for anonymous requesting user show only resources that are either public or discoverable
-                resources = resources.filter(Q(raccess__public=True) | Q(raccess__discoverable=True))
-
-        return {
-            'profile_user': u,
-            'resources': resources,
-            'quota_message': get_quota_message(u),
-            'group_membership_requests': group_membership_requests,
-        }
+        return get_user_profile_context_data(u, self.request)
 
 
 class UserPasswordResetView(TemplateView):
@@ -436,6 +440,7 @@ def oauth_request(request):
 
 
 def oauth_return(request):
+
     token = request.GET.get('access_token', None)
     uid = request.GET.get('uid', None)
     uname = request.GET.get('user_name', None)
@@ -471,6 +476,55 @@ def oauth_return(request):
         return login_redirect(request)
     else:
         return HttpResponseBadRequest('Bad request - invalid access_token or failed to create linked user')
+
+
+@login_required
+def retrieve_globus_buckets(request):
+    # note that trailing slash should not be added to return_to url
+    return_url = '&return_to={}://{}/gdo_return'.format(request.scheme, request.get_host())
+    url = 'authorize?provider=globus&scope=urn:globus:auth:scope:transfer.api.globus.org:all'
+    req_url = '{}{}{}'.format(settings.SERVICE_SERVER_URL, url, return_url)
+    auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
+    response = requests.get(req_url,
+                            headers={'Authorization': auth_header_str},
+                            verify=False)
+    if response.status_code != status.HTTP_200_OK:
+        return HttpResponseBadRequest(content=response.text)
+    return_data = loads(response.content)
+
+    auth_url = return_data['authorization_url']
+
+    return HttpResponseRedirect(auth_url)
+
+
+@login_required
+def globus_data_auth_return(request):
+    token = request.GET.get('access_token', None)
+    if not token:
+        return HttpResponseBadRequest('Bad request - no valid access_token is provided')
+
+    # get avaiable endpoints for a given globus user
+    url = '{}registration/get_buckets?provider=globus&token={}'.format(settings.SERVICE_SERVER_URL, token)
+    auth_header_str = 'Basic {}'.format(settings.DATA_REG_API_KEY)
+    response = requests.get(url,
+                            headers={'Authorization': auth_header_str},
+                            verify=False)
+    if response.status_code != status.HTTP_200_OK:
+        # request fails
+        return HttpResponseBadRequest('Bad request - the data registration service cannot list avaiable endpoints: ' +
+                                      response.content)
+    return_data = loads(response.content)
+    bucket_list = return_data['buckets']
+    ep_list = []
+    for bucket in bucket_list:
+        ep_list.append(bucket['name'])
+
+    # /return to user profile page
+    template_name = 'accounts/profile.html'
+    context = get_user_profile_context_data(request.user)
+    context['endpoints'] = ep_list
+
+    return TemplateResponse(request, template_name, context)
 
 
 def login(request, template="accounts/account_login.html",
@@ -530,14 +584,6 @@ def email_verify_password_reset(request, uidb36=None, token=None):
     else:
         messages.error(request, _("The link you clicked is no longer valid."))
         return redirect("/")
-
-@login_required
-def deactivate_user(request):
-    user = request.user
-    user.is_active = False
-    user.save()
-    messages.success(request, "Your account has been successfully deactivated.")
-    return HttpResponseRedirect('/accounts/logout/')
 
 
 @login_required

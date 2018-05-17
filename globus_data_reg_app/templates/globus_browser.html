@@ -1,0 +1,35 @@
+{% block modal_globus_browse %}
+    <div class="modal fade" id="globusContent" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-backdrop up-load"></div>
+      <img class="ajax-loader" width='100' height='100' src="{{STATIC_URL}}img/ajax-loader.gif" align='center' style="position:absolute;z-index:100000;top:28%;left:50%;">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            <h4 class="modal-title" id="myModalLabel">Path: <span id="globus_path_label"></span> </h4>
+          </div>
+          <form class="form-globus" role="form" action="/globus/register/" method="post" id="globusRegister">
+            <div class="modal-body">
+              {% csrf_token %}
+              <input type="hidden" name="store" id="root_store" value=""/>
+              <input type="hidden" name="upload" id="register_store" value=""/>
+              <div>
+                <div>
+                    <div>Viewing : <input type="text" class="form-control" id="globus_view_store" ></div>
+                    <div id = "file_struct"></div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="submit" id="globus_register" class="btn btn-primary">Select</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script type="text/javascript" src="{{ STATIC_URL }}js/globus.js"></script>
+{% endblock %}

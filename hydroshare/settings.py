@@ -294,6 +294,7 @@ INSTALLED_APPS = (
     "hs_access_control",
     "hs_labels",
     "irods_browser_app",
+    "globus_data_reg_app",
     "widget_tweaks",
     "hs_sitemap",
     "hs_collection_resource",

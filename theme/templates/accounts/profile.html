@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% load mezzanine_tags hydroshare_tags %}
 
+{% block extra_head %}
+    <link href="{{ STATIC_URL }}css/site_base_globus.css" rel="stylesheet"/>
+{% endblock %}
+
 {% block meta_title %}User profile for {{ profile_user|best_name }}{% endblock %}
 
 {% block main %}
@@ -60,13 +64,36 @@
                                 </div>
                             {% endif %}
 
-                            {#        Password      #}
+                            {#        Register Data from Globus      #}
                             {% if profile_user.id == user.id %}
+                            {% if endpoints %}
+                                <input type="hidden" id="globus-endpoints" name="globus_endpoints" value="globus_endpoints">
+                            {% endif %}
                             <div data-page-mode="edit">
                                 <hr>
                                 <div class="profile-picture-controls text-center">
-                                    {#        Account deactivation       #}
-                                    <div><a data-toggle="modal" data-target="#deactivate-account-dialog">Deactivate account</a></div>
+                                    {#        Register globus data       #}
+                                    <div class="panel panel-default">
+                                        <div class="panel-heading">
+                                            <h4 class="panel-title">
+                                                <span class="glyphicon glyphicon-tags"></span>
+                                                <a data-toggle="collapse" class="accordion-toggle" data-parent="#accordion" href="#register-globus">
+                                                    &nbsp;&nbsp;Register Data from Globus</a></h4>
+                                        </div>
+                                        <div id="register-globus" class="facet-list panel-collapse collapse in">
+                                            <div class="panel-body">
+                                                {% if endpoints %}
+                                                    <div class="alert alert-success">You have retrieved your storage buckets from Globus successfully.</div>
+                                                    <button id="btn-display-globus-endpoints" class="btn btn-success" data-toggle="modal"
+                                                            data-target="#select-globus-endpoints" title="Browse buckets & register file...">
+                                                    Browse buckets & register file...
+                                                    </button>
+                                                {% else %}
+                                                    <a href="{% url 'retrieve_globus_buckets' %}">Browser your storage buckets from Globus</a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             {% endif %}
@@ -639,37 +666,30 @@
             </div>
 
             {% if profile_user.id == user.id %}
-            <!-- Deactivate Account Modal -->
-            <div class="modal fade" id="deactivate-account-dialog" tabindex="-1" role="dialog"
-                 aria-labelledby="Deactivate account">
+            <!-- Display globus endpoint buckets modal -->
+            <div class="modal fade" id="select-globus-endpoints" tabindex="-1" role="dialog"
+                 aria-labelledby="displayGlobusEndpoints">
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal"
                                     aria-label="Close"><span aria-hidden="true">&times;</span>
                             </button>
-                            <h4 class="modal-title" id="myModalLabel">Deactivate Account</h4>
+                            <h4 class="modal-title" id="deleteProfilePicture">Select a globus bucket</h4>
                         </div>
                         <div class="modal-body">
-                            <div class="row">
-                                <div class="col-sm-2 col-xs-12 text-center">
-                                    <span id="icon-warning" class="glyphicon glyphicon-warning-sign"></span>
-                                </div>
-                                <div class="col-sm-10 col-xs-12">
-                                    <div><strong>WARNING</strong>: This will <strong><u>permanently</u></strong> disable your account. You cannot undo
-                                        this action. Please note that if you do choose to disable your account, your Resources
-                                        will remain in CommonsShare and will be accessible to anyone who currently has access. If
-                                        you wish to remove your resources from CommonsShare, you should do so <u>before</u> disabling
-                                        your account.
-                                    </div>
-
-                                </div>
-                            </div>
-
+                            {% for ep in endpoints %}
+                                <div>{{ ep }}</div>
+                            {% endfor %}
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                            <a href="{% url 'deactivate_account' %}" class="btn btn-danger">Confirm</a>
+                            <button type="button" class="btn btn-default" data-dismiss="modal">
+                                Close
+                            </button>
+                            <button class="btn btn-primary" id="globus-endpoint" name="globus-endpoint"
+                                    title="Select a bucket and browse"
+                                    value="clear">Select and Browse
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -728,80 +748,13 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Create iRODS User Account Modal -->
-            <div class="modal fade" id="create-irods-account-dialog" tabindex="-1" role="dialog"
-                 aria-labelledby="myModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-sm">
-                    <div class="modal-content">
-                        <form role="form" method="post">
-                            <div class="modal-header">
-                                <button type="button" class="close" data-dismiss="modal"
-                                        aria-label="Close"><span aria-hidden="true">&times;</span>
-                                </button>
-                                <h4 class="modal-title" id="myModalLabel">Create your iRODS user account</h4>
-                            </div>
-                            <div class="modal-body">
-                                {% csrf_token %}
-                                <div class="row">
-                                    <div class="col-sm-10 col-xs-12">
-                                        <div>A corresponding iRODS user account with the same username <strong>{{ profile_user.username }}</strong> will be created
-                                            in the CommonsShare user zone when you confirm this action. You will have to input a password below for your
-                                            iRODS user account, which does not have to be the same as your current CommonsShare password. <strong>The password
-                                            is required to be composed of at least 8 characters.</strong> Please keep your iRODS user account password in a
-                                            secure place and use it to access your account in the CommonsShare user zone using iRODS clients such as icommands or Cyberduck.
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="id_irods_password">Password: </label>
-                                            <input class="form-control" autocomplete="off" id="id_irods_password" name="irods_password" placeholder="Password" type="password">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                                <button id="btn-create-irods-account" class="btn btn-primary" disabled>Confirm</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Delete iRODS User Account Modal -->
-            <div class="modal fade" id="delete-irods-account-dialog" tabindex="-1" role="dialog"
-                 aria-labelledby="Create iRODS user account">
-                <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal"
-                                    aria-label="Close"><span aria-hidden="true">&times;</span>
-                            </button>
-                            <h4 class="modal-title" id="myModalLabel">Delete your iRODS user account</h4>
-                        </div>
-                        <div class="modal-body">
-                            <div class="row">
-                                <div class="col-sm-2 col-xs-12 text-center">
-                                    <span id="icon-warning" class="glyphicon glyphicon-warning-sign"></span>
-                                </div>
-                                <div class="col-sm-10 col-xs-12">
-                                    <div><strong>WARNING</strong>: This will <strong>delete</strong> your iRODS user account in the
-                                        CommonsShare user zone as well as all data you have under that account. You cannot recover
-                                        your data after this action.
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                            <button id="btn-delete-irods-account" class="btn btn-danger">Confirm</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
             {% endif %}
         </form>
         {% endwith %}
     </div>
+    {% block modal %}
+        {% include "globus_browser.html" %}
+    {% endblock %}
 {% endblock %}
 
 {% block extra_css %}
