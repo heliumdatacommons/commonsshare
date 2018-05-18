@@ -12,6 +12,10 @@
     padding: 4px;
 }
 
+#globus_content_label {
+    color: #357ebd;
+}
+
 .file,.folder {
     cursor:pointer;
     opacity:0.8;

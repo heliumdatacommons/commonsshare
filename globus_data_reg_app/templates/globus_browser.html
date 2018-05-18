@@ -2,6 +2,7 @@
     <link href="{{ STATIC_URL }}css/site_base_globus.css" rel="stylesheet"/>
 {% endblock %}
 
+
 {% block modal_globus_browse %}
     <div class="modal fade" id="globusContent" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-backdrop register"></div>
@@ -10,7 +11,7 @@
         <div class="modal-content">
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-            <h4 class="modal-title" id="myModalLabel">Path: <span id="globus_path_label"></span> </h4>
+            <h4 class="modal-title" id="myModalLabel">Globus user: <span id="globus_content_label">{{ profile_user.username }}</span> </h4>
           </div>
           <form class="form-globus" role="form" action="/globus/register/" method="post" id="globusRegister">
             <div class="modal-body">
@@ -19,7 +20,7 @@
               <input type="hidden" name="upload" id="register_store" value=""/>
               <div>
                 <div>
-                    <div>Viewing : <input type="text" class="form-control" id="globus_view_store" ></div>
+                    <div>Viewing : <input type="text" class="form-control" id="globus_view_store" readonly></div>
                     <div id = "file_struct"></div>
                 </div>
               </div>

@@ -3,23 +3,22 @@ $('#btn-select-globus-file').on('click',function(event) {
     $('.ajax-loader').hide();
     var store = '';
     var token = $("#globus_token").val();
-    var bucket_path = $("#selectGlobusBucket option:selected").text();
+    var bucket_ep = $("#selectGlobusBucket option:selected").text();
     var bucket_id = $("#selectGlobusBucket option:selected").val();
-    $("#globus_content_label").text(bucket_path);
-    $('#root_store').val(bucket_path);
-    store = bucket_path;
+    $('#root_store').val(bucket_ep);
+    store = bucket_ep;
 
     // Setting up the view tab
-    $('#file_struct').attr('name',store);
+    $('#file_struct').attr('name','/');
     $('#globus_view_store').val(store);
     // loading file structs
     var parent = $('#file_struct');
-    get_store(store, bucket_id, token, parent, 0);
+    get_store(bucket_ep, store, bucket_id, token, parent, 0);
     $('body').off('click');
-    $('body').on('click', '.folder', click_folder_opr(bucket_id, token));
+    $('body').on('click', '.folder', click_folder_opr(bucket_ep, bucket_id, token));
 });
 
-function set_store_display(store, parent, margin, json) {
+function set_store_display(path, bucket_ep, bucket_id, token, parent, margin, json) {
     var files = json.files;
     var folder = json.folder;
     var lastSelected = [];
@@ -28,13 +27,14 @@ function set_store_display(store, parent, margin, json) {
     }
     else {
         $.each(folder, function(i, v) {
-            $(parent).append("<div class='folder' id='globus_folder_" + v + "' name='" + store + "/" + v + "' style='margin-left:" + margin + "px;'><img src='/static/img/folder.png' width='15' height='15'>&nbsp; " + v + "</div>");
+            $(parent).append("<div class='folder' id='globus_folder_" + v + "' name='" + "/" + v + "' style='margin-left:" + margin + "px;'><img src='/static/img/folder.png' width='15' height='15'>&nbsp; " + v + "</div>");
         });
 
         $.each(files, function(i, v) {
-            $(parent).append("<div class='file' id='globus_file_" + v + "' name='" + store + "/" + v + "' style='margin-left:" + margin + "px;'><img src='/static/img/file.png' width='15' height='15'>&nbsp; " + v + "</div>")
+            $(parent).append("<div class='file' id='globus_file_" + v + "' name='" + "/" + v + "' style='margin-left:" + margin + "px;'><img src='/static/img/file.png' width='15' height='15'>&nbsp; " + v + "</div>")
         });
     }
+    $('.folder').on('click', click_folder_opr(bucket_ep, bucket_id, token));
     $('.file').attr('unselectable', 'on'); // disable default browser shift text selection highlighting in IE
     $('.file').on('click',function(e) {
         var current = $(this), selected;
@@ -82,7 +82,7 @@ function set_store_display(store, parent, margin, json) {
     });
 }
 
-function get_store(store, store_id, token, parent, margin) {
+function get_store(bucket_ep, store, store_id, token, parent, margin) {
     if (store) {
         $.ajax({
             mode: "queue",
@@ -90,12 +90,12 @@ function get_store(store, store_id, token, parent, margin) {
             async: true,
             type: "POST",
             data: {
-                store: store,
                 store_id: store_id,
-                token: token
+                token: token,
+                path: (store===bucket_ep ? '' : store)
             },
             success: function (json) {
-                return set_store_display(store, parent, margin, json);
+                return set_store_display(store, bucket_ep, store_id, token, parent, margin, json);
             },
 
             error: function (xhr, errmsg, err) {
@@ -109,8 +109,8 @@ function get_store(store, store_id, token, parent, margin) {
         return false;
 }
 
-function click_folder_opr(store_id, token) {
-    var margin_left = parseInt($(this).css('margin-left')) + 10;
+function click_folder_opr(bucket_ep, store_id, token) {
+    var margin_left = 10;
     if($(this).hasClass('isOpen')) {
         $(this).addClass('isClose');
         $(this).removeClass('isOpen');
@@ -124,11 +124,12 @@ function click_folder_opr(store_id, token) {
     }
     else {
         var store = $(this).attr('name');
-        var parent = $(this)
-        get_store(store, store_id, token, parent, margin_left);
+        var parent = $(this);
+        get_store(bucket_ep, store, store_id, token, parent, margin_left);
         $(this).addClass('isOpen');
         set_datastore($(this).attr('name'), true);
     }
+
     return false;
 }
 

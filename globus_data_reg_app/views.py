@@ -6,36 +6,26 @@ from django.conf import settings
 from rest_framework import status
 
 
-def search_ds(coll):
-    store = {}
-    file = []
-    folder = []
-    if coll.data_objects:
-        for files in coll.data_objects:
-            file.append(files.name)
-    if coll.subcollections:
-        for folders in coll.subcollections:
-            folder.append(folders.name)
-
-    store['files'] = file
-    store['folder'] = folder
-    return store
-
-
 # Create your views here.
 def store(request):
     """
-    Get file hierarchy for the requested endpoint directory in globus.
+    Get file hierarchy for the requested endpoint directory or for the requested bucket path from globus if path is
+    not empty in the request.
     It is invoked by an AJAX call, so it returns json object that holds content for files and folders
-    under the requested directory/collection/subcollection
+    under the requested endpoint
     """
     return_object = {}
-    datastore = str(request.POST['store'])
     token = str(request.POST['token'])
     ds_uuid = str(request.POST['store_id'])
-    # list file/dir entries for a given globus storage bucket id
-    url = '{}registration/list_bucket?provider=globus&token={}&bucket_id={}'.format(settings.SERVICE_SERVER_URL,
-                                                                                     token, ds_uuid)
+    path = str(request.POST['path'])
+    if path:
+        # list file/dir entries for a given globus storage bucket id
+        url = '{}registration/list_bucket_path?provider=globus&token={}&bucket_id={}&path={}'.format(
+            settings.SERVICE_SERVER_URL, token, ds_uuid, path)
+    else:
+        # list file/dir entries for a given globus storage bucket id
+        url = '{}registration/list_bucket?provider=globus&token={}&bucket_id={}'.format(settings.SERVICE_SERVER_URL,
+                                                                                        token, ds_uuid)
     auth_header_str = 'Basic {}'.format(settings.DATA_REG_API_KEY)
     response = requests.get(url,
                             headers={'Authorization': auth_header_str},
@@ -44,7 +34,20 @@ def store(request):
         # request fails
         return JsonResponse(status=response.status_code, data={'message': response.content})
 
-    return JsonResponse(response.content)
+    return_data = json.loads(response.content)
+
+    return_object = {}
+    file = []
+    folder = []
+    for lst in return_data['listings']:
+        if lst['type'] == 'dir':
+            folder.append(lst['name'])
+        elif lst['type'] == 'file':
+            file.append(lst['name'])
+
+    return_object['files'] = file
+    return_object['folder'] = folder
+    return JsonResponse(return_object)
 
 
 def register(request):
