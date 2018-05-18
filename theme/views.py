@@ -440,7 +440,6 @@ def oauth_request(request):
 
 
 def oauth_return(request):
-
     token = request.GET.get('access_token', None)
     uid = request.GET.get('uid', None)
     uname = request.GET.get('user_name', None)
@@ -480,6 +479,7 @@ def oauth_return(request):
 
 @login_required
 def retrieve_globus_buckets(request):
+    
     # note that trailing slash should not be added to return_to url
     return_url = '&return_to={}://{}/gdo_return'.format(request.scheme, request.get_host())
     url = 'authorize?provider=globus&scope=urn:globus:auth:scope:transfer.api.globus.org:all'
@@ -517,12 +517,13 @@ def globus_data_auth_return(request):
     bucket_list = return_data['buckets']
     ep_list = []
     for bucket in bucket_list:
-        ep_list.append(bucket['name'])
+        ep_list.append({'name': bucket['name'], 'id': bucket['id']})
 
     # /return to user profile page
     template_name = 'accounts/profile.html'
     context = get_user_profile_context_data(request.user)
     context['endpoints'] = ep_list
+    context['globus_token'] = token
 
     return TemplateResponse(request, template_name, context)
 

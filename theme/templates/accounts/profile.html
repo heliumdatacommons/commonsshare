@@ -1,10 +1,6 @@
 {% extends "base.html" %}
 {% load mezzanine_tags hydroshare_tags %}
 
-{% block extra_head %}
-    <link href="{{ STATIC_URL }}css/site_base_globus.css" rel="stylesheet"/>
-{% endblock %}
-
 {% block meta_title %}User profile for {{ profile_user|best_name }}{% endblock %}
 
 {% block main %}
@@ -68,6 +64,7 @@
                             {% if profile_user.id == user.id %}
                             {% if endpoints %}
                                 <input type="hidden" id="globus-endpoints" name="globus_endpoints" value="globus_endpoints">
+                                <input type="hidden" id="globus_token" name="globus_token" value="{{ globus_token }}">
                             {% endif %}
                             <div data-page-mode="edit">
                                 <hr>
@@ -83,13 +80,21 @@
                                         <div id="register-globus" class="facet-list panel-collapse collapse in">
                                             <div class="panel-body">
                                                 {% if endpoints %}
-                                                    <div class="alert alert-success">You have retrieved your storage buckets from Globus successfully.</div>
-                                                    <button id="btn-display-globus-endpoints" class="btn btn-success" data-toggle="modal"
-                                                            data-target="#select-globus-endpoints" title="Browse buckets & register file...">
-                                                    Browse buckets & register file...
-                                                    </button>
+                                                    <fieldset>
+                                                        <label for="selectGlobusBucket">Select storage bucket</label>
+                                                        <select name="globus_bucket" class="form-control form-required" id="selectGlobusBucket">
+                                                            {% for ep in endpoints %}
+                                                                <option value="{{ ep.id }}">{{ ep.name }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </fieldset>
+                                                    <a id="btn-select-globus-file" type="button"
+                                                       class="btn btn-success" data-toggle="modal" data-target="#globusContent">
+                                                        Browse bucket and select file...
+                                                    </a>
+                                                    <div id="globus-sel-file"></div>
                                                 {% else %}
-                                                    <a href="{% url 'retrieve_globus_buckets' %}">Browser your storage buckets from Globus</a>
+                                                    <a href="{% url 'retrieve_globus_buckets' %}">Retrieve your storage buckets from Globus</a>
                                                 {% endif %}
                                             </div>
                                         </div>
@@ -666,35 +671,6 @@
             </div>
 
             {% if profile_user.id == user.id %}
-            <!-- Display globus endpoint buckets modal -->
-            <div class="modal fade" id="select-globus-endpoints" tabindex="-1" role="dialog"
-                 aria-labelledby="displayGlobusEndpoints">
-                <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal"
-                                    aria-label="Close"><span aria-hidden="true">&times;</span>
-                            </button>
-                            <h4 class="modal-title" id="deleteProfilePicture">Select a globus bucket</h4>
-                        </div>
-                        <div class="modal-body">
-                            {% for ep in endpoints %}
-                                <div>{{ ep }}</div>
-                            {% endfor %}
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-default" data-dismiss="modal">
-                                Close
-                            </button>
-                            <button class="btn btn-primary" id="globus-endpoint" name="globus-endpoint"
-                                    title="Select a bucket and browse"
-                                    value="clear">Select and Browse
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Delete picture modal -->
             <div class="modal fade" id="delete-picture" tabindex="-1" role="dialog"
                  aria-labelledby="deleteProfilePicture">
@@ -752,10 +728,13 @@
         </form>
         {% endwith %}
     </div>
-    {% block modal %}
+    {% if profile_user.id == user.id %}
+        {% block modal %}
         {% include "globus_browser.html" %}
-    {% endblock %}
+        {% endblock %}
+    {% endif %}
 {% endblock %}
+
 
 {% block extra_css %}
   <link rel="stylesheet" href="{{ STATIC_URL }}css/jquery.tagsinput-revisited.min.css" />

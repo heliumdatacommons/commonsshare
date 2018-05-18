@@ -2,18 +2,21 @@ $('#btn-select-globus-file').on('click',function(event) {
     $('#file_struct').children().remove();
     $('.ajax-loader').hide();
     var store = '';
-    $("#globus_content_label").text(sessionStorage.IRODS_username);
-    $('#root_store').val(sessionStorage.IRODS_datastore);
-    store = sessionStorage.IRODS_datastore;
+    var token = $("#globus_token").val();
+    var bucket_path = $("#selectGlobusBucket option:selected").text();
+    var bucket_id = $("#selectGlobusBucket option:selected").val();
+    $("#globus_content_label").text(bucket_path);
+    $('#root_store').val(bucket_path);
+    store = bucket_path;
 
     // Setting up the view tab
     $('#file_struct').attr('name',store);
     $('#globus_view_store').val(store);
     // loading file structs
     var parent = $('#file_struct');
-    get_store(store, parent, 0);
+    get_store(store, bucket_id, token, parent, 0);
     $('body').off('click');
-    $('body').on('click', '.folder', click_folder_opr);
+    $('body').on('click', '.folder', click_folder_opr(bucket_id, token));
 });
 
 function set_store_display(store, parent, margin, json) {
@@ -79,7 +82,7 @@ function set_store_display(store, parent, margin, json) {
     });
 }
 
-function get_store(store, parent, margin) {
+function get_store(store, store_id, token, parent, margin) {
     if (store) {
         $.ajax({
             mode: "queue",
@@ -87,7 +90,9 @@ function get_store(store, parent, margin) {
             async: true,
             type: "POST",
             data: {
-                store: store
+                store: store,
+                store_id: store_id,
+                token: token
             },
             success: function (json) {
                 return set_store_display(store, parent, margin, json);
@@ -104,7 +109,7 @@ function get_store(store, parent, margin) {
         return false;
 }
 
-function click_folder_opr() {
+function click_folder_opr(store_id, token) {
     var margin_left = parseInt($(this).css('margin-left')) + 10;
     if($(this).hasClass('isOpen')) {
         $(this).addClass('isClose');
@@ -120,7 +125,7 @@ function click_folder_opr() {
     else {
         var store = $(this).attr('name');
         var parent = $(this)
-        get_store(store, parent, margin_left);
+        get_store(store, store_id, token, parent, margin_left);
         $(this).addClass('isOpen');
         set_datastore($(this).attr('name'), true);
     }
@@ -134,21 +139,16 @@ function set_datastore(store, isFolder) {
         }
         $('#globus_view_store').val(store);
     }
-};
+}
 
-$("#globusContent form").bind("keypress", function(e) {
-    if (e.keyCode == 13) {
-        $("#btnSearch").attr('value');
-        //add more buttons here
-        return false;
-    }
-});
 
 function globus_register() {
     $.ajax({
         url: "/globus/register/",
         type: "POST",
         data: {
+            token: $("#globus_token").val(),
+            store_uuid: $("#selectGlobusBucket optoin:selected").val(),
             path: $('#register_store').val()
         },
         success: function(json) {
@@ -165,5 +165,12 @@ function globus_register() {
 
 $('#globusRegister').on('submit', function(event) {
     event.preventDefault();
+    var selected = [];
+    $('.selected').each( function() {
+        selected.push($(this).attr('name'));
+    });
+    $('#register_store').val(selected);
+    $('#globusContent .modal-backdrop.up-load').show();
+    $('#globusContent .ajax-loader').show();
     globus_register();
 });

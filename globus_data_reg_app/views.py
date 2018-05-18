@@ -1,7 +1,9 @@
 import json
-import os
-import string
-from django.http import HttpResponse, HttpResponseRedirect
+import requests
+
+from django.http import JsonResponse
+from django.conf import settings
+from rest_framework import status
 
 
 def search_ds(coll):
@@ -29,39 +31,43 @@ def store(request):
     """
     return_object = {}
     datastore = str(request.POST['store'])
-    coll = irods_sess.collections.get(datastore)
-    store = search_ds(coll)
+    token = str(request.POST['token'])
+    ds_uuid = str(request.POST['store_id'])
+    # list file/dir entries for a given globus storage bucket id
+    url = '{}registration/list_bucket?provider=globus&token={}&bucket_id={}'.format(settings.SERVICE_SERVER_URL,
+                                                                                     token, ds_uuid)
+    auth_header_str = 'Basic {}'.format(settings.DATA_REG_API_KEY)
+    response = requests.get(url,
+                            headers={'Authorization': auth_header_str},
+                            verify=False)
+    if response.status_code != status.HTTP_200_OK:
+        # request fails
+        return JsonResponse(status=response.status_code, data={'message': response.content})
 
-    return_object['files'] = store['files']
-    return_object['folder'] = store['folder']
-    jsondump = json.dumps(return_object)
-    irods_sess.cleanup()
-    return HttpResponse(
-        jsondump,
-        content_type = "application/json"
-    )
+    return JsonResponse(response.content)
+
 
 def register(request):
     if request.method == 'POST':
-        file_names = str(request.POST['upload'])
-        fnames_list = string.split(file_names, ',')
+        token = str(request.POST['token'])
+        ds_uuid = str(request.POST['store_uuid'])
+        path = str(request.POST['path'])
+        # list file/dir entries for a given globus storage bucket id
+        url = '{}registration/register_paths?provider=globus&token={}&bucket_id={}&paths={}'.format(
+            settings.SERVICE_SERVER_URL, token, ds_uuid, path)
+        auth_header_str = 'Basic {}'.format(settings.DATA_REG_API_KEY)
+        response = requests.get(url,
+                                headers={'Authorization': auth_header_str},
+                                verify=False)
+        if response.status_code != status.HTTP_200_OK:
+            # request fails
+            return JsonResponse(status=response.status_code, data={'error': response.content})
 
-        response_data = {}
-        response_data['file_type_error'] = ''
-        response_data['irods_file_names'] = file_names
-        # get selected file names without path for informational display on the page
-        response_data['irods_sel_file'] = ', '.join(os.path.basename(f.rstrip(os.sep)) for f in fnames_list)
-        homepath = fnames_list[0]
-        response_data['irods_federated'] = utils.is_federated(homepath)
-        response_data['is_file_reference'] = request.POST['file_ref']
-
-        return HttpResponse(
-            json.dumps(response_data),
-            content_type = "application/json"
+        return JsonResponse(
+            response.content
         )
     else:
-        return HttpResponse(
-            json.dumps({"error": "Not POST request"}),
-            content_type="application/json"
+        return JsonResponse(
+            status= 400,
+            data = json.dumps({"error": "Not POST request"})
         )
-
