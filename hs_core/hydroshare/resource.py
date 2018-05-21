@@ -967,9 +967,8 @@ def publish_resource(user, pk):
     # create published date
     resource.metadata.create_element('date', type='published', start_date=resource.updated)
 
-    # add doi to "Identifier" element of science metadata
     md_args = {'name': 'minid',
-               'url': 'http://minid.bd2k.org/minid/landingpage/' + resource.minid}
+               'url': 'http://minid.bd2k.org/minid/landingpage/' + resource.minid + ', http://n2t.net/' + resource.minid}
     resource.metadata.create_element('Identifier', **md_args)
 
     utils.resource_modified(resource, user, overwrite_bag=False)
