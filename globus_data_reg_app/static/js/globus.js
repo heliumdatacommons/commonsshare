@@ -9,16 +9,16 @@ $('#btn-select-globus-file').on('click',function(event) {
     store = bucket_ep;
 
     // Setting up the view tab
-    $('#file_struct').attr('name','/');
+    $('#file_struct').attr('name',store);
     $('#globus_view_store').val(store);
     // loading file structs
     var parent = $('#file_struct');
-    get_store(bucket_ep, store, bucket_id, token, parent, 0);
+    get_store(store, parent, 0);
     $('body').off('click');
-    $('body').on('click', '.folder', click_folder_opr(bucket_ep, bucket_id, token));
+    $('body').on('click', '.folder', click_folder_opr);
 });
 
-function set_store_display(path, bucket_ep, bucket_id, token, parent, margin, json) {
+function set_store_display(path, parent, margin, json) {
     var files = json.files;
     var folder = json.folder;
     var lastSelected = [];
@@ -34,7 +34,6 @@ function set_store_display(path, bucket_ep, bucket_id, token, parent, margin, js
             $(parent).append("<div class='file' id='globus_file_" + v + "' name='" + "/" + v + "' style='margin-left:" + margin + "px;'><img src='/static/img/file.png' width='15' height='15'>&nbsp; " + v + "</div>")
         });
     }
-    $('.folder').on('click', click_folder_opr(bucket_ep, bucket_id, token));
     $('.file').attr('unselectable', 'on'); // disable default browser shift text selection highlighting in IE
     $('.file').on('click',function(e) {
         var current = $(this), selected;
@@ -82,7 +81,10 @@ function set_store_display(path, bucket_ep, bucket_id, token, parent, margin, js
     });
 }
 
-function get_store(bucket_ep, store, store_id, token, parent, margin) {
+function get_store(store, parent, margin) {
+    var token = $("#globus_token").val();
+    var bucket_ep = $("#selectGlobusBucket option:selected").text();
+    var store_id = $("#selectGlobusBucket option:selected").val();
     if (store) {
         $.ajax({
             mode: "queue",
@@ -95,7 +97,7 @@ function get_store(bucket_ep, store, store_id, token, parent, margin) {
                 path: (store===bucket_ep ? '' : store)
             },
             success: function (json) {
-                return set_store_display(store, bucket_ep, store_id, token, parent, margin, json);
+                return set_store_display(store, parent, margin, json);
             },
 
             error: function (xhr, errmsg, err) {
@@ -109,8 +111,8 @@ function get_store(bucket_ep, store, store_id, token, parent, margin) {
         return false;
 }
 
-function click_folder_opr(bucket_ep, store_id, token) {
-    var margin_left = 10;
+function click_folder_opr() {
+    var margin_left = parseInt($(this).css('margin-left')) + 10;
     if($(this).hasClass('isOpen')) {
         $(this).addClass('isClose');
         $(this).removeClass('isOpen');
@@ -125,7 +127,7 @@ function click_folder_opr(bucket_ep, store_id, token) {
     else {
         var store = $(this).attr('name');
         var parent = $(this);
-        get_store(bucket_ep, store, store_id, token, parent, margin_left);
+        get_store(store, parent, margin_left);
         $(this).addClass('isOpen');
         set_datastore($(this).attr('name'), true);
     }
