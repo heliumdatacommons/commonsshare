@@ -1649,6 +1649,19 @@ class AbstractResource(ResourcePermissionsMixin, ResourceIRODSMixin):
         has_metadata = self.has_required_metadata
         return has_files and has_metadata
 
+    def set_irods_access_control(self, user_or_group_name=None, perm='read'):
+        # give read permission to corresponding iRODS user
+        if not user_or_group_name:
+            raise ValueError('bad input argument: username cannot be None')
+        elif perm not in ('null', 'read', 'write', 'own'):
+            raise ValueError('bad input argument: only null, read, write, or own for permission is allowed')
+        else:
+            istorage = self.get_irods_storage()
+            rpath = '/' + settings.IRODS_ZONE + '/home/' + settings.IRODS_USERNAME
+            istorage.set_access_control(perm, user_or_group_name, rpath, recursive=False)
+            istorage.set_access_control(perm, user_or_group_name, self.root_path)
+
+
     def set_discoverable(self, value, user=None):
         """Set the discoverable flag for a resource.
 
@@ -1747,6 +1760,10 @@ class AbstractResource(ResourcePermissionsMixin, ResourceIRODSMixin):
             self.raccess.public = value
             if value:  # can't be public without being discoverable
                 self.raccess.discoverable = value
+                self.set_irods_access_control(user_or_group_name='public', perm='read')
+            else:
+                self.set_irods_access_control(user_or_group_name='public', perm='null')
+
             self.raccess.save()
 
             # public changed state: set isPublic metadata AVU accordingly

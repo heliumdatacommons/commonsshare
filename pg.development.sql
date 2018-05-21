@@ -3998,6 +3998,8 @@ CREATE TABLE hs_core_resourcefile (
     file_folder character varying(4096),
     logical_file_content_type_id integer,
     logical_file_object_id integer,
+    reference_file_path character varying(255),
+    reference_file_size character varying(15),
     CONSTRAINT hs_core_resourcefile_logical_file_object_id_check CHECK ((logical_file_object_id >= 0)),
     CONSTRAINT hs_core_resourcefile_object_id_check CHECK ((object_id >= 0))
 );
@@ -8213,8 +8215,7 @@ CREATE TABLE theme_userprofile (
     middle_name character varying(1024),
     state character varying(1024),
     user_type character varying(1024),
-    website character varying(200),
-    create_irods_user_account boolean NOT NULL
+    website character varying(200)
 );
 
 
@@ -11861,6 +11862,10 @@ COPY django_migrations (id, app, name, applied) FROM stdin;
 207	hs_tools_resource	0012_auto_20171110_1559	2018-01-08 21:56:29.672568+00
 208	hs_tools_resource	0016_merge	2018-01-08 21:56:29.677747+00
 209	hs_tools_resource	0017_auto_20171128_1852	2018-01-08 21:56:30.870221+00
+210	hs_access_control	0023_auto_20180423_1904	2018-04-24 16:58:56.42946+00
+211	hs_core	0036_resourcefile_reference_file_path	2018-04-24 16:58:56.730637+00
+212	hs_core	0037_resourcefile_reference_file_size	2018-04-24 16:58:56.934192+00
+213	theme	0009_remove_userprofile_create_irods_user_account	2018-04-24 16:58:57.175777+00
 \.
 
 
@@ -11868,7 +11873,7 @@ COPY django_migrations (id, app, name, applied) FROM stdin;
 -- Name: django_migrations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('django_migrations_id_seq', 209, true);
+SELECT pg_catalog.setval('django_migrations_id_seq', 213, true);
 
 
 --
@@ -12973,7 +12978,7 @@ SELECT pg_catalog.setval('hs_core_relation_id_seq', 1, false);
 -- Data for Name: hs_core_resourcefile; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY hs_core_resourcefile (id, object_id, resource_file, content_type_id, fed_resource_file, file_folder, logical_file_content_type_id, logical_file_object_id) FROM stdin;
+COPY hs_core_resourcefile (id, object_id, resource_file, content_type_id, fed_resource_file, file_folder, logical_file_content_type_id, logical_file_object_id, reference_file_path, reference_file_size) FROM stdin;
 \.
 
 
@@ -23714,16 +23719,6 @@ SELECT pg_catalog.setval('hs_tools_resource_toolversion_id_seq', 1, false);
 --
 
 COPY hs_tracking_session (id, begin, visitor_id) FROM stdin;
-1	2016-06-23 17:06:32.174288+00	1
-2	2016-06-23 17:07:55.65815+00	2
-3	2017-02-02 16:16:56.853803+00	3
-4	2017-02-02 17:23:27.983199+00	1
-5	2017-02-02 17:27:56.526549+00	1
-6	2017-02-02 17:28:40.81141+00	6
-7	2017-05-18 23:38:49.595277+00	7
-8	2017-08-18 14:41:26.36915+00	1
-9	2017-09-01 18:10:51.832185+00	1
-10	2017-09-01 18:34:26.166302+00	10
 \.
 
 
@@ -23739,215 +23734,6 @@ SELECT pg_catalog.setval('hs_tracking_session_id_seq', 10, true);
 --
 
 COPY hs_tracking_variable (id, "timestamp", name, type, value, session_id) FROM stdin;
-1	2016-06-23 17:06:32.176345+00	begin_session	4	none	1
-2	2016-06-23 17:06:32.178545+00	visit	2	/admin/login/	1
-3	2016-06-23 17:06:35.724699+00	visit	2	/admin/	1
-4	2016-06-23 17:06:39.943401+00	visit	2	/admin/pages/page/	1
-5	2016-06-23 17:06:40.044229+00	visit	2	/admin/jsi18n/	1
-6	2016-06-23 17:06:42.609026+00	visit	2	/admin/pages/richtextpage/add/	1
-7	2016-06-23 17:06:42.678194+00	visit	2	/admin/jsi18n/	1
-8	2016-06-23 17:07:03.948786+00	visit	2	/admin_keywords_submit/	1
-9	2016-06-23 17:07:04.469555+00	visit	2	/admin/pages/page/	1
-10	2016-06-23 17:07:04.503762+00	visit	2	/admin/jsi18n/	1
-11	2016-06-23 17:07:12.764509+00	visit	2	/admin_page_ordering/	1
-12	2016-06-23 17:07:31.574614+00	visit	2	/admin_page_ordering/	1
-13	2016-06-23 17:07:40.236028+00	visit	2	/	1
-14	2016-06-23 17:07:55.65976+00	begin_session	4	none	2
-15	2016-06-23 17:07:55.661515+00	visit	2	/	2
-16	2016-06-23 17:17:35.201336+00	visit	2	/	2
-17	2016-06-23 17:17:37.904373+00	visit	2	/accounts/login/	2
-18	2016-06-23 17:17:48.822462+00	visit	2	/help/	2
-19	2016-06-23 17:17:53.399003+00	visit	2	/accounts/login/	2
-20	2016-06-23 17:17:57.673472+00	visit	2	/search/	2
-21	2016-06-23 17:17:59.819554+00	visit	2	/	2
-22	2017-02-02 16:16:56.855351+00	begin_session	4	none	3
-23	2017-02-02 16:16:56.856808+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=None user_email_domain=None request_url=/	3
-24	2017-02-02 16:17:02.82735+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=None user_email_domain=None request_url=/robots.txt	3
-25	2017-02-02 17:23:27.986851+00	begin_session	4	none	4
-26	2017-02-02 17:23:27.990782+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=None user_email_domain=None request_url=/robots.txt	4
-27	2017-02-02 17:23:31.342204+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=None user_email_domain=None request_url=/	4
-28	2017-02-02 17:24:38.198471+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=None user_email_domain=None request_url=/admin/login/	4
-29	2017-02-02 17:24:42.204342+00	login	4	none	4
-30	2017-02-02 17:24:42.340796+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/	4
-31	2017-02-02 17:24:54.087076+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/auth/group/	4
-32	2017-02-02 17:24:54.160685+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/jsi18n/	4
-33	2017-02-02 17:24:55.856132+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/auth/group/1/	4
-34	2017-02-02 17:24:55.901448+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/jsi18n/	4
-35	2017-02-02 17:25:53.90589+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/auth/group/	4
-36	2017-02-02 17:25:53.937875+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/jsi18n/	4
-37	2017-02-02 17:25:56.282825+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/auth/group/	4
-38	2017-02-02 17:25:56.311809+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/jsi18n/	4
-39	2017-02-02 17:25:57.523103+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/auth/group/1/	4
-40	2017-02-02 17:25:57.555392+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/jsi18n/	4
-41	2017-02-02 17:26:10.302942+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/auth/group/	4
-42	2017-02-02 17:26:10.334185+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/jsi18n/	4
-43	2017-02-02 17:26:11.566495+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/auth/group/1/	4
-44	2017-02-02 17:26:11.598047+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/jsi18n/	4
-45	2017-02-02 17:26:32.836314+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/auth/group/	4
-46	2017-02-02 17:26:32.867675+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/jsi18n/	4
-47	2017-02-02 17:26:34.341114+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/auth/group/1/	4
-48	2017-02-02 17:26:34.37208+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/jsi18n/	4
-49	2017-02-02 17:26:48.146126+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/auth/group/	4
-50	2017-02-02 17:26:48.189508+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/jsi18n/	4
-51	2017-02-02 17:26:50.025204+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/auth/group/1/	4
-52	2017-02-02 17:26:50.056122+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/jsi18n/	4
-53	2017-02-02 17:27:30.617921+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/pages/page/	4
-54	2017-02-02 17:27:30.663401+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/jsi18n/	4
-55	2017-02-02 17:27:38.952301+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/	4
-56	2017-02-02 17:27:40.825451+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/help/	4
-57	2017-02-02 17:27:43.346591+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/	4
-58	2017-02-02 17:27:44.583727+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/my-resources/	4
-59	2017-02-02 17:27:46.165948+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/search/	4
-60	2017-02-02 17:27:47.261057+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/collaborate/	4
-61	2017-02-02 17:27:51.150329+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/my-resources/	4
-62	2017-02-02 17:27:52.430797+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/	4
-63	2017-02-02 17:27:56.42667+00	logout	4	none	4
-64	2017-02-02 17:27:56.528123+00	begin_session	4	none	5
-65	2017-02-02 17:27:56.529615+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=None user_email_domain=None request_url=/	5
-66	2017-02-02 17:28:07.807214+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=None user_email_domain=None request_url=/admin/login/	5
-67	2017-02-02 17:28:12.325126+00	login	4	none	5
-68	2017-02-02 17:28:12.448623+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/	5
-69	2017-02-02 17:28:28.298125+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/robots/rule/	5
-70	2017-02-02 17:28:28.332412+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/jsi18n/	5
-71	2017-02-02 17:28:30.150827+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/robots/url/	5
-72	2017-02-02 17:28:30.180193+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/admin/jsi18n/	5
-73	2017-02-02 17:28:38.218862+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=Unspecified user_email_domain=com request_url=/	5
-74	2017-02-02 17:28:40.710661+00	logout	4	none	5
-75	2017-02-02 17:28:40.81281+00	begin_session	4	none	6
-76	2017-02-02 17:28:40.814548+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=None user_email_domain=None request_url=/	6
-77	2017-05-18 23:38:49.596672+00	begin_session	2	user_ip=192.168.56.1 user_type=None user_email_domain=None	7
-78	2017-05-18 23:38:49.598486+00	visit	2	user_ip=192.168.56.1 http_method=GET http_code=200 user_type=None user_email_domain=None request_url=/	7
-79	2017-08-18 14:41:26.37093+00	begin_session	2	user_ip=192.168.56.1|user_type=None|user_email_domain=None	8
-80	2017-08-18 14:41:26.372707+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=None|user_email_domain=None|request_url=/	8
-81	2017-08-18 14:41:26.68745+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=None|user_email_domain=None|request_url=/hsapi/userInfo/	8
-82	2017-08-18 14:41:31.109255+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=None|user_email_domain=None|request_url=/help/	8
-83	2017-08-18 14:41:31.330216+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=None|user_email_domain=None|request_url=/hsapi/userInfo/	8
-84	2017-08-18 14:41:59.495708+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=None|user_email_domain=None|request_url=/terms-of-use/	8
-85	2017-08-18 14:41:59.707129+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=None|user_email_domain=None|request_url=/hsapi/userInfo/	8
-86	2017-08-18 14:42:09.01361+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=None|user_email_domain=None|request_url=/privacy/	8
-87	2017-08-18 14:42:09.222581+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=None|user_email_domain=None|request_url=/hsapi/userInfo/	8
-88	2017-08-18 14:43:08.418714+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=None|user_email_domain=None|request_url=/accounts/login/	8
-89	2017-08-18 14:43:08.640749+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=None|user_email_domain=None|request_url=/hsapi/userInfo/	8
-90	2017-08-18 14:43:23.172241+00	login	2	user_ip=192.168.56.1|user_type=Unspecified|user_email_domain=com	8
-91	2017-08-18 14:43:23.273113+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=Unspecified|user_email_domain=com|request_url=/	8
-92	2017-08-18 14:43:23.540091+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=Unspecified|user_email_domain=com|request_url=/hsapi/userInfo/	8
-93	2017-08-18 14:43:30.327452+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=Unspecified|user_email_domain=com|request_url=/user/4/	8
-94	2017-08-18 14:43:30.607109+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=Unspecified|user_email_domain=com|request_url=/hsapi/userInfo/	8
-95	2017-08-18 14:44:04.119077+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/user/4/	8
-96	2017-08-18 14:44:04.386389+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/hsapi/userInfo/	8
-97	2017-08-18 14:49:06.870383+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/	8
-98	2017-08-18 14:49:11.581645+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/page/	8
-99	2017-08-18 14:49:11.663938+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	8
-100	2017-08-18 14:49:15.093103+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/richtextpage/9/	8
-101	2017-08-18 14:49:15.170222+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	8
-102	2017-08-18 14:49:36.961493+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/page/	8
-103	2017-08-18 14:49:37.017793+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	8
-104	2017-08-18 14:49:39.935549+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/richtextpage/9/	8
-105	2017-08-18 14:49:39.986086+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	8
-106	2017-08-18 14:49:51.985418+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/redirects/redirect/	8
-107	2017-08-18 14:49:52.030657+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	8
-108	2017-09-01 18:10:51.835432+00	begin_session	2	user_ip=192.168.56.1|user_type=None|user_email_domain=None	9
-109	2017-09-01 18:10:51.838809+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=None|user_email_domain=None|request_url=/	9
-110	2017-09-01 18:10:52.092611+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=None|user_email_domain=None|request_url=/hsapi/userInfo/	9
-111	2017-09-01 18:10:54.913194+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=None|user_email_domain=None|request_url=/accounts/login/	9
-112	2017-09-01 18:10:55.126297+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=None|user_email_domain=None|request_url=/hsapi/userInfo/	9
-113	2017-09-01 18:11:00.096183+00	login	2	user_ip=192.168.56.1|user_type=|user_email_domain=com	9
-114	2017-09-01 18:11:00.198224+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/	9
-115	2017-09-01 18:11:00.549976+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/hsapi/userInfo/	9
-116	2017-09-01 18:11:11.925214+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/	9
-117	2017-09-01 18:11:16.792542+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/auth/user/	9
-118	2017-09-01 18:11:16.896024+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-119	2017-09-01 18:11:22.014511+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/page/	9
-120	2017-09-01 18:11:22.130432+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-121	2017-09-01 18:11:24.415939+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/richtextpage/5/	9
-122	2017-09-01 18:11:24.523589+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-123	2017-09-01 18:12:13.301857+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/richtextpage/5/delete/	9
-124	2017-09-01 18:12:16.676691+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/page/	9
-125	2017-09-01 18:12:16.721076+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-126	2017-09-01 18:12:25.227323+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/link/add/	9
-127	2017-09-01 18:12:25.306909+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-128	2017-09-01 18:12:49.855774+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/page/	9
-129	2017-09-01 18:12:49.905028+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-130	2017-09-01 18:13:03.552141+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/link/add/	9
-131	2017-09-01 18:13:03.616113+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-132	2017-09-01 18:13:41.882203+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/page/	9
-133	2017-09-01 18:13:41.931486+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-134	2017-09-01 18:13:44.496554+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/link/14/	9
-135	2017-09-01 18:13:44.550091+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-136	2017-09-01 18:13:50.290076+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/page/	9
-137	2017-09-01 18:13:50.335162+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-138	2017-09-01 18:14:07.489304+00	visit	2	user_ip=192.168.56.1|http_method=POST|http_code=200|user_type=|user_email_domain=com|request_url=/admin_page_ordering/	9
-139	2017-09-01 18:14:24.062034+00	visit	2	user_ip=192.168.56.1|http_method=POST|http_code=200|user_type=|user_email_domain=com|request_url=/admin_page_ordering/	9
-140	2017-09-01 18:14:28.216599+00	visit	2	user_ip=192.168.56.1|http_method=POST|http_code=200|user_type=|user_email_domain=com|request_url=/admin_page_ordering/	9
-141	2017-09-01 18:14:31.06684+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/	9
-142	2017-09-01 18:14:31.44987+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/hsapi/userInfo/	9
-143	2017-09-01 18:23:19.040525+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/terms-of-use/	9
-144	2017-09-01 18:23:19.309727+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/hsapi/userInfo/	9
-145	2017-09-01 18:23:25.330575+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/privacy/	9
-146	2017-09-01 18:23:25.573448+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/hsapi/userInfo/	9
-147	2017-09-01 18:23:30.396642+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/sitemap/	9
-148	2017-09-01 18:23:30.659632+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/hsapi/userInfo/	9
-149	2017-09-01 18:24:24.515638+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/	9
-150	2017-09-01 18:24:28.71583+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/page/	9
-151	2017-09-01 18:24:28.778898+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-152	2017-09-01 18:24:31.13236+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/richtextpage/9/	9
-153	2017-09-01 18:24:31.174932+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-154	2017-09-01 18:25:47.92566+00	visit	2	user_ip=192.168.56.1|http_method=POST|http_code=200|user_type=|user_email_domain=com|request_url=/admin_keywords_submit/	9
-155	2017-09-01 18:25:48.319793+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/page/	9
-156	2017-09-01 18:25:48.386326+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-157	2017-09-01 18:26:05.228541+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/richtextpage/10/	9
-158	2017-09-01 18:26:05.298139+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-159	2017-09-01 18:26:27.274143+00	visit	2	user_ip=192.168.56.1|http_method=POST|http_code=200|user_type=|user_email_domain=com|request_url=/admin_keywords_submit/	9
-160	2017-09-01 18:26:27.602237+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/page/	9
-161	2017-09-01 18:26:27.64587+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-162	2017-09-01 18:27:19.67518+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/	9
-163	2017-09-01 18:27:20.051144+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/hsapi/userInfo/	9
-164	2017-09-01 18:27:42.390151+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/	9
-165	2017-09-01 18:27:45.715743+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/page/	9
-166	2017-09-01 18:27:45.772333+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-167	2017-09-01 18:27:48.44955+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/richtextpage/9/	9
-168	2017-09-01 18:27:48.516585+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-169	2017-09-01 18:28:03.248267+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/	9
-170	2017-09-01 18:28:03.530175+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/hsapi/userInfo/	9
-171	2017-09-01 18:28:50.577674+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/	9
-172	2017-09-01 18:28:59.241291+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/redirects/redirect/	9
-173	2017-09-01 18:28:59.308313+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-174	2017-09-01 18:29:04.107942+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/redirects/redirect/add/	9
-175	2017-09-01 18:29:04.159245+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-176	2017-09-01 18:29:42.523937+00	visit	2	user_ip=192.168.56.1|http_method=POST|http_code=200|user_type=|user_email_domain=com|request_url=/admin/redirects/redirect/add/	9
-177	2017-09-01 18:29:42.599272+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-178	2017-09-01 18:29:59.362776+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/sites/site/	9
-179	2017-09-01 18:29:59.414452+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-180	2017-09-01 18:30:04.134304+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/redirects/redirect/	9
-181	2017-09-01 18:30:04.181827+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-182	2017-09-01 18:30:08.469813+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/sites/site/	9
-183	2017-09-01 18:30:10.861791+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/sites/site/	9
-184	2017-09-01 18:30:12.092742+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/redirects/redirect/	9
-185	2017-09-01 18:30:14.572093+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/redirects/redirect/add/	9
-186	2017-09-01 18:30:14.628338+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-187	2017-09-01 18:30:38.236852+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/redirects/redirect/	9
-188	2017-09-01 18:30:38.284108+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-189	2017-09-01 18:30:41.966393+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/redirects/redirect/add/	9
-190	2017-09-01 18:30:42.024719+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-191	2017-09-01 18:33:12.02615+00	visit	2	user_ip=192.168.56.1|http_method=POST|http_code=200|user_type=|user_email_domain=com|request_url=/admin/redirects/redirect/add/	9
-192	2017-09-01 18:33:12.085458+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-193	2017-09-01 18:33:16.62184+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/redirects/redirect/	9
-194	2017-09-01 18:33:16.699057+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-195	2017-09-01 18:33:20.787212+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/redirects/redirect/1/	9
-196	2017-09-01 18:33:20.862496+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-197	2017-09-01 18:33:32.516301+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/redirects/redirect/	9
-198	2017-09-01 18:33:32.582932+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-199	2017-09-01 18:33:36.93989+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/page/	9
-200	2017-09-01 18:33:36.989427+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-201	2017-09-01 18:33:43.364234+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/link/6/	9
-202	2017-09-01 18:33:43.423753+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/jsi18n/	9
-203	2017-09-01 18:33:52.602182+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/admin/pages/page/	9
-204	2017-09-01 18:33:55.134136+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/	9
-205	2017-09-01 18:33:55.528412+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=|user_email_domain=com|request_url=/hsapi/userInfo/	9
-206	2017-09-01 18:34:26.09324+00	logout	2	user_ip=192.168.56.1|user_type=|user_email_domain=com	9
-207	2017-09-01 18:34:26.167777+00	begin_session	2	user_ip=192.168.56.1|user_type=None|user_email_domain=None	10
-208	2017-09-01 18:34:26.169191+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=None|user_email_domain=None|request_url=/	10
-209	2017-09-01 18:34:26.397144+00	visit	2	user_ip=192.168.56.1|http_method=GET|http_code=200|user_type=None|user_email_domain=None|request_url=/hsapi/userInfo/	10
 \.
 
 
@@ -23963,16 +23749,6 @@ SELECT pg_catalog.setval('hs_tracking_variable_id_seq', 209, true);
 --
 
 COPY hs_tracking_visitor (id, first_seen, user_id) FROM stdin;
-1	2016-06-23 17:06:32.171224+00	4
-2	2016-06-23 17:07:55.656084+00	\N
-3	2017-02-02 16:16:56.851102+00	\N
-4	2017-02-02 17:23:27.980519+00	\N
-5	2017-02-02 17:27:56.524908+00	\N
-6	2017-02-02 17:28:40.809782+00	\N
-7	2017-05-18 23:38:49.592669+00	\N
-8	2017-08-18 14:41:26.366412+00	\N
-9	2017-09-01 18:10:51.822911+00	\N
-10	2017-09-01 18:34:26.164483+00	\N
 \.
 
 
@@ -24369,8 +24145,7 @@ SELECT pg_catalog.setval('theme_siteconfiguration_id_seq', 1, true);
 -- Data for Name: theme_userprofile; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY theme_userprofile (id, picture, title, subject_areas, organization, phone_1, phone_1_type, phone_2, phone_2_type, public, cv, details, user_id, country, middle_name, state, user_type, website, create_irods_user_account) FROM stdin;
-4		Research Software Engineer		RENCI		Mobile		Mobile	t			4	Unspecified		Unspecified			f
+COPY theme_userprofile (id, picture, title, subject_areas, organization, phone_1, phone_1_type, phone_2, phone_2_type, public, cv, details, user_id, country, middle_name, state, user_type, website) FROM stdin;
 \.
 
 

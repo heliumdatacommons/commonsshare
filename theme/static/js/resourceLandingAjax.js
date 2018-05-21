@@ -62,36 +62,6 @@ function label_ajax_submit() {
     return false;
 }
 
-function shareable_ajax_submit(event) {
-    var form = $(this).closest("form");
-    var datastring = form.serialize();
-    var url = form.attr('action');
-    var element = $(this);
-    var action = $(this).closest("form").find("input[name='t']").val();
-    element.attr("disabled", true);
-
-    $.ajax({
-        type: "POST",
-        url: url,
-        dataType: 'html',
-        data: datastring,
-        success: function () {
-            element.attr("disabled", false);
-            if (action == "make_not_shareable") {
-                element.closest("form").find("input[name='t']").val("make_shareable");
-            }
-            else {
-                element.closest("form").find("input[name='t']").val("make_not_shareable");
-            }
-        },
-        error: function () {
-            element.attr("disabled", false);
-        }
-    });
-    //don't submit the form
-    return false;
-}
-
 function license_agreement_ajax_submit(event) {
     // this sets if user will be required to agree to resource rights statement prior
     // to any resource file or bag download

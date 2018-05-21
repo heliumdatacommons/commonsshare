@@ -11,6 +11,8 @@ from django.db.models import Q
 
 from hs_core.models import BaseResource, Contributor, Creator, Subject, Description, Title, \
     Coverage, Relation
+from hs_access_control.models import UserAccess
+from hs_labels.models import UserLabels
 from .utils import user_from_id, group_from_id, get_profile
 from theme.models import UserQuota, UserProfile
 from hs_dictionary.models import University, UncategorizedTerm
@@ -33,10 +35,6 @@ def create_account(
     Returns: The user that was created
 
     """
-
-    from django.contrib.auth.models import User, Group
-    from hs_access_control.models import UserAccess
-    from hs_labels.models import UserLabels
 
     username = username if username else email
 

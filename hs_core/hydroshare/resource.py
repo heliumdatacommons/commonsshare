@@ -428,6 +428,9 @@ def create_resource(
         UserResourcePrivilege.share(resource=resource, grantor=owner, user=owner,
                                     privilege=PrivilegeCodes.OWNER)
 
+        # give read permission to corresponding iRODS user
+        resource.set_irods_access_control(user_or_group_name=owner.username)
+
         resource_labels = ResourceLabels(resource=resource)
         resource_labels.save()
 
