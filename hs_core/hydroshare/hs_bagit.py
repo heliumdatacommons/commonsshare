@@ -91,7 +91,8 @@ def create_bag(resource):
     istorage.saveFile(zipfile, destbagfile, True)
 
     # set bag_modified to false for a newly created bag
-    istorage.setAVU(resource, "bag_modified", "false")
+    path = resource.root_path
+    istorage.setAVU(path, "bag_modified", "false")
 
     # delete if there exists any bags for the resource
     resource.bags.all().delete()
