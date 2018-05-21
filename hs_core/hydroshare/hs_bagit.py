@@ -52,8 +52,6 @@ def delete_files_and_bag(resource):
 
 def create_bag(resource):
 
-    # resource.setAVU("bag_modified", True)
-
     checksums = ['md5', 'sha256']
 
     # generate remote-file-mainfest for fetch.txt
@@ -85,7 +83,15 @@ def create_bag(resource):
     bag_full_name = 'bags/{res_id}.zip'.format(res_id=resource.short_id)
     irods_dest_prefix = "/" + settings.IRODS_ZONE + "/home/" + settings.IRODS_USERNAME
     destbagfile = os.path.join(irods_dest_prefix, bag_full_name)
+
+    # delete any existing bag files
+    if (istorage.exists(destbagfile)):
+        istorage.delete(destbagfile)
+
     istorage.saveFile(zipfile, destbagfile, True)
+
+    # set bag_modified to false for a newly created bag
+    istorage.setAVU(resource, "bag_modified", "false")
 
     # delete if there exists any bags for the resource
     resource.bags.all().delete()
@@ -95,6 +101,7 @@ def create_bag(resource):
         content_object=resource.baseresource,
         timestamp=resource.updated
     )
+
 
     return b
 
