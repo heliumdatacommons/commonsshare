@@ -18,6 +18,7 @@
               {% csrf_token %}
               <input type="hidden" name="store" id="root_store" value=""/>
               <input type="hidden" name="upload" id="register_store" value=""/>
+              <input type="hidden" name="uid" id="uid" value="{{ uid }}"/>
               <div>
                 <div>
                     <div>Viewing : <input type="text" class="form-control" id="globus_view_store" readonly></div>

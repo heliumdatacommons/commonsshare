@@ -69,12 +69,17 @@ def get_user_profile_context_data(pu, request=None):
             # for anonymous requesting user show only resources that are either public or discoverable
             resources = resources.filter(Q(raccess__public=True) | Q(raccess__discoverable=True))
 
-    return {
+    context_dict = {
         'profile_user': pu,
         'resources': resources,
         'quota_message': get_quota_message(pu),
         'group_membership_requests': group_membership_requests,
     }
+
+    if request:
+        context_dict['uid'] = request.session['subject_id']
+
+    return context_dict
 
 
 class UserProfileView(TemplateView):
@@ -86,7 +91,6 @@ class UserProfileView(TemplateView):
                 u = User.objects.get(pk=int(kwargs['user']))
             except:
                 u = User.objects.get(username=kwargs['user'])
-
         else:
             try:
                 u = User.objects.get(pk=int(self.request.GET['user']))
@@ -472,6 +476,7 @@ def oauth_return(request):
         login_msg = "Successfully logged in"
         auth_login(request, tgt_user)
         info(request, _(login_msg))
+        request.session['subject_id'] = uid
         return login_redirect(request)
     else:
         return HttpResponseBadRequest('Bad request - invalid access_token or failed to create linked user')
@@ -479,7 +484,6 @@ def oauth_return(request):
 
 @login_required
 def retrieve_globus_buckets(request):
-    
     # note that trailing slash should not be added to return_to url
     return_url = '&return_to={}://{}/gdo_return'.format(request.scheme, request.get_host())
     url = 'authorize?provider=globus&scope=urn:globus:auth:scope:transfer.api.globus.org:all'
@@ -521,10 +525,9 @@ def globus_data_auth_return(request):
 
     # /return to user profile page
     template_name = 'accounts/profile.html'
-    context = get_user_profile_context_data(request.user)
+    context = get_user_profile_context_data(request.user, request)
     context['endpoints'] = ep_list
     context['globus_token'] = token
-
     return TemplateResponse(request, template_name, context)
 
 

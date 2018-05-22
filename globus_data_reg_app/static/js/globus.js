@@ -18,20 +18,23 @@ $('#btn-select-globus-file').on('click',function(event) {
     $('body').on('click', '.folder', click_folder_opr);
 });
 
-function set_store_display(path, parent, margin, json) {
+function set_store_display(store, parent, margin, json) {
     var files = json.files;
     var folder = json.folder;
+    var bucket_ep = $("#selectGlobusBucket option:selected").text();
     var lastSelected = [];
     if (files.length == 0 && folder.length == 0) {
         $(parent).append("<div class='file' style='margin-left:" + margin + "px;'></div>");
     }
     else {
+        if (store == bucket_ep)
+            store = '';
         $.each(folder, function(i, v) {
-            $(parent).append("<div class='folder' id='globus_folder_" + v + "' name='" + "/" + v + "' style='margin-left:" + margin + "px;'><img src='/static/img/folder.png' width='15' height='15'>&nbsp; " + v + "</div>");
+            $(parent).append("<div class='folder' id='globus_folder_" + v + "' name='" + store + "/" + v + "' style='margin-left:" + margin + "px;'><img src='/static/img/folder.png' width='15' height='15'>&nbsp; " + v + "</div>");
         });
 
         $.each(files, function(i, v) {
-            $(parent).append("<div class='file' id='globus_file_" + v + "' name='" + "/" + v + "' style='margin-left:" + margin + "px;'><img src='/static/img/file.png' width='15' height='15'>&nbsp; " + v + "</div>")
+            $(parent).append("<div class='file' id='globus_file_" + v + "' name='" + store + "/" + v + "' style='margin-left:" + margin + "px;'><img src='/static/img/file.png' width='15' height='15'>&nbsp; " + v + "</div>")
         });
     }
     $('.file').attr('unselectable', 'on'); // disable default browser shift text selection highlighting in IE
@@ -150,8 +153,8 @@ function globus_register() {
         url: "/globus/register/",
         type: "POST",
         data: {
-            token: $("#globus_token").val(),
-            store_uuid: $("#selectGlobusBucket optoin:selected").val(),
+            uid: $("#uid").val(),
+            store_uuid: $("#selectGlobusBucket option:selected").val(),
             path: $('#register_store').val()
         },
         success: function(json) {
@@ -160,7 +163,7 @@ function globus_register() {
         },
         error: function(xhr, errmsg, err) {
             console.log(xhr.status + ": " + xhr.responseText + ". Error message: " + errmsg);
-            $("#globus-sel-file").text("No file is registered.");
+            $("#globus-sel-file").text("No file is registered - " + xhr.responseText);
             $('#globusContent').modal('hide');
         }
     });

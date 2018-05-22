@@ -32,7 +32,7 @@ def store(request):
                             verify=False)
     if response.status_code != status.HTTP_200_OK:
         # request fails
-        return JsonResponse(status=response.status_code, data={'message': response.content})
+        return JsonResponse(status=response.status_code, data={'error': response.content})
 
     return_data = json.loads(response.content)
 
@@ -52,16 +52,30 @@ def store(request):
 
 def register(request):
     if request.method == 'POST':
-        token = str(request.POST['token'])
+        uid = str(request.POST['uid'])
         ds_uuid = str(request.POST['store_uuid'])
         path = str(request.POST['path'])
-        # list file/dir entries for a given globus storage bucket id
-        url = '{}registration/register_paths?provider=globus&token={}&bucket_id={}&paths={}'.format(
-            settings.SERVICE_SERVER_URL, token, ds_uuid, path)
+
+        # create iRODS resource first before registering the path
+        url = '{}registration/create_resource?rescname={}&subjectid={}'.format(
+            settings.SERVICE_SERVER_URL, ds_uuid, uid)
         auth_header_str = 'Basic {}'.format(settings.DATA_REG_API_KEY)
-        response = requests.get(url,
-                                headers={'Authorization': auth_header_str},
-                                verify=False)
+
+        response = requests.get(url, headers={'Authorization': auth_header_str}, verify=False)
+
+        if response.status_code != status.HTTP_200_OK:
+            # request fails
+            return JsonResponse(status=response.status_code, data={'error': response.content})
+
+        p_data = {
+            'provider': 'globus',
+            'bucket_id': ds_uuid,
+            'paths': [path]
+        }
+
+        # list file/dir entries for a given globus storage bucket id
+        url = '{}registration/register_paths'.format(settings.SERVICE_SERVER_URL)
+        response = requests.post(url, data=json.dumps(p_data), headers={'Authorization': auth_header_str}, verify=False)
         if response.status_code != status.HTTP_200_OK:
             # request fails
             return JsonResponse(status=response.status_code, data={'error': response.content})
