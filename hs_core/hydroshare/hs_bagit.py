@@ -123,16 +123,24 @@ def get_remote_file_manifest(resource):
 
         os.makedirs(tmpdir)
 
-        srcfile = os.path.join(irods_dest_prefix, irods_file_name)
-        istorage.getFile(srcfile, tmpfile)
-        checksum_md5 = mca.compute_checksum(tmpfile, hashlib.md5())
-        checksum_sha256 = mca.compute_checksum(tmpfile, hashlib.sha256())
-        data['url'] = irods_file_url
-        data['length'] = f.size
-        data['filename'] = f.file_name
-        data['md5'] = checksum_md5
-        data['sha256'] = checksum_sha256
-        data_list.append(data)
+        srcfile = f.reference_file_path
+
+        if srcfile is None or len(srcfile) == 0:
+            srcfile = os.path.join(irods_dest_prefix, irods_file_name)
+
+        try:
+            istorage.getFile(srcfile, tmpfile)
+        except:
+            pass
+        else:
+            checksum_md5 = mca.compute_checksum(tmpfile, hashlib.md5())
+            checksum_sha256 = mca.compute_checksum(tmpfile, hashlib.sha256())
+            data['url'] = irods_file_url
+            data['length'] = f.size
+            data['filename'] = f.file_name
+            data['md5'] = checksum_md5
+            data['sha256'] = checksum_sha256
+            data_list.append(data)
 
     return json.dumps(data_list)
 
