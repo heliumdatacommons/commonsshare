@@ -599,18 +599,17 @@ def create_scidas_virtual_app(request, res_id, cluster):
 
     res, _, _ = authorize(request, res_id, needed_permission=ACTION_TO_AUTHORIZE.VIEW_RESOURCE)
     cluster_name = cluster
-    if cluster_name != 'chameleon' and cluster_name != 'aws' and cluster_name != 'azure':
+    if cluster_name != 'gcp' and cluster_name != 'aws':
         cluster_name = ''
     file_data_list = []
     p_data = {}
     file_path = '/'+ds.IRODS_ZONE+'/home/'+ds.IRODS_USERNAME
+    pub_key = ''
     for rf in ResourceFile.objects.filter(object_id=res.id):
-        fname = ''
+        if pub_key and p_data:
+            break
         if rf.resource_file.name:
             fname = os.path.join(file_path, rf.resource_file.name)
-        elif rf.fed_resource_file.name:
-            fname = rf.fed_resource_file.name
-        if fname:
             file_data_list.append(fname)
             if fname.endswith('.json') and not p_data:
                 temp_json_file = get_file_from_irods(rf)
@@ -618,18 +617,31 @@ def create_scidas_virtual_app(request, res_id, cluster):
                     jdata = load(fp)
                     if 'id' in jdata and 'containers' in jdata:
                         p_data = jdata
+            elif fname.endswith('.pub') and not pub_key:
+                temp_pkey_file = get_file_from_irods(rf)
+                with open(temp_pkey_file, 'r') as fp:
+                    pub_key = fp.readline()
+                    # remove the last newline character
+                    if pub_key.endswith('\n'):
+                        pub_key = pub_key[:-1]
 
     url = settings.PIVOT_URL
-    preset_url = ''
+
     if not p_data:
         messages.error(request, "The resource must include the JSON request file in order to launch PIVOT")
         return HttpResponseRedirect(request.META['HTTP_REFERER'])
-    else:
-        app_id = p_data['id']
-        p_data['containers'][0]['data'] = file_data_list
 
-    if cluster_name:
-        p_data['containers'][0]['cluster'] = cluster_name
+    app_id = p_data['id']
+    # the data field has been changed in the updated PIVOT API, so comment this out for now
+    # p_data['containers'][0]['data'] = file_data_list
+
+    for con in p_data['containers']:
+        if cluster_name:
+            con['rack'] = cluster_name
+        if 'env' in con:
+            con['env']['SSH_PUBKEY'] = pub_key
+        else:
+            con['env'] = {'SSH_PUBKEY': pub_key}
 
     if 'endpoints' in p_data['containers'][0]:
         if p_data['containers'][0]['endpoints']:
@@ -665,47 +677,36 @@ def create_scidas_virtual_app(request, res_id, cluster):
     if response.status_code != status.HTTP_200_OK and \
             response.status_code != status.HTTP_201_CREATED:
         return HttpResponseBadRequest(content=response.text)
-    while True:
-        response = requests.get(app_url)
-        if not response.status_code == status.HTTP_200_OK:
-            return HttpResponseBadRequest(content=response.text)
-        return_data = loads(response.content)
-        con_ret_data_list = return_data['containers']
-        con_ret_data = con_ret_data_list[0]
-        con_state = con_ret_data['state']
-        ep_data_list = con_ret_data['endpoints']
-        if con_state=='running' and (ep_data_list or preset_url):
-            break
-        else:
-            # the jupyter appliance is not ready yet, need to wait and poll again
-            time.sleep(2)
 
-    if preset_url:
-        app_url = preset_url
-    else:
-        ep_data = ep_data_list[0]
-        app_url = 'http://' + ep_data['host'] + ':' + str(ep_data['host_port'])
+    redirect_url = app_url + '/ui'
+    return HttpResponseRedirect(redirect_url)
 
-    # make sure the new directed url is loaded and working before redirecting.
-    # Since scidas will install dependencies included in requirements.txt, it will take some time
-    # before the app_url is ready to go after the appliance is provisioned, hence wait for up to 10 seconds
-    # before erroring out if connection to the url keeps being refused.
-    idx = 0
-    while True:
-        try:
-            ret = urlopen(app_url, timeout=10)
-            break
-        except URLError as ex:
-            errmsg = ex.reason if hasattr(ex, 'reason') else 'URLError'
-            idx += 1
-            time.sleep(5)
-
-        if idx > 6:
-            messages.error(request, errmsg)
-            return HttpResponseRedirect(request.META['HTTP_REFERER'])
-
-    if ret.code == 200:
-        return HttpResponseRedirect(app_url)
-    else:
-        messages.error(request, 'time out error')
-        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+    # if preset_url:
+    #     app_url = preset_url
+    # else:
+    #     ep_data = ep_data_list[0]
+    #     app_url = 'http://' + ep_data['host'] + ':' + str(ep_data['host_port'])
+    #
+    # # make sure the new directed url is loaded and working before redirecting.
+    # # Since scidas will install dependencies included in requirements.txt, it will take some time
+    # # before the app_url is ready to go after the appliance is provisioned, hence wait for up to 10 seconds
+    # # before erroring out if connection to the url keeps being refused.
+    # idx = 0
+    # while True:
+    #     try:
+    #         ret = urlopen(app_url, timeout=10)
+    #         break
+    #     except URLError as ex:
+    #         errmsg = ex.reason if hasattr(ex, 'reason') else 'URLError'
+    #         idx += 1
+    #         time.sleep(5)
+    #
+    #     if idx > 6:
+    #         messages.error(request, errmsg)
+    #         return HttpResponseRedirect(request.META['HTTP_REFERER'])
+    #
+    # if ret.code == 200:
+    #     return HttpResponseRedirect(app_url)
+    # else:
+    #     messages.error(request, 'time out error')
+    #     return HttpResponseRedirect(request.META['HTTP_REFERER'])
