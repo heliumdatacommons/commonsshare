@@ -57,7 +57,7 @@ def register(request):
         path = str(request.POST['path'])
 
         # create iRODS resource first before registering the path
-        url = '{}registration/create_resource?rescname={}&subjectid={}'.format(
+        url = '{}registration/create_resource?provider=globus&bucket_id={}&subjectid={}'.format(
             settings.SERVICE_SERVER_URL, ds_uuid, uid)
         auth_header_str = 'Basic {}'.format(settings.DATA_REG_API_KEY)
 
@@ -70,6 +70,7 @@ def register(request):
         p_data = {
             'provider': 'globus',
             'bucket_id': ds_uuid,
+            'subjectid': uid,
             'paths': [path]
         }
 
@@ -80,9 +81,7 @@ def register(request):
             # request fails
             return JsonResponse(status=response.status_code, data={'error': response.content})
 
-        return JsonResponse(
-            response.content
-        )
+        return JsonResponse({"globus_sel_file": path.split('/')[-1]})
     else:
         return JsonResponse(
             status= 400,
