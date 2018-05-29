@@ -1,0 +1,53 @@
+#globusContent .form-globus {
+    max-width: 865px;
+    padding: 5px;
+}
+
+#globusContent #file_struct {
+    margin-top: 10px;
+    height: 250px;
+    overflow: auto;
+    resize: both;
+    border: 1px solid #DDD;
+    padding: 4px;
+}
+
+#globus_content_label {
+    color: #357ebd;
+}
+
+.file,.folder {
+    cursor:pointer;
+    opacity:0.8;
+}
+
+.file:hover,.folder:hover {
+    opacity: 1;
+}
+
+#globusContent .ajax-loader, #globusContent .modal-backdrop.register {
+    display: none;
+    opacity:0.5;
+}
+
+.selected {
+    background-color: #cecece;
+}
+
+/* disable default browser shift key text selection highlighting */
+.file {
+    user-select: none;
+    -ms-user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+}
+
+#globus-sel-file {
+    margin-left: 4px;
+    margin-right: 4px;
+}
+
+#globus-browse {
+    margin-top: 6px;
+}
+

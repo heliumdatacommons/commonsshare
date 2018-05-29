@@ -50,7 +50,7 @@ class GlobusOAuth2:
                     user.delete()
                     return None
 
-                hashed_token = hashlib.sha256(access_token)
+                hashed_token = hashlib.sha256(access_token).hexdigest()[0:50]
                 url = '{}registration/add_user_oids?username={}&subjectid={}&sessionid={}'.format(
                     settings.SERVICE_SERVER_URL,
                     username, uid, hashed_token)

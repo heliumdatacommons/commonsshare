@@ -48,6 +48,40 @@ from theme.utils import get_quota_message
 from .forms import SignupForm
 
 
+def get_user_profile_context_data(pu, request=None):
+    # get all resources the profile user owns
+    resources = pu.uaccess.owned_resources
+    # get a list of groupmembershiprequests
+    group_membership_requests = GroupMembershipRequest.objects.filter(invitation_to=pu).all()
+
+    # if requesting user is not the profile user, then show only resources that the requesting user has access
+    if request and request.user != pu:
+        if request.user.is_authenticated():
+            if request.user.is_superuser:
+                # admin can see all resources owned by profile user
+                pass
+            else:
+                # filter out any resources the requesting user doesn't have access
+                resources = resources.filter(Q(pk__in=request.user.uaccess.view_resources) |
+                                             Q(raccess__public=True) | Q(raccess__discoverable=True))
+
+        else:
+            # for anonymous requesting user show only resources that are either public or discoverable
+            resources = resources.filter(Q(raccess__public=True) | Q(raccess__discoverable=True))
+
+    context_dict = {
+        'profile_user': pu,
+        'resources': resources,
+        'quota_message': get_quota_message(pu),
+        'group_membership_requests': group_membership_requests,
+    }
+
+    if request:
+        context_dict['uid'] = request.session['subject_id']
+
+    return context_dict
+
+
 class UserProfileView(TemplateView):
     template_name='accounts/profile.html'
 
@@ -57,39 +91,13 @@ class UserProfileView(TemplateView):
                 u = User.objects.get(pk=int(kwargs['user']))
             except:
                 u = User.objects.get(username=kwargs['user'])
-
         else:
             try:
                 u = User.objects.get(pk=int(self.request.GET['user']))
             except:
                 u = User.objects.get(username=self.request.GET['user'])
 
-        # get all resources the profile user owns
-        resources = u.uaccess.owned_resources
-        # get a list of groupmembershiprequests
-        group_membership_requests = GroupMembershipRequest.objects.filter(invitation_to=u).all()
-
-        # if requesting user is not the profile user, then show only resources that the requesting user has access
-        if self.request.user != u:
-            if self.request.user.is_authenticated():
-                if self.request.user.is_superuser:
-                    # admin can see all resources owned by profile user
-                    pass
-                else:
-                    # filter out any resources the requesting user doesn't have access
-                    resources = resources.filter(Q(pk__in=self.request.user.uaccess.view_resources) |
-                                                 Q(raccess__public=True) | Q(raccess__discoverable=True))
-
-            else:
-                # for anonymous requesting user show only resources that are either public or discoverable
-                resources = resources.filter(Q(raccess__public=True) | Q(raccess__discoverable=True))
-
-        return {
-            'profile_user': u,
-            'resources': resources,
-            'quota_message': get_quota_message(u),
-            'group_membership_requests': group_membership_requests,
-        }
+        return get_user_profile_context_data(u, self.request)
 
 
 class UserPasswordResetView(TemplateView):
@@ -468,9 +476,59 @@ def oauth_return(request):
         login_msg = "Successfully logged in"
         auth_login(request, tgt_user)
         info(request, _(login_msg))
+        request.session['subject_id'] = uid
         return login_redirect(request)
     else:
         return HttpResponseBadRequest('Bad request - invalid access_token or failed to create linked user')
+
+
+@login_required
+def retrieve_globus_buckets(request):
+    # note that trailing slash should not be added to return_to url
+    return_url = '&return_to={}://{}/gdo_return'.format(request.scheme, request.get_host())
+    url = 'authorize?provider=globus&scope=urn:globus:auth:scope:transfer.api.globus.org:all'
+    req_url = '{}{}{}'.format(settings.SERVICE_SERVER_URL, url, return_url)
+    auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
+    response = requests.get(req_url,
+                            headers={'Authorization': auth_header_str},
+                            verify=False)
+    if response.status_code != status.HTTP_200_OK:
+        return HttpResponseBadRequest(content=response.text)
+    return_data = loads(response.content)
+
+    auth_url = return_data['authorization_url']
+
+    return HttpResponseRedirect(auth_url)
+
+
+@login_required
+def globus_data_auth_return(request):
+    token = request.GET.get('access_token', None)
+    if not token:
+        return HttpResponseBadRequest('Bad request - no valid access_token is provided')
+
+    # get avaiable endpoints for a given globus user
+    url = '{}registration/get_buckets?provider=globus&token={}'.format(settings.SERVICE_SERVER_URL, token)
+    auth_header_str = 'Basic {}'.format(settings.DATA_REG_API_KEY)
+    response = requests.get(url,
+                            headers={'Authorization': auth_header_str},
+                            verify=False)
+    if response.status_code != status.HTTP_200_OK:
+        # request fails
+        return HttpResponseBadRequest('Bad request - the data registration service cannot list avaiable endpoints: ' +
+                                      response.content)
+    return_data = loads(response.content)
+    bucket_list = return_data['buckets']
+    ep_list = []
+    for bucket in bucket_list:
+        ep_list.append({'name': bucket['name'], 'id': bucket['id']})
+
+    # /return to user profile page
+    template_name = 'accounts/profile.html'
+    context = get_user_profile_context_data(request.user, request)
+    context['endpoints'] = ep_list
+    context['globus_token'] = token
+    return TemplateResponse(request, template_name, context)
 
 
 def login(request, template="accounts/account_login.html",
@@ -531,14 +589,6 @@ def email_verify_password_reset(request, uidb36=None, token=None):
         messages.error(request, _("The link you clicked is no longer valid."))
         return redirect("/")
 
-@login_required
-def deactivate_user(request):
-    user = request.user
-    user.is_active = False
-    user.save()
-    messages.success(request, "Your account has been successfully deactivated.")
-    return HttpResponseRedirect('/accounts/logout/')
-
 
 @login_required
 def create_scidas_virtual_app(request, res_id, cluster):
@@ -549,18 +599,17 @@ def create_scidas_virtual_app(request, res_id, cluster):
 
     res, _, _ = authorize(request, res_id, needed_permission=ACTION_TO_AUTHORIZE.VIEW_RESOURCE)
     cluster_name = cluster
-    if cluster_name != 'chameleon' and cluster_name != 'aws' and cluster_name != 'azure':
+    if cluster_name != 'gcp' and cluster_name != 'aws':
         cluster_name = ''
     file_data_list = []
     p_data = {}
     file_path = '/'+ds.IRODS_ZONE+'/home/'+ds.IRODS_USERNAME
+    pub_key = ''
     for rf in ResourceFile.objects.filter(object_id=res.id):
-        fname = ''
+        if pub_key and p_data:
+            break
         if rf.resource_file.name:
             fname = os.path.join(file_path, rf.resource_file.name)
-        elif rf.fed_resource_file.name:
-            fname = rf.fed_resource_file.name
-        if fname:
             file_data_list.append(fname)
             if fname.endswith('.json') and not p_data:
                 temp_json_file = get_file_from_irods(rf)
@@ -568,18 +617,31 @@ def create_scidas_virtual_app(request, res_id, cluster):
                     jdata = load(fp)
                     if 'id' in jdata and 'containers' in jdata:
                         p_data = jdata
+            elif fname.endswith('.pub') and not pub_key:
+                temp_pkey_file = get_file_from_irods(rf)
+                with open(temp_pkey_file, 'r') as fp:
+                    pub_key = fp.readline()
+                    # remove the last newline character
+                    if pub_key.endswith('\n'):
+                        pub_key = pub_key[:-1]
 
     url = settings.PIVOT_URL
-    preset_url = ''
+
     if not p_data:
         messages.error(request, "The resource must include the JSON request file in order to launch PIVOT")
         return HttpResponseRedirect(request.META['HTTP_REFERER'])
-    else:
-        app_id = p_data['id']
-        p_data['containers'][0]['data'] = file_data_list
 
-    if cluster_name:
-        p_data['containers'][0]['cluster'] = cluster_name
+    app_id = p_data['id']
+    # the data field has been changed in the updated PIVOT API, so comment this out for now
+    # p_data['containers'][0]['data'] = file_data_list
+
+    for con in p_data['containers']:
+        if cluster_name:
+            con['rack'] = cluster_name
+        if 'env' in con:
+            con['env']['SSH_PUBKEY'] = pub_key
+        else:
+            con['env'] = {'SSH_PUBKEY': pub_key}
 
     if 'endpoints' in p_data['containers'][0]:
         if p_data['containers'][0]['endpoints']:
@@ -615,47 +677,36 @@ def create_scidas_virtual_app(request, res_id, cluster):
     if response.status_code != status.HTTP_200_OK and \
             response.status_code != status.HTTP_201_CREATED:
         return HttpResponseBadRequest(content=response.text)
-    while True:
-        response = requests.get(app_url)
-        if not response.status_code == status.HTTP_200_OK:
-            return HttpResponseBadRequest(content=response.text)
-        return_data = loads(response.content)
-        con_ret_data_list = return_data['containers']
-        con_ret_data = con_ret_data_list[0]
-        con_state = con_ret_data['state']
-        ep_data_list = con_ret_data['endpoints']
-        if con_state=='running' and (ep_data_list or preset_url):
-            break
-        else:
-            # the jupyter appliance is not ready yet, need to wait and poll again
-            time.sleep(2)
 
-    if preset_url:
-        app_url = preset_url
-    else:
-        ep_data = ep_data_list[0]
-        app_url = 'http://' + ep_data['host'] + ':' + str(ep_data['host_port'])
+    redirect_url = app_url + '/ui'
+    return HttpResponseRedirect(redirect_url)
 
-    # make sure the new directed url is loaded and working before redirecting.
-    # Since scidas will install dependencies included in requirements.txt, it will take some time
-    # before the app_url is ready to go after the appliance is provisioned, hence wait for up to 10 seconds
-    # before erroring out if connection to the url keeps being refused.
-    idx = 0
-    while True:
-        try:
-            ret = urlopen(app_url, timeout=10)
-            break
-        except URLError as ex:
-            errmsg = ex.reason if hasattr(ex, 'reason') else 'URLError'
-            idx += 1
-            time.sleep(5)
-
-        if idx > 6:
-            messages.error(request, errmsg)
-            return HttpResponseRedirect(request.META['HTTP_REFERER'])
-
-    if ret.code == 200:
-        return HttpResponseRedirect(app_url)
-    else:
-        messages.error(request, 'time out error')
-        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+    # if preset_url:
+    #     app_url = preset_url
+    # else:
+    #     ep_data = ep_data_list[0]
+    #     app_url = 'http://' + ep_data['host'] + ':' + str(ep_data['host_port'])
+    #
+    # # make sure the new directed url is loaded and working before redirecting.
+    # # Since scidas will install dependencies included in requirements.txt, it will take some time
+    # # before the app_url is ready to go after the appliance is provisioned, hence wait for up to 10 seconds
+    # # before erroring out if connection to the url keeps being refused.
+    # idx = 0
+    # while True:
+    #     try:
+    #         ret = urlopen(app_url, timeout=10)
+    #         break
+    #     except URLError as ex:
+    #         errmsg = ex.reason if hasattr(ex, 'reason') else 'URLError'
+    #         idx += 1
+    #         time.sleep(5)
+    #
+    #     if idx > 6:
+    #         messages.error(request, errmsg)
+    #         return HttpResponseRedirect(request.META['HTTP_REFERER'])
+    #
+    # if ret.code == 200:
+    #     return HttpResponseRedirect(app_url)
+    # else:
+    #     messages.error(request, 'time out error')
+    #     return HttpResponseRedirect(request.META['HTTP_REFERER'])

@@ -1,17 +1,16 @@
-$('#btn-select-irods-file').on('click',function(event) {
-    $('#res_type').val($("#form-resource-type").val());
+$('#btn-select-globus-file').on('click',function(event) {
     $('#file_struct').children().remove();
     $('.ajax-loader').hide();
     var store = '';
-    if (sessionStorage.IRODS_signininfo) {
-        $("#irods_content_label").text(sessionStorage.IRODS_username);
-        $('#root_store').val(sessionStorage.IRODS_datastore);
-        store = sessionStorage.IRODS_datastore;
-    }
+    var token = $("#globus_token").val();
+    var bucket_ep = $("#selectGlobusBucket option:selected").text();
+    var bucket_id = $("#selectGlobusBucket option:selected").val();
+    $('#root_store').val(bucket_ep);
+    store = bucket_ep;
 
     // Setting up the view tab
     $('#file_struct').attr('name',store);
-    $('#irods_view_store').val(store);
+    $('#globus_view_store').val(store);
     // loading file structs
     var parent = $('#file_struct');
     get_store(store, parent, 0);
@@ -22,17 +21,20 @@ $('#btn-select-irods-file').on('click',function(event) {
 function set_store_display(store, parent, margin, json) {
     var files = json.files;
     var folder = json.folder;
+    var bucket_ep = $("#selectGlobusBucket option:selected").text();
     var lastSelected = [];
     if (files.length == 0 && folder.length == 0) {
         $(parent).append("<div class='file' style='margin-left:" + margin + "px;'></div>");
     }
     else {
+        if (store == bucket_ep)
+            store = '';
         $.each(folder, function(i, v) {
-            $(parent).append("<div class='folder' id='irods_folder_" + v + "' name='" + store + "/" + v + "' style='margin-left:" + margin + "px;'><img src='/static/img/folder.png' width='15' height='15'>&nbsp; " + v + "</div>");
+            $(parent).append("<div class='folder' id='globus_folder_" + v + "' name='" + store + "/" + v + "' style='margin-left:" + margin + "px;'><img src='/static/img/folder.png' width='15' height='15'>&nbsp; " + v + "</div>");
         });
 
         $.each(files, function(i, v) {
-            $(parent).append("<div class='file' id='irods_file_" + v + "' name='" + store + "/" + v + "' style='margin-left:" + margin + "px;'><img src='/static/img/file.png' width='15' height='15'>&nbsp; " + v + "</div>")
+            $(parent).append("<div class='file' id='globus_file_" + v + "' name='" + store + "/" + v + "' style='margin-left:" + margin + "px;'><img src='/static/img/file.png' width='15' height='15'>&nbsp; " + v + "</div>")
         });
     }
     $('.file').attr('unselectable', 'on'); // disable default browser shift text selection highlighting in IE
@@ -83,19 +85,19 @@ function set_store_display(store, parent, margin, json) {
 }
 
 function get_store(store, parent, margin) {
+    var token = $("#globus_token").val();
+    var bucket_ep = $("#selectGlobusBucket option:selected").text();
+    var store_id = $("#selectGlobusBucket option:selected").val();
     if (store) {
         $.ajax({
             mode: "queue",
-            url: '/irods/store/',
+            url: '/globus/store/',
             async: true,
             type: "POST",
             data: {
-                store: store,
-                user: sessionStorage.IRODS_username,
-                password: sessionStorage.IRODS_password,
-                zone: sessionStorage.IRODS_zone,
-                port: sessionStorage.IRODS_port,
-                host: sessionStorage.IRODS_host
+                store_id: store_id,
+                token: token,
+                path: (store===bucket_ep ? '' : store)
             },
             success: function (json) {
                 return set_store_display(store, parent, margin, json);
@@ -132,6 +134,7 @@ function click_folder_opr() {
         $(this).addClass('isOpen');
         set_datastore($(this).attr('name'), true);
     }
+
     return false;
 }
 
@@ -140,90 +143,40 @@ function set_datastore(store, isFolder) {
         if (!isFolder) {
             store = $(store).attr('name');
         }
-        $('#irods_view_store').val(store);
+        $('#globus_view_store').val(store);
     }
 }
 
-// ### IRODS FUNCTION FOR VIEWING INPUT BOX UPON PRESSING RETURN ###
-$('#irods_view_store').keypress(function(e) {
-    if(e.which == 13) {
-        e.preventDefault();
-        var store = $(this).val();
-        if (store=='') {
-            store = $('#root_store').val();
+
+function globus_register() {
+    $.ajax({
+        url: "/globus/register/",
+        type: "POST",
+        data: {
+            uid: $("#uid").val(),
+            store_uuid: $("#selectGlobusBucket option:selected").val(),
+            path: $('#register_store').val()
+        },
+        success: function(json) {
+            $("#globus-sel-file").text(json.globus_sel_file + ' is registered successfully.');
+            $('#globusContent').modal('hide');
+        },
+        error: function(xhr, errmsg, err) {
+            console.log(xhr.status + ": " + xhr.responseText + ". Error message: " + errmsg);
+            $("#globus-sel-file").text("No file is registered - " + xhr.responseText);
+            $('#globusContent').modal('hide');
         }
-        // Setting up the view tab
-        $('#file_struct').attr('name',store);
-        $('#irods_view_store').val(store);
+    });
+}
 
-        // loading file structs
-        var parent = $('#file_struct');
-        var got_store = get_store(store, parent, 0);
-
-        if (got_store) {
-            $('#file_struct').children().remove();
-            click_folder_opr();
-        }
-        else {
-            alert('Datastore does not exist');
-        }
-    }
-});
-
-$("#irodsContent form").bind("keypress", function(e) {
-    if (e.keyCode == 13) {
-        $("#btnSearch").attr('value');
-        //add more buttons here
-        return false;
-    }
-});
-
-$('#iget_irods').on('click',function() {
+$('#globusRegister').on('submit', function(event) {
+    event.preventDefault();
     var selected = [];
     $('.selected').each( function() {
         selected.push($(this).attr('name'));
     });
-    $('#upload_store').val(selected);
-    $("#irods-username").val(sessionStorage.IRODS_username);
-    $("#irods-password").val(sessionStorage.IRODS_password);
-    $("#irods-host").val(sessionStorage.IRODS_host);
-    $("#irods-zone").val(sessionStorage.IRODS_zone);
-    $("#irods-port").val(sessionStorage.IRODS_port);
-    $("#is_file_reference").val($('#file_ref_chk').is(":checked")? 'true' : 'false');
-    $('#irodsContent .modal-backdrop.up-load').show();
-    $('#irodsContent .ajax-loader').show();
-});
-
-function irods_upload() {
-    $.ajax({
-        url: "/irods/upload/",
-        type: "POST",
-        data: {
-            upload: $('#upload_store').val(),
-            res_type: $('#res_type').val(),
-            file_ref: $('#file_ref_chk').is(":checked")? true : false
-        },
-        success: function(json) {
-            $("#irods-sel-file").text(json.irods_sel_file);
-            $('#irods_file_names').val(json.irods_file_names);
-            $('#irods_federated').val(json.irods_federated);
-            $('#is_file_reference').val(json.is_file_reference);
-            $("#file-type-error").text(json.file_type_error);
-            $('#irodsContent').modal('hide');
-            if(json.irods_federated && json.is_file_reference==='false')
-                $('#irods-copy-move').show();
-            else
-                $('#irods-copy-move').hide();
-        },
-        error: function(xhr, errmsg, err) {
-            console.log(xhr.status + ": " + xhr.responseText + ". Error message: " + errmsg);
-            $("#irods-sel-file").text("No file selected.");
-            $('#irodsContent').modal('hide');
-        }
-    });
-}
-
-$('#irodsUpload').on('submit', function(event) {
-    event.preventDefault();
-    irods_upload();
+    $('#register_store').val(selected);
+    $('#globusContent .modal-backdrop.up-load').show();
+    $('#globusContent .ajax-loader').show();
+    globus_register();
 });
