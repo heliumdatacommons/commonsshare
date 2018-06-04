@@ -76,7 +76,7 @@ def get_user_profile_context_data(pu, request=None):
         'group_membership_requests': group_membership_requests,
     }
 
-    if request:
+    if request and 'subject_id' in request.session:
         context_dict['uid'] = request.session['subject_id']
 
     return context_dict
@@ -486,19 +486,33 @@ def oauth_return(request):
 def retrieve_globus_buckets(request):
     # note that trailing slash should not be added to return_to url
     return_url = '&return_to={}://{}/gdo_return'.format(request.scheme, request.get_host())
-    url = 'authorize?provider=globus&scope=urn:globus:auth:scope:transfer.api.globus.org:all'
+    uid = request.session.get('subject_id', '')
+    if not uid:
+        return HttpResponseBadRequest(content='user subject id is empty')
+
+    url = 'token?uid={}&provider=globus&scope=urn:globus:auth:scope:transfer.api.globus.org:all'.format(uid)
     req_url = '{}{}{}'.format(settings.SERVICE_SERVER_URL, url, return_url)
+
     auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
     response = requests.get(req_url,
                             headers={'Authorization': auth_header_str},
                             verify=False)
-    if response.status_code != status.HTTP_200_OK:
+    if response.status_code == status.HTTP_401_UNAUTHORIZED:
+        # the user is not authorized - need to authorize the user
+        return_data = loads(response.text)
+        auth_url = return_data['authorization_url']
+        return HttpResponseRedirect(auth_url)
+    elif response.status_code == status.HTTP_200_OK:
+        # the user is already authorized, directly use the returned token
+        return_data = loads(response.content)
+        if 'access_token' in return_data:
+            atoken = return_data['access_token']
+            full_ret_url = '{}?access_token={}'.format('/gdo_return', atoken)
+            return HttpResponseRedirect(full_ret_url)
+        else:
+            return HttpResponseBadRequest('no access_token is returned from token request:' + response.content)
+    else:
         return HttpResponseBadRequest(content=response.text)
-    return_data = loads(response.content)
-
-    auth_url = return_data['authorization_url']
-
-    return HttpResponseRedirect(auth_url)
 
 
 @login_required
