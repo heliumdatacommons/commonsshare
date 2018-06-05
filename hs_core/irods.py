@@ -153,8 +153,8 @@ class ResourceIRODSMixin(models.Model):
                         qual_path = output['long_path'][len(self.short_id)+1:]
                         output['qual_path'] = qual_path
                         output['folder'] = None
-                        if qual_path.startswith('data/contents/'):
-                            output['folder'] = qual_path[len('data/contents/'):]
+                        if qual_path.startswith('data/'):
+                            output['folder'] = qual_path[len('data/'):]
 
                     if key == 'data-object name':
                         output['filename'] = value

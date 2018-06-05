@@ -2,7 +2,7 @@ import os
 import zipfile
 import shutil
 import logging
-import requests
+from uuid import uuid4
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -20,11 +20,7 @@ from hs_core.hydroshare import utils
 from hs_access_control.models import ResourceAccess, UserResourcePrivilege, PrivilegeCodes
 from hs_labels.models import ResourceLabels
 
-
-from uuid import uuid4
 from minid_client import minid_client_api as mca
-
-
 
 FILE_SIZE_LIMIT = 1*(1024 ** 3)
 FILE_SIZE_LIMIT_FOR_DISPLAY = '1G'
@@ -672,7 +668,7 @@ def add_resource_files(pk, *files, **kwargs):
                                                   move=move,
                                                   is_file_reference=is_file_reference))
 
-    # make sure data/contents directory exists if not exist already
+    # make sure data directory exists if not exist already
     utils.create_empty_contents_directory(resource)
 
     return ret
@@ -910,7 +906,28 @@ def delete_resource_file(pk, filename_or_id, user, delete_logical_file=True):
                                         resource.short_id, filename_or_id))
 
 def publish_resource(user, pk):
-    # TODO: replace with publishing via minid
+    """
+    Formally publishes a resource in CommonsShare. Triggers the creation of a MINID for the resource,
+    and triggers the exposure of the resource to the CommonsShare DataONE Member Node. The user must
+    be an owner of a resource or an administrator to perform this action.
+
+    Parameters:
+        user - requesting user to publish the resource who must be one of the owners of the resource
+        pk - Unique CommonsShare identifier for the resource to be formally published.
+        request - request triggering this action
+
+    Returns:    The id of the resource that was published
+
+    Return Type:    string
+
+    Raises:
+    Exceptions.NotAuthorized - The user is not authorized
+    Exceptions.NotFound - The resource identified by pid does not exist
+    Exception.ServiceFailure - The service is unable to process the request
+    and other general exceptions
+
+    Note:  This is different than just giving public access to a resource via access control rule
+    """
 
     resource_id = pk
     resource = utils.get_resource_by_shortkey(pk)
@@ -926,7 +943,7 @@ def publish_resource(user, pk):
 
     if istorage.exists(res_coll):
         bag_modified = istorage.getAVU(res_coll, 'bag_modified')
-        if bag_modified.lower() == "true":
+        if bag_modified is None or bag_modified.lower() == "true":
             hs_bagit.create_bag(resource)
     else:
         raise ValidationError("Resource {} does not exist in iRODS".format(resource.short_id))
@@ -944,7 +961,7 @@ def publish_resource(user, pk):
     resource_url = '{0}/resource/{1}'.format(utils.current_site_url(), resource.short_id)
     download_bag_url = '{0}/django_irods/download/bags/{1}.zip'.format(utils.current_site_url(), resource.short_id)
     locations = [resource_url, download_bag_url]
-    config= mca.parse_config('config/minid-config.cfg')
+    config= mca.parse_config('hydroshare/minid-config.cfg')
     minid = mca.register_entity(config['minid_server'],
                                 checksum,
                                 config['email'],
@@ -958,6 +975,9 @@ def publish_resource(user, pk):
     resource.raccess.shareable = False
     resource.raccess.published = True
     resource.raccess.save()
+
+    # remove the temp directory
+    shutil.rmtree(tmpdir)
 
     # change "Publisher" element of science metadata to CommonsShare
     md_args = {'name': 'CommonsShare',

@@ -8,23 +8,10 @@ import traceback
 import zipfile
 import logging
 
-import requests
-
-from xml.etree import ElementTree
-
-from rest_framework import status
-
-from django.conf import settings
-from django.core.mail import send_mail
-
-from celery.task import periodic_task
-from celery.schedules import crontab
 from celery import shared_task
 
 from hs_core.models import BaseResource
 from hs_core.hydroshare import utils
-from django_irods.icommands import SessionException
-
 
 # Pass 'django' into getLogger instead of __name__
 # for celery tasks (as this seems to be the
@@ -82,103 +69,3 @@ def add_zip_file_contents_to_resource(pk, zip_file_path):
     finally:
         # Delete upload file
         os.unlink(zip_file_path)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

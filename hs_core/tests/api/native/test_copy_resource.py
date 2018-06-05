@@ -366,14 +366,14 @@ class TestCopyResource(TestCase):
         # check that we put the 2 files in a new folder (cea)
         for res_file in self.composite_resource.files.all():
             file_path, base_file_name = res_file.full_path, res_file.file_name
-            expected_file_path = "{}/data/contents/cea/{}"
+            expected_file_path = "{}/data/cea/{}"
             expected_file_path = expected_file_path.format(self.composite_resource.root_path,
                                                            base_file_name)
             self.assertEqual(file_path, expected_file_path)
 
         for res_file in new_composite_resource.files.all():
             file_path, base_file_name = res_file.full_path, res_file.file_name
-            expected_file_path = "{}/data/contents/cea/{}"
+            expected_file_path = "{}/data/cea/{}"
             expected_file_path = expected_file_path.format(new_composite_resource.root_path,
                                                            base_file_name)
             self.assertEqual(file_path, expected_file_path)

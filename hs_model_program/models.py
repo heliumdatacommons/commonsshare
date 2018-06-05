@@ -209,7 +209,7 @@ class ModelProgramMetaData(CoreMetaData):
     def build_xml_for_uploaded_content(self, parent_container, element_name, content_list):
         # create an XML element for each content file
         for content in content_list:
-            content = '/data/contents/' + content
+            content = '/data/' + content
             element = etree.SubElement(parent_container, '{%s}%s' % (self.NAMESPACES['hsterms'], element_name) )
             element.text = content
     

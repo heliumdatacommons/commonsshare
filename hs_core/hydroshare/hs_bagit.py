@@ -1,28 +1,14 @@
 import os
-import shutil
-import errno
-import tempfile
-import mimetypes
-import zipfile
 import hashlib
+import json
+import shutil
 
 from uuid import uuid4
-
-from foresite import utils, Aggregation, AggregatedResource, RdfLibSerializer
-from rdflib import Namespace, URIRef
-
-import bagit
 from mezzanine.conf import settings
+
 from hs_core.models import Bags, ResourceFile
-
-from bdbag import bdbag_api as bdb, get_typed_exception, DEFAULT_CONFIG_FILE, VERSION
-from bdbag.fetch.auth.keychain import DEFAULT_KEYCHAIN_FILE
-
-from django.conf import settings
-
+from bdbag import bdbag_api as bdb
 from minid_client import minid_client_api as mca
-
-import json
 
 class HsBagitException(Exception):
     pass
@@ -51,31 +37,38 @@ def delete_files_and_bag(resource):
         bag.delete()
 
 def create_bag(resource):
+    """
+        create a bdbag for the resource
 
+        Parameters:
+        :param resource: the resource, consisting of files to create the bdbag.
+        :return: a Bag object which points to the newly created bag.
+        """
     checksums = ['md5', 'sha256']
-
-    # generate remote-file-mainfest for fetch.txt
-    # generate metatdata json for bag-info.txt
-    remote_file_manifest_json = get_remote_file_manifest(resource)
-    metadata_json = get_metadata_json(resource)
 
     tmpdir = os.path.join(settings.TEMP_FILE_DIR, uuid4().hex, resource.short_id)
     os.makedirs(tmpdir)
 
+    # generate remote-file-mainfest for fetch.txt
+    remote_file_manifest_json = get_remote_file_manifest(tmpdir, resource)
+
+    # generate metatdata json for bag-info.txt
+    metadata_json = get_metadata_json(resource)
+
     # create the remote manifest and metadata files
     remote_manifest_file = os.path.join(tmpdir, 'remote-file-manifest.json')
-    with open(remote_manifest_file, 'w') as out:
-        out.write(remote_file_manifest_json)
+    with open(remote_manifest_file, 'w') as outfile:
+        json.dump(remote_file_manifest_json, outfile)
 
     metadata_file = os.path.join(tmpdir, 'metadata.json')
-    with open(metadata_file, 'w') as out:
-        out.write(metadata_json)
+    with open(metadata_file, 'w') as outfile:
+        json.dump(metadata_json, outfile)
 
     bagdir = os.path.join(tmpdir, "bag")
     os.makedirs(bagdir)
 
     # make the bdbag and create a zip archive
-    bdb.make_bag(bagdir, checksums, False, False, False, None, metadata_file, remote_manifest_file, 'config/bdbag.json')
+    bdb.make_bag(bagdir, checksums, False, False, False, None, metadata_file, remote_manifest_file, 'hydroshare/bdbag.json')
     zipfile = bdb.archive_bag(bagdir, "zip")
 
     # save the zipped bag to iRODS for retrieval upon download request
@@ -83,10 +76,6 @@ def create_bag(resource):
     bag_full_name = 'bags/{res_id}.zip'.format(res_id=resource.short_id)
     irods_dest_prefix = "/" + settings.IRODS_ZONE + "/home/" + settings.IRODS_USERNAME
     destbagfile = os.path.join(irods_dest_prefix, bag_full_name)
-
-    # delete any existing bag files
-    if (istorage.exists(destbagfile)):
-        istorage.delete(destbagfile)
 
     istorage.saveFile(zipfile, destbagfile, True)
 
@@ -97,36 +86,39 @@ def create_bag(resource):
     # delete if there exists any bags for the resource
     resource.bags.all().delete()
 
+    # clean up temp directory
+    shutil.rmtree(tmpdir)
+
     # link the zipped bag file in IRODS via bag_url for bag downloading
     b = Bags.objects.create(
         content_object=resource.baseresource,
         timestamp=resource.updated
     )
 
-
     return b
 
-
-def get_remote_file_manifest(resource):
-    json_data = ''
+def get_remote_file_manifest(tmpdir, resource):
     data_list = []
     for f in ResourceFile.objects.filter(object_id=resource.id):
         data = {}
-        irods_file_name = resource.short_id + "/data/contents/" + f.file_name
-        irods_dest_prefix = "/" + settings.IRODS_ZONE + "/home/" + settings.IRODS_USERNAME
-        irods_server_prefix = settings.IRODS_HOST + ':' + settings.IRODS_PORT
-        irods_file_url = 'irods://' + irods_server_prefix +  irods_dest_prefix + "/" + irods_file_name
-        istorage = resource.get_irods_storage()
 
-        tmpdir = os.path.join(settings.TEMP_FILE_DIR, uuid4().hex)
-        tmpfile = os.path.join(tmpdir, f.file_name)
+        from hs_core.hydroshare import utils
 
-        os.makedirs(tmpdir)
-
-        srcfile = f.reference_file_path
-
-        if srcfile is None or len(srcfile) == 0:
+        if f.reference_file_path:
+            irods_file_name = f.reference_file_path
+            srcfile = irods_file_name
+            last_sep_pos = irods_file_name.rfind('/')
+            ref_file_name = irods_file_name[last_sep_pos+1:]
+            tmpfile = os.path.join(tmpdir, ref_file_name)
+            fetch_url = '{0}/django_irods/download/{1}'.format(utils.current_site_url(), resource.short_id + irods_file_name)
+        else:
+            irods_file_name = f.storage_path
+            irods_dest_prefix = "/" + settings.IRODS_ZONE + "/home/" + settings.IRODS_USERNAME
             srcfile = os.path.join(irods_dest_prefix, irods_file_name)
+            tmpfile = os.path.join(tmpdir, f.file_name)
+            fetch_url = '{0}/django_irods/download/{1}'.format(utils.current_site_url(), irods_file_name)
+
+        istorage = resource.get_irods_storage()
 
         try:
             istorage.getFile(srcfile, tmpfile)
@@ -135,14 +127,15 @@ def get_remote_file_manifest(resource):
         else:
             checksum_md5 = mca.compute_checksum(tmpfile, hashlib.md5())
             checksum_sha256 = mca.compute_checksum(tmpfile, hashlib.sha256())
-            data['url'] = irods_file_url
+
+            data['url'] = fetch_url
             data['length'] = f.size
             data['filename'] = f.file_name
             data['md5'] = checksum_md5
             data['sha256'] = checksum_sha256
             data_list.append(data)
 
-    return json.dumps(data_list)
+    return data_list
 
 def get_metadata_json(resource):
     data = {}
@@ -150,4 +143,4 @@ def get_metadata_json(resource):
     data['External-Description'] = "CommonsShare BDBag for resource " + resource.short_id
     data['Arbitrary-Metadata-Field'] = "TBD Arbitrary metadata field"
 
-    return json.dumps(data)
+    return data

@@ -141,10 +141,10 @@ def add_files_to_resource(request, shortkey, *args, **kwargs):
     extract_metadata = True if extract_metadata.lower() == 'yes' else False
     file_folder = request.POST.get('file_folder', None)
     if file_folder is not None:
-        if file_folder == "data/contents":
+        if file_folder == "data":
             file_folder = None
-        elif file_folder.startswith("data/contents/"):
-            file_folder = file_folder[len("data/contents/"):]
+        elif file_folder.startswith("data"):
+            file_folder = file_folder[len("data"):]
 
     try:
         utils.resource_file_add_pre_process(resource=resource, files=res_files, user=request.user,
@@ -1080,6 +1080,7 @@ def create_resource(request, *args, **kwargs):
     fed_copy_or_move = request.POST.get("copy-or-move")
     irods_fsizes = []
     irods_avus = {}
+    ref_files_checksums = {}
     if irods_fnames:
         if federated:
             source_names = irods_fnames.split(',')
@@ -1135,6 +1136,10 @@ def create_resource(request, *args, **kwargs):
     except Exception as ex:
         ajax_response_data['message'] = ex.message
         return JsonResponse(ajax_response_data)
+
+    # add checksums to request sesssion to be used when creating a bdbag
+    for fname, checksum in ref_files_checksums.iteritems():
+        request.session[fname] = checksum
 
     resource = hydroshare.create_resource(
             resource_type=request.POST['resource-type'],

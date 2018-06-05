@@ -6,7 +6,7 @@ Check synchronization between iRODS and Django
 This checks that:
 
 1. every ResourceFile corresponds to an iRODS file
-2. every iRODS file in {short_id}/data/contents corresponds to a ResourceFile
+2. every iRODS file in {short_id}/data corresponds to a ResourceFile
 3. every iRODS directory {short_id} corresponds to a Django resource
 
 * By default, prints errors on stdout.

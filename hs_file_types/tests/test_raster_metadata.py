@@ -146,7 +146,7 @@ class RasterFileTypeMetaData(MockIRODSTestCaseMixin, TransactionTestCase):
         # check that we put the 3 files in a new folder (small_logan)
         for res_file in self.composite_resource.files.all():
             file_path, base_file_name, _ = get_resource_file_name_and_extension(res_file)
-            expected_file_path = "{}/data/contents/logan_vrt_small/{}"
+            expected_file_path = "{}/data/logan_vrt_small/{}"
             expected_file_path = expected_file_path.format(self.composite_resource.short_id,
                                                            base_file_name)
             self.assertEqual(file_path, expected_file_path)
@@ -590,7 +590,7 @@ class RasterFileTypeMetaData(MockIRODSTestCaseMixin, TransactionTestCase):
         self.assertNotEqual(BandInformation.objects.count(), 0)
 
         # delete the folder for the logical file
-        folder_path = "data/contents/small_logan"
+        folder_path = "data/small_logan"
         remove_folder(self.user, self.composite_resource.short_id, folder_path)
         # there should no content files
         self.assertEqual(self.composite_resource.files.count(), 0)
@@ -618,24 +618,24 @@ class RasterFileTypeMetaData(MockIRODSTestCaseMixin, TransactionTestCase):
         GeoRasterLogicalFile.set_file_type(self.composite_resource, res_file.id, self.user)
         # test renaming of files that are associated with raster LFO - which should raise exception
         self.assertEqual(self.composite_resource.files.count(), 2)
-        src_path = 'data/contents/small_logan/small_logan.tif'
-        tgt_path = "data/contents/small_logan/small_logan_1.tif"
+        src_path = 'data/small_logan/small_logan.tif'
+        tgt_path = "data/small_logan/small_logan_1.tif"
         with self.assertRaises(DRF_ValidationError):
             move_or_rename_file_or_folder(self.user, self.composite_resource.short_id, src_path,
                                           tgt_path)
-        src_path = 'data/contents/small_logan/small_logan.vrt'
-        tgt_path = "data/contents/small_logan/small_logan_1.vrt"
+        src_path = 'data/small_logan/small_logan.vrt'
+        tgt_path = "data/small_logan/small_logan_1.vrt"
         with self.assertRaises(DRF_ValidationError):
             move_or_rename_file_or_folder(self.user, self.composite_resource.short_id, src_path,
                                           tgt_path)
         # test moving the files associated with geo raster LFO
-        src_path = 'data/contents/small_logan/small_logan.tif'
-        tgt_path = "data/contents/big_logan/small_logan.tif"
+        src_path = 'data/small_logan/small_logan.tif'
+        tgt_path = "data/big_logan/small_logan.tif"
         with self.assertRaises(DRF_ValidationError):
             move_or_rename_file_or_folder(self.user, self.composite_resource.short_id, src_path,
                                           tgt_path)
-        src_path = 'data/contents/small_logan/small_logan.vrt'
-        tgt_path = "data/contents/big_logan/small_logan.vrt"
+        src_path = 'data/small_logan/small_logan.vrt'
+        tgt_path = "data/big_logan/small_logan.vrt"
         with self.assertRaises(DRF_ValidationError):
             move_or_rename_file_or_folder(self.user, self.composite_resource.short_id, src_path,
                                           tgt_path)

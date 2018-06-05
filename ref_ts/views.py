@@ -289,7 +289,7 @@ def assemble_refts_bag(res_id, empty_bag_stream, temp_dir=None):
     res_files_fp_arr = ts_utils.generate_resource_files(res_id, temp_dir)
 
     bag_zip_obj = zipfile.ZipFile(bag_save_to_path, "a", zipfile.ZIP_DEFLATED)
-    bag_content_base_folder = str(res_id) + "/data/contents/"  # _RESOURCE_ID_/data/contents/
+    bag_content_base_folder = str(res_id) + "/data/"  # _RESOURCE_ID_/data/
     for fn_fp in res_files_fp_arr:
         fh = open(fn_fp['fullpath'], 'r')
         bag_zip_obj.writestr(bag_content_base_folder + fn_fp['fname'], fh.read())

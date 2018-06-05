@@ -140,7 +140,7 @@ def landing_page(request, page):
                 shortkey = content_model.short_id
                 nc_file_name = f.resource_file.name.split('/')[-1]
 
-                context['opendap'] = '{}/opendap/{}/data/contents/{}.html'\
+                context['opendap'] = '{}/opendap/{}/data/{}.html'\
                     .format(ip, shortkey, nc_file_name)
                 context['nc_file_name'] = nc_file_name
 

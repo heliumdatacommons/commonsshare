@@ -3161,7 +3161,7 @@ class ResourceFile(ResourceFileIRODSMixin):
 
         This is based upon the resourcemap_urls.py entry:
 
-            url(r'^resource/(?P<shortkey>[0-9a-f-]+)/data/contents/(?.+)/$',
+            url(r'^resource/(?P<shortkey>[0-9a-f-]+)/data/(?.+)/$',
                 views.file_download_url_mapper,
                 name='get_resource_file')
 
@@ -3286,7 +3286,7 @@ class BaseResource(Page, AbstractResource):
         """Return the root folder of the iRODS structure containing resource files.
 
         Note that this folder doesn't directly contain the resource files;
-        They are contained in ./data/contents/* instead.
+        They are contained in ./data/* instead.
         """
         if self.is_federated:
             return os.path.join(self.resource_federation_path, self.short_id)
@@ -3297,10 +3297,10 @@ class BaseResource(Page, AbstractResource):
     def file_path(self):
         """Return the file path of the resource.
 
-        This is the root path plus "data/contents".
+        This is the root path plus "data".
         This is the root of the folder structure for resource files.
         """
-        return os.path.join(self.root_path, "data", "contents")
+        return os.path.join(self.root_path, "data")
 
     @property
     def scimeta_path(self):

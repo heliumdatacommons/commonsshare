@@ -168,7 +168,7 @@ def is_federated(homepath):
 def get_federated_zone_home_path(filepath):
     """
     Args:
-        filepath: the iRODS data object file path that included zone name in the format of
+        filepath: the iRODS data object file path that included zone name in the format of`
         /zone_name/home/user_name/file_path
 
     Returns:
@@ -345,45 +345,6 @@ def delete_fed_zone_file(file_name_with_full_path):
     '''
     istorage = IrodsStorage('federated')
     istorage.delete(file_name_with_full_path)
-
-
-def replicate_resource_bag_to_user_zone(user, res_id):
-    """
-    Replicate resource bag to iRODS user zone
-    Args:
-        user: the requesting user
-        res_id: the resource id with its bag to be replicated to iRODS user zone
-
-    Returns:
-    None, but exceptions will be raised if there is an issue with iRODS operation
-    """
-    # do on-demand bag creation
-    res = get_resource_by_shortkey(res_id)
-    res_coll = res.root_path
-    istorage = res.get_irods_storage()
-    bag_modified = "false"
-    # needs to check whether res_id collection exists before getting/setting AVU on it to
-    # accommodate the case where the very same resource gets deleted by another request when
-    # it is getting downloaded
-    # TODO: why would we want to do anything at all if the resource does not exist???
-    if istorage.exists(res_coll):
-        bag_modified = istorage.getAVU(res_coll, 'bag_modified')
-        if bag_modified.lower() == "true":
-            hs_bagit.create_bag(res)
-
-        # do replication of the resource bag to irods user zone
-        if not res.resource_federation_path:
-            istorage.set_fed_zone_session()
-        src_file = res.bag_path
-        # TODO: allow setting destination path
-        tgt_file = '/{userzone}/home/{username}/{resid}.zip'.format(
-            userzone=settings.HS_USER_IRODS_ZONE, username=user.username, resid=res_id)
-        fsize = istorage.size(src_file)
-        validate_user_quota(user, fsize)
-        istorage.copyFiles(src_file, tgt_file)
-    else:
-        raise ValidationError("Resource {} does not exist in iRODS".format(res.short_id))
-
 
 def copy_resource_files_and_AVUs(src_res_id, dest_res_id):
     """

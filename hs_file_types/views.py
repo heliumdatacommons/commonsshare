@@ -85,7 +85,7 @@ def set_file_type_public(request, pk, file_path, hs_file_type):
     :param request: an instance of HttpRequest object
     :param pk: id of the composite resource in which this file type needs to be set
     :param file_path: relative file path of the file which needs to be set to the specified file
-    type. If the absolute file path is [resource-id]/data/contents/some-folder/some-file.txt then
+    type. If the absolute file path is [resource-id]/data/some-folder/some-file.txt then
     file_path needs to be set as: some-folder/some-file.txt
     :param hs_file_type: type of file to be set (e.g, NetCDF, GeoRaster, GeoFeature etc)
     :return:

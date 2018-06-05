@@ -536,7 +536,7 @@ class TimeSeriesFileTypeMetaDataTest(MockIRODSTestCaseMixin, TransactionTestCase
         self.assertEqual(TimeSeriesLogicalFile.objects.count(), 1)
         self.assertEqual(TimeSeriesFileMetaData.objects.count(), 1)
         # delete the folder for the logical file
-        folder_path = "data/contents/ODM2_Multi_Site_One_Variable"
+        folder_path = "data/ODM2_Multi_Site_One_Variable"
         remove_folder(self.user, self.composite_resource.short_id, folder_path)
         # there should no content files
         self.assertEqual(self.composite_resource.files.count(), 0)
@@ -596,7 +596,7 @@ class TimeSeriesFileTypeMetaDataTest(MockIRODSTestCaseMixin, TransactionTestCase
         # test renaming of files that are associated with timeseries LFO - should raise exception
         self.assertEqual(self.composite_resource.files.count(), 1)
 
-        base_path = "data/contents/ODM2_Multi_Site_One_Variable/{}"
+        base_path = "data/ODM2_Multi_Site_One_Variable/{}"
         src_path = base_path.format('ODM2_Multi_Site_One_Variable.sqlite')
         tgt_path = base_path.format('ODM2_Multi_Site_One_Variable_1.sqlite')
         with self.assertRaises(DRF_ValidationError):
@@ -605,7 +605,7 @@ class TimeSeriesFileTypeMetaDataTest(MockIRODSTestCaseMixin, TransactionTestCase
         # TODO: test for renaming csv file when we implement csv file
 
         # test moving the files associated with timeseries LFO
-        tgt_path = 'data/contents/new_folder/ODM2_Multi_Site_One_Variable.sqlite'
+        tgt_path = 'data/new_folder/ODM2_Multi_Site_One_Variable.sqlite'
         with self.assertRaises(DRF_ValidationError):
             move_or_rename_file_or_folder(self.user, self.composite_resource.short_id, src_path,
                                           tgt_path)

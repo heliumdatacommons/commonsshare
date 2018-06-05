@@ -994,14 +994,14 @@ class ResourceFileListCreate(ResourceFileToListItemMixin, generics.ListCreateAPI
         "results": [
             {
                 "url": "http://mill24.cep.unc.edu/django_irods/
-                download/bd88d2a152894134928c587d38cf0272/data/contents/
+                download/bd88d2a152894134928c587d38cf0272/data/
                 mytest_resource/text_file.txt",
                 "size": 21,
                 "content_type": "text/plain"
             },
             {
                 "url": "http://mill24.cep.unc.edu/django_irods/download/
-                bd88d2a152894134928c587d38cf0272/data/contents/mytest_resource/a_directory/cea.tif",
+                bd88d2a152894134928c587d38cf0272/data/mytest_resource/a_directory/cea.tif",
                 "size": 270993,
                 "content_type": "image/tiff"
             }

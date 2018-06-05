@@ -105,7 +105,7 @@ class CompositeResource(BaseResource):
                 if tgt_file_dir.startswith(src_file_dir):
                     path_to_check = src_file_dir
 
-            if path_to_check and not path_to_check.endswith("data/contents"):
+            if path_to_check and not path_to_check.endswith("data"):
                 # it is not the base directory - it must be a directory under base dir
                 res_file_objs = [res_file_obj for res_file_obj in self.files.all() if
                                  res_file_obj.dir_path == path_to_check]
@@ -147,7 +147,7 @@ class CompositeResource(BaseResource):
         else:
             return False
 
-        if not path_to_check.endswith("data/contents"):
+        if not path_to_check.endswith("data"):
             # it is not the base directory - it must be a directory under base dir
             res_file_objs = [res_file_obj for res_file_obj in self.files.all() if
                              res_file_obj.dir_path == path_to_check]

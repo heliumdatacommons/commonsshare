@@ -89,8 +89,8 @@ class RefTimeSeriesFileTypeMetaDataTest(TestCaseCommonUtilities, TransactionTest
         self.assertEqual(res_file.logical_file_type_name, "GenericLogicalFile")
         # check that there is one GenericLogicalFile object
         self.assertEqual(GenericLogicalFile.objects.count(), 1)
-        fed_file_path = "data/contents/{}".format(self.refts_file_name)
-        self.assertEqual(os.path.join('data', 'contents', res_file.short_path), fed_file_path)
+        fed_file_path = "data/{}".format(self.refts_file_name)
+        self.assertEqual(os.path.join('data', res_file.short_path), fed_file_path)
 
         # set the tif file to RefTimeseries file type
         RefTimeseriesLogicalFile.set_file_type(self.composite_resource, res_file.id, self.user)

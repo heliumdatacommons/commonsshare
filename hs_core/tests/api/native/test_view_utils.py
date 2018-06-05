@@ -31,14 +31,14 @@ class TestViewUtils(MockIRODSTestCaseMixin, TestCase):
         file = open('myfile.txt', 'r')
 
         hydroshare.add_resource_files(resource.short_id, file)
-        create_folder(resource.short_id, "data/contents/test_folder")
+        create_folder(resource.short_id, "data/test_folder")
 
         move_to_folder(user, resource.short_id,
-                       src_paths=['data/contents/myfile.txt'],
-                       tgt_path="data/contents/test_folder",
+                       src_paths=['data/myfile.txt'],
+                       tgt_path="data/test_folder",
                        validate_move=True)
 
-        folder_contents = list_folder(resource.short_id, "data/contents/test_folder")
+        folder_contents = list_folder(resource.short_id, "data/test_folder")
         self.assertTrue(['myfile.txt'] in folder_contents)
 
         resource.delete()
@@ -67,19 +67,19 @@ class TestViewUtils(MockIRODSTestCaseMixin, TestCase):
         file = open('myfile.txt', 'r')
 
         hydroshare.add_resource_files(resource.short_id, file)
-        create_folder(resource.short_id, "data/contents/test_folder")
+        create_folder(resource.short_id, "data/test_folder")
 
         rename_file_or_folder(user, resource.short_id,
-                              src_path="data/contents/myfile.txt",
-                              tgt_path="data/contents/myfile2.txt",
+                              src_path="data/myfile.txt",
+                              tgt_path="data/myfile2.txt",
                               validate_rename=True)
 
         rename_file_or_folder(user, resource.short_id,
-                              src_path="data/contents/test_folder",
-                              tgt_path="data/contents/test_folder2",
+                              src_path="data/test_folder",
+                              tgt_path="data/test_folder2",
                               validate_rename=True)
 
-        folder_contents = list_folder(resource.short_id, "data/contents/")
+        folder_contents = list_folder(resource.short_id, "data/")
         self.assertTrue(['myfile2.txt'] in folder_contents)
         self.assertTrue(['test_folder2'] in folder_contents)
 

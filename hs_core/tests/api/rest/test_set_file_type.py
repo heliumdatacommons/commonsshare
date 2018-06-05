@@ -67,12 +67,12 @@ class TestSetFileTypeEndPoint(HSRESTTestCase):
         res_file = self.resource.files.all().first()
         self.assertEqual(res_file.file_name, self.raster_file_name)
 
-        create_folder(self.resource.short_id, 'data/contents/sub_test_dir')
+        create_folder(self.resource.short_id, 'data/sub_test_dir')
 
         # move the first two files in file_name_list to the new folder
         move_or_rename_file_or_folder(self.user, self.resource.short_id,
-                                      'data/contents/' + self.raster_file_name,
-                                      'data/contents/sub_test_dir/' + self.raster_file_name)
+                                      'data/' + self.raster_file_name,
+                                      'data/sub_test_dir/' + self.raster_file_name)
 
         res_file = self.resource.files.all().first()
         self.assertEqual(res_file.short_path, "sub_test_dir/" + self.raster_file_name)

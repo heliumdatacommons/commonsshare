@@ -241,7 +241,7 @@
                         </div>
                         {# ======= Modal window ends =======#}
 
-                        <div id="hs-file-browser" data-res-id="{{ cm.short_id }}" data-current-path="data/contents"
+                        <div id="hs-file-browser" data-res-id="{{ cm.short_id }}" data-current-path="data"
                              {% if page.perms.change and metadata_form %}data-mode="edit"{% endif %}
                              data-supported-files="{{ cm.get_supported_upload_file_types }}"
                              data-allow-multiple-files="{{ cm.allow_multiple_file_upload }}"

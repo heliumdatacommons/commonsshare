@@ -162,7 +162,7 @@ class CompositeResourceTest(MockIRODSTestCaseMixin, TransactionTestCase):
         self.assertEqual(txt_res_file.logical_file_type_name, "GenericLogicalFile")
 
         # now delete the folder small_logan that contains files associated with raster file type
-        folder_path = "data/contents/small_logan"
+        folder_path = "data/small_logan"
         remove_folder(self.user, self.composite_resource.short_id, folder_path)
         txt_res_file.refresh_from_db()
         self.assertEqual(txt_res_file.logical_file_type_name, "GenericLogicalFile")
@@ -725,10 +725,10 @@ class CompositeResourceTest(MockIRODSTestCaseMixin, TransactionTestCase):
         tif_res_file = hydroshare.utils.get_resource_files_by_extension(
             self.composite_resource, '.tif')[0]
         self.assertTrue(tif_res_file.resource_file.name.endswith(
-            "/data/contents/small_logan/small_logan.tif"))
-        # test that creating a folder at "/data/contents/small_logan/" is not supported
+            "/data/small_logan/small_logan.tif"))
+        # test that creating a folder at "/data/small_logan/" is not supported
         # as that folder contains a resource file that's part of GeoRaster logical file
-        new_folder_path = "{}/data/contents/small_logan/my-new-folder"
+        new_folder_path = "{}/data/small_logan/my-new-folder"
         new_folder_path = new_folder_path.format(self.composite_resource.short_id)
         self.assertEqual(self.composite_resource.supports_folder_creation(new_folder_path), False)
         self.composite_resource.delete()
@@ -756,7 +756,7 @@ class CompositeResourceTest(MockIRODSTestCaseMixin, TransactionTestCase):
         # create a new folder so that we can test if the generic file can be moved there or not
         # this code is confusing because three different conventions are involved:
         # 1. Relative path
-        # 2. Partially qualified path data/contents/folder
+        # 2. Partially qualified path data/folder
         # 3. Fully qualified path starting at root_path and containing file_path
         new_folder_full_path = os.path.join(self.composite_resource.file_path, "my-new-folder")
         new_folder_path = os.path.join("data", "contents", "my-new-folder")
@@ -773,12 +773,12 @@ class CompositeResourceTest(MockIRODSTestCaseMixin, TransactionTestCase):
         # that folder can be renamed
         # now move the file to this new folder
         move_or_rename_file_or_folder(self.user, self.composite_resource.short_id,
-                                      'data/contents/' + self.generic_file_name,
+                                      'data/' + self.generic_file_name,
                                       new_folder_path + "/" + self.generic_file_name)
 
         # test rename folder
-        src_full_path = self.composite_resource.short_id + '/data/contents/my-new-folder/'
-        tgt_full_path = self.composite_resource.short_id + '/data/contents/my-new-folder-1/'
+        src_full_path = self.composite_resource.short_id + '/data/my-new-folder/'
+        tgt_full_path = self.composite_resource.short_id + '/data/my-new-folder-1/'
         # this is the function we are testing
         self.assertEqual(self.composite_resource.supports_rename_path(
             src_full_path, tgt_full_path), True)
@@ -794,30 +794,30 @@ class CompositeResourceTest(MockIRODSTestCaseMixin, TransactionTestCase):
         tif_res_file = hydroshare.utils.get_resource_files_by_extension(
             self.composite_resource, '.tif')[0]
         self.assertTrue(tif_res_file.resource_file.name.endswith(
-            "/data/contents/small_logan/small_logan.tif"))
+            "/data/small_logan/small_logan.tif"))
 
         # test renaming of any files that are part of GeoRasterLogicalFile is not allowed
-        src_full_path = self.composite_resource.short_id + '/data/contents/small_logan/' + \
+        src_full_path = self.composite_resource.short_id + '/data/small_logan/' + \
             self.raster_file_name
         tgt_full_path = self.composite_resource.short_id + \
-            '/data/contents/small_logan/small_logan_1.tif'
+            '/data/small_logan/small_logan_1.tif'
         # this is the function we are testing
         self.assertEqual(self.composite_resource.supports_rename_path(
             src_full_path, tgt_full_path), False)
 
         # test rename folder that contains resource files that are part of the GeoRasterLogicalFile
         # is allowed
-        src_full_path = self.composite_resource.short_id + '/data/contents/small_logan'
-        tgt_full_path = self.composite_resource.short_id + '/data/contents/small_logan_1'
+        src_full_path = self.composite_resource.short_id + '/data/small_logan'
+        tgt_full_path = self.composite_resource.short_id + '/data/small_logan_1'
         # this is the function we are testing
         self.assertEqual(self.composite_resource.supports_rename_path(
             src_full_path, tgt_full_path), True)
 
         # test that we can't  move a file to a folder that contains resource files that are part
         # of GeoRasterLogicalFile object
-        src_full_path = self.composite_resource.short_id + '/data/contents/my-new-folder/' + \
+        src_full_path = self.composite_resource.short_id + '/data/my-new-folder/' + \
             self.generic_file_name
-        tgt_full_path = self.composite_resource.short_id + '/data/contents/small_logan/' + \
+        tgt_full_path = self.composite_resource.short_id + '/data/small_logan/' + \
             self.generic_file_name
         # this is the function we are testing
         self.assertEqual(self.composite_resource.supports_rename_path(
@@ -833,14 +833,14 @@ class CompositeResourceTest(MockIRODSTestCaseMixin, TransactionTestCase):
         # add a file to the resource which will be part of  a GenericLogicalFile object
         self._add_generic_file_to_resource()
         self.assertEqual(self.composite_resource.files.count(), 1)
-        new_folder_path = "data/contents/my-new-folder"
+        new_folder_path = "data/my-new-folder"
         # create the folder
         create_folder(self.composite_resource.short_id, new_folder_path)
         # now move the file to this new folder
         move_or_rename_file_or_folder(self.user, self.composite_resource.short_id,
-                                      'data/contents/' + self.generic_file_name,
+                                      'data/' + self.generic_file_name,
                                       new_folder_path + "/" + self.generic_file_name)
-        folder_to_zip = self.composite_resource.short_id + '/data/contents/my-new-folder'
+        folder_to_zip = self.composite_resource.short_id + '/data/my-new-folder'
         # test that we can zip the folder my_new_folder
         self.assertEqual(self.composite_resource.supports_zip(folder_to_zip), True)
 
@@ -856,8 +856,8 @@ class CompositeResourceTest(MockIRODSTestCaseMixin, TransactionTestCase):
             self.composite_resource, '.tif')[0]
         # resource file exists in a new folder 'small_logan'
         self.assertTrue(tif_res_file.resource_file.name.endswith(
-            "/data/contents/small_logan/small_logan.tif"))
-        folder_to_zip = self.composite_resource.short_id + '/data/contents/small_logan'
+            "/data/small_logan/small_logan.tif"))
+        folder_to_zip = self.composite_resource.short_id + '/data/small_logan'
         # test that we can zip the folder small_logan
         self.assertEqual(self.composite_resource.supports_zip(folder_to_zip), True)
         self.composite_resource.delete()
@@ -873,14 +873,14 @@ class CompositeResourceTest(MockIRODSTestCaseMixin, TransactionTestCase):
         # add a file to the resource which will be part of  a GenericLogicalFile object
         self._add_generic_file_to_resource()
         self.assertEqual(self.composite_resource.files.count(), 1)
-        new_folder_path = "data/contents/my-new-folder"
+        new_folder_path = "data/my-new-folder"
         # create the folder
         create_folder(self.composite_resource.short_id, new_folder_path)
         # now move the file to this new folder
         move_or_rename_file_or_folder(self.user, self.composite_resource.short_id,
-                                      'data/contents/' + self.generic_file_name,
+                                      'data/' + self.generic_file_name,
                                       new_folder_path + "/" + self.generic_file_name)
-        folder_to_zip = self.composite_resource.short_id + '/data/contents/my-new-folder'
+        folder_to_zip = self.composite_resource.short_id + '/data/my-new-folder'
         # test that we can zip the folder my_new_folder
         self.assertEqual(self.composite_resource.supports_zip(folder_to_zip), True)
         # this is the function we are testing - my-new-folder can be deleted
@@ -901,8 +901,8 @@ class CompositeResourceTest(MockIRODSTestCaseMixin, TransactionTestCase):
             self.composite_resource, '.tif')[0]
         # resource file exists in a new folder 'small_logan'
         self.assertTrue(tif_res_file.resource_file.name.endswith(
-            "/data/contents/small_logan/small_logan.tif"))
-        folder_to_zip = self.composite_resource.short_id + '/data/contents/small_logan'
+            "/data/small_logan/small_logan.tif"))
+        folder_to_zip = self.composite_resource.short_id + '/data/small_logan'
         # test that we can zip the folder my_new_folder
         self.assertEqual(self.composite_resource.supports_zip(folder_to_zip), True)
         # this is the function we are testing - small_logan folder can't be deleted

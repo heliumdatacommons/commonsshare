@@ -87,7 +87,7 @@ class GeoFeatureFileTypeMetaDataTest(TestCaseCommonUtilities, TransactionTestCas
         self.assertEqual(res_file.logical_file_type_name, "GenericLogicalFile")
         # check that there is one GenericLogicalFile object
         self.assertEqual(GenericLogicalFile.objects.count(), 1)
-        fed_file_path = "{}/data/contents/{}".format(self.composite_resource.root_path,
+        fed_file_path = "{}/data/{}".format(self.composite_resource.root_path,
                                                      self.zip_file_name)
         self.assertEqual(res_file.storage_path, fed_file_path)
 

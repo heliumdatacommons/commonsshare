@@ -86,7 +86,7 @@ class TestCaseCommonUtilities(object):
         # create a folder, if folder is created successfully, no exception is raised, otherwise,
         # an iRODS exception will be raised which will be caught by the test runner and mark as
         # a test failure
-        create_folder(res.short_id, 'data/contents/sub_test_dir')
+        create_folder(res.short_id, 'data/sub_test_dir')
         istorage = res.get_irods_storage()
         res_path = res.file_path
         store = istorage.listdir(res_path)
@@ -94,15 +94,15 @@ class TestCaseCommonUtilities(object):
 
         # rename the third file in file_name_list
         move_or_rename_file_or_folder(user, res.short_id,
-                                      'data/contents/' + file_name_list[2],
-                                      'data/contents/new_' + file_name_list[2])
+                                      'data/' + file_name_list[2],
+                                      'data/new_' + file_name_list[2])
         # move the first two files in file_name_list to the new folder
         move_or_rename_file_or_folder(user, res.short_id,
-                                      'data/contents/' + file_name_list[0],
-                                      'data/contents/sub_test_dir/' + file_name_list[0])
+                                      'data/' + file_name_list[0],
+                                      'data/sub_test_dir/' + file_name_list[0])
         move_or_rename_file_or_folder(user, res.short_id,
-                                      'data/contents/' + file_name_list[1],
-                                      'data/contents/sub_test_dir/' + file_name_list[1])
+                                      'data/' + file_name_list[1],
+                                      'data/sub_test_dir/' + file_name_list[1])
         updated_res_file_names = []
         for rf in ResourceFile.objects.filter(object_id=res.id):
             updated_res_file_names.append(rf.short_path)
@@ -126,7 +126,7 @@ class TestCaseCommonUtilities(object):
 
         # zip the folder
         output_zip_fname, size = \
-            zip_folder(user, res.short_id, 'data/contents/sub_test_dir',
+            zip_folder(user, res.short_id, 'data/sub_test_dir',
                        'sub_test_dir.zip', True)
         self.assertGreater(size, 0, msg='zipped file has a size of 0')
         # Now resource should contain only two files: new_file3.txt and sub_test_dir.zip
@@ -148,17 +148,17 @@ class TestCaseCommonUtilities(object):
             # TODO: Why isn't this a method of resource?
             add_resource_files(res.short_id, self.test_file_1)
 
-        # TODO: use ResourceFile.create_folder, which doesn't require data/contents prefix
-        create_folder(res.short_id, 'data/contents/sub_test_dir')
+        # TODO: use ResourceFile.create_folder, which doesn't require data prefix
+        create_folder(res.short_id, 'data/sub_test_dir')
 
-        # TODO: use ResourceFile.rename, which doesn't require data/contents prefix
+        # TODO: use ResourceFile.rename, which doesn't require data prefix
         move_or_rename_file_or_folder(user, res.short_id,
-                                      'data/contents/' + file_name_list[0],
-                                      'data/contents/sub_test_dir/' + file_name_list[0])
+                                      'data/' + file_name_list[0],
+                                      'data/sub_test_dir/' + file_name_list[0])
         # Now resource should contain three files: file3_new.txt, sub_test_dir.zip, and file1.txt
         self.assertEqual(res.files.all().count(), 3, msg="resource file count didn't match")
         with self.assertRaises(SessionException):
-            unzip_file(user, res.short_id, 'data/contents/sub_test_dir.zip', False)
+            unzip_file(user, res.short_id, 'data/sub_test_dir.zip', False)
 
         # Resource should still contain three files: file3_new.txt, sub_test_dir.zip, and file1.txt
         file_cnt = res.files.all().count()
@@ -169,13 +169,13 @@ class TestCaseCommonUtilities(object):
         # TODO: this causes a multiple delete because the paths are valid now.
         istorage = res.get_irods_storage()
 
-        remove_folder(user, res.short_id, 'data/contents/sub_test_dir')
+        remove_folder(user, res.short_id, 'data/sub_test_dir')
 
         # Now resource should contain two files: file3_new.txt and sub_test_dir.zip
         file_cnt = res.files.all().count()
         self.assertEqual(file_cnt, 2, msg="resource file count didn't match - " +
                                           str(file_cnt) + " != 2")
-        unzip_file(user, res.short_id, 'data/contents/sub_test_dir.zip', True)
+        unzip_file(user, res.short_id, 'data/sub_test_dir.zip', True)
         # Now resource should contain three files: file1.txt, file2.txt, and file3_new.txt
         self.assertEqual(res.files.all().count(), 3, msg="resource file count didn't match")
         updated_res_file_names = []
@@ -192,7 +192,7 @@ class TestCaseCommonUtilities(object):
 
         # rename a folder
         move_or_rename_file_or_folder(user, res.short_id,
-                                      'data/contents/sub_test_dir', 'data/contents/sub_dir')
+                                      'data/sub_test_dir', 'data/sub_dir')
         updated_res_file_names = []
         for rf in ResourceFile.objects.filter(object_id=res.id):
             updated_res_file_names.append(rf.short_path)
@@ -212,7 +212,7 @@ class TestCaseCommonUtilities(object):
 
         # remove a folder
         # TODO: utilize ResourceFile.remove_folder instead. Takes a short path.
-        remove_folder(user, res.short_id, 'data/contents/sub_dir')
+        remove_folder(user, res.short_id, 'data/sub_dir')
         # Now resource only contains one file
         self.assertEqual(res.files.all().count(), 1, msg="resource file count didn't match")
         updated_res_file_names = []
