@@ -7,6 +7,8 @@ from collections import namedtuple
 import paramiko
 import logging
 from dateutil import parser
+from uuid import uuid4
+import hashlib
 
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import Group, User
@@ -31,6 +33,8 @@ from hs_core.signals import pre_metadata_element_create, post_delete_file_from_r
 from hs_core.hydroshare.utils import get_file_mime_type
 from django_irods.storage import IrodsStorage
 from hs_access_control.models import PrivilegeCodes
+
+from minid_client import minid_client_api as mca
 
 ActionToAuthorize = namedtuple('ActionToAuthorize',
                                'VIEW_METADATA, '
@@ -127,7 +131,6 @@ def get_size_and_avu_for_irods_ref_files(username, password, host, port, zone, i
     # delete the user session after iRODS file operations are done
     irods_storage.delete_user_session()
     return ifsizes, ifextra_mds
-
 
 def run_ssh_command(host, uname, pwd, exec_cmd):
     """
@@ -639,7 +642,7 @@ def zip_folder(user, res_id, input_coll_path, output_zip_fname, bool_remove_orig
     :return: output_zip_fname and output_zip_size pair
     """
     if __debug__:
-        assert(input_coll_path.startswith("data/contents/"))
+        assert(input_coll_path.startswith("data/"))
 
     resource = hydroshare.utils.get_resource_by_shortkey(res_id)
     istorage = resource.get_irods_storage()
@@ -691,7 +694,7 @@ def unzip_file(user, res_id, zip_with_rel_path, bool_remove_original):
     :return:
     """
     if __debug__:
-        assert(zip_with_rel_path.startswith("data/contents/"))
+        assert(zip_with_rel_path.startswith("data/"))
 
     resource = hydroshare.utils.get_resource_by_shortkey(res_id)
     istorage = resource.get_irods_storage()
@@ -723,7 +726,7 @@ def create_folder(res_id, folder_path):
     :return:
     """
     if __debug__:
-        assert(folder_path.startswith("data/contents/"))
+        assert(folder_path.startswith("data/"))
 
     resource = hydroshare.utils.get_resource_by_shortkey(res_id)
     istorage = resource.get_irods_storage()
@@ -745,7 +748,7 @@ def remove_folder(user, res_id, folder_path):
     :return:
     """
     if __debug__:
-        assert(folder_path.startswith("data/contents/"))
+        assert(folder_path.startswith("data/"))
 
     resource = hydroshare.utils.get_resource_by_shortkey(res_id)
     istorage = resource.get_irods_storage()
@@ -771,7 +774,7 @@ def list_folder(res_id, folder_path):
     :return:
     """
     if __debug__:
-        assert(folder_path.startswith("data/contents/"))
+        assert(folder_path.startswith("data/"))
 
     resource = hydroshare.utils.get_resource_by_shortkey(res_id)
     istorage = resource.get_irods_storage()
@@ -780,7 +783,7 @@ def list_folder(res_id, folder_path):
     return istorage.listdir(coll_path)
 
 
-# TODO: modify this to take short paths not including data/contents
+# TODO: modify this to take short paths not including data/
 def move_or_rename_file_or_folder(user, res_id, src_path, tgt_path, validate_move_rename=True):
     """
     Move or rename a file or folder in hydroshareZone or any federated zone used for CommonsShare
@@ -795,11 +798,11 @@ def move_or_rename_file_or_folder(user, res_id, src_path, tgt_path, validate_mov
             this action.
     :return:
 
-    Note: this utilizes partly qualified pathnames data/contents/foo rather than just 'foo'
+    Note: this utilizes partly qualified pathnames data/foo rather than just 'foo'
     """
     if __debug__:
-        assert(src_path.startswith("data/contents/"))
-        assert(tgt_path.startswith("data/contents/"))
+        assert(src_path.startswith("data/"))
+        assert(tgt_path.startswith("data/"))
 
     resource = hydroshare.utils.get_resource_by_shortkey(res_id)
     istorage = resource.get_irods_storage()
@@ -827,7 +830,7 @@ def move_or_rename_file_or_folder(user, res_id, src_path, tgt_path, validate_mov
     hydroshare.utils.resource_modified(resource, user, overwrite_bag=False)
 
 
-# TODO: modify this to take short paths not including data/contents
+# TODO: modify this to take short paths not including data/
 def rename_file_or_folder(user, res_id, src_path, tgt_path, validate_rename=True):
     """
     Rename a file or folder in hydroshareZone or any federated zone used for CommonsShare
@@ -842,13 +845,13 @@ def rename_file_or_folder(user, res_id, src_path, tgt_path, validate_rename=True
             this action.
     :return:
 
-    Note: this utilizes partly qualified pathnames data/contents/foo rather than just 'foo'.
+    Note: this utilizes partly qualified pathnames data/foo rather than just 'foo'.
     Also, this foregoes extensive antibugging of arguments because that is done in the
     REST API.
     """
     if __debug__:
-        assert(src_path.startswith("data/contents/"))
-        assert(tgt_path.startswith("data/contents/"))
+        assert(src_path.startswith("data/"))
+        assert(tgt_path.startswith("data/"))
 
     resource = hydroshare.utils.get_resource_by_shortkey(res_id)
     istorage = resource.get_irods_storage()
@@ -865,7 +868,7 @@ def rename_file_or_folder(user, res_id, src_path, tgt_path, validate_rename=True
     hydroshare.utils.resource_modified(resource, user, overwrite_bag=False)
 
 
-# TODO: modify this to take short paths not including data/contents
+# TODO: modify this to take short paths not including data/
 def move_to_folder(user, res_id, src_paths, tgt_path, validate_move=True):
     """
     Move a file or folder to a folder in hydroshareZone or any federated zone used for CommonsShare
@@ -880,14 +883,14 @@ def move_to_folder(user, res_id, src_paths, tgt_path, validate_move=True):
             this action.
     :return:
 
-    Note: this utilizes partly qualified pathnames data/contents/foo rather than just 'foo'
+    Note: this utilizes partly qualified pathnames data/foo rather than just 'foo'
     Also, this foregoes extensive antibugging of arguments because that is done in the
     REST API.
     """
     if __debug__:
         for s in src_paths:
-            assert(s.startswith('data/contents/'))
-        assert(tgt_path == 'data/contents' or tgt_path.startswith("data/contents/"))
+            assert(s.startswith('data/'))
+        assert(tgt_path == 'data/' or tgt_path.startswith("data/"))
 
     resource = hydroshare.utils.get_resource_by_shortkey(res_id)
     istorage = resource.get_irods_storage()

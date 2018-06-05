@@ -861,8 +861,8 @@ $(document).ready(function () {
     // Set initial folder structure
     var resID = $("#hs-file-browser").attr("data-res-id");
     if (resID) {
-        get_irods_folder_struct_ajax_submit(resID, 'data/contents');
-        pathLog.push('data/contents');
+        get_irods_folder_struct_ajax_submit(resID, 'data');
+        pathLog.push('data');
     }
 
     var previewNode = $("#flag-uploading").removeClass("hidden").clone();
@@ -950,7 +950,7 @@ $(document).ready(function () {
                         // Remove further paths from the log
                         var range = pathLog.length - pathLogIndex;
                         pathLog.splice(pathLogIndex + 1, range);
-                        pathLog.push("data/contents");
+                        pathLog.push("data");
                         pathLogIndex = pathLog.length - 1;
 
                         refreshFileBrowser();

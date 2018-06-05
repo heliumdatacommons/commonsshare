@@ -29,7 +29,6 @@ from hs_core.views import pagination
 from hs_core.hydroshare.utils import get_file_storage, resource_modified
 from hs_core.serialization import GenericResourceMeta, HsDeserializationDependencyException, \
     HsDeserializationException
-from hs_core.hydroshare.hs_bagit import create_bag_files
 
 
 logger = logging.getLogger(__name__)
@@ -740,7 +739,6 @@ class ScienceMetadataRetrieveUpdate(APIView):
                                                                          hydroshare_host=domain)
                 # Update resource metadata
                 rm.write_metadata_to_resource(resource, update_title=True, update_keywords=True)
-                create_bag_files(resource)
             except HsDeserializationDependencyException as e:
                 msg = ("HsDeserializationDependencyException encountered when updating "
                        "science metadata for resource {pk}; depedent resource was {dep}.")
@@ -996,14 +994,14 @@ class ResourceFileListCreate(ResourceFileToListItemMixin, generics.ListCreateAPI
         "results": [
             {
                 "url": "http://mill24.cep.unc.edu/django_irods/
-                download/bd88d2a152894134928c587d38cf0272/data/contents/
+                download/bd88d2a152894134928c587d38cf0272/data/
                 mytest_resource/text_file.txt",
                 "size": 21,
                 "content_type": "text/plain"
             },
             {
                 "url": "http://mill24.cep.unc.edu/django_irods/download/
-                bd88d2a152894134928c587d38cf0272/data/contents/mytest_resource/a_directory/cea.tif",
+                bd88d2a152894134928c587d38cf0272/data/mytest_resource/a_directory/cea.tif",
                 "size": 270993,
                 "content_type": "image/tiff"
             }

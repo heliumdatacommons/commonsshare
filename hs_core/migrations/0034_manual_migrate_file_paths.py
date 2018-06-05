@@ -10,7 +10,7 @@ import os.path
 # containing only two possible file names and not employing deprecated field names.
 # 1. This recognizes the following forms of file names as valid:
 #    a. folder + file
-#    b. data/contents + folder + file
+#    b. data + folder + file
 #    c. fully qualified name starting with absolute resource path.
 #    It converts (a) and (b) to (c) as needed. It also converts
 #    fed_resource_file_name_or_path into a fully qualified fed_resource_file.
@@ -125,7 +125,7 @@ def root_path(resource):
     Return the root folder of the iRODS structure containing resource files
 
     Note that this folder doesn't directly contain the resource files;
-    They are contained in ./data/contents/* instead.
+    They are contained in ./data/* instead.
     """
     if is_federated(resource):
         return os.path.join(resource.resource_federation_path, resource.short_id)
@@ -137,7 +137,7 @@ def file_path(resource):
     """
     Copy of BaseResource.file_path (without model method references)
 
-    Return the file path of the resource. This is the root path plus "data/contents".
+    Return the file path of the resource. This is the root path plus "data".
 
     This is the root of the folder structure for resource files.
     """
@@ -409,10 +409,10 @@ def migrate_file_paths(apps, schema_editor):
                     # set_storage_path(BaseResource, file, path)  # NOT NEEDED
                     # print("found fully qualified unfederated name '{}'".format(path))
                     # pass
-                elif path.startswith("data/contents/"):
+                elif path.startswith("data/"):
                     print("WARNING: path {} starts with extra data header for {} ({}) ...REPAIRING"
                           .format(path, resource.short_id, resource.resource_type))
-                    plen = len("data/contents/")
+                    plen = len("data/")
                     path = path[plen:]
                     # set fully qualified path
                     if file.file_folder is None:
@@ -493,10 +493,10 @@ def migrate_file_paths(apps, schema_editor):
                     print("ERROR: non-conformant full path {} for federated resource {} ({})"
                           .format(path, resource.short_id, resource.resource_type))
                     found = False
-                elif path.startswith("data/contents/"):
+                elif path.startswith("data/"):
                     print("WARNING: path {} starts with extra data header for {} ({}) ...REPAIRING"
                           .format(path, resource.short_id, resource.resource_type))
-                    plen = len("data/contents/")
+                    plen = len("data/")
                     path = path[plen:]
                     # set fully qualified path
                     if file.file_folder is None:
@@ -513,8 +513,8 @@ def migrate_file_paths(apps, schema_editor):
         if file.fed_resource_file_name_or_path is not None:
             count = count + 1
             path = file.fed_resource_file_name_or_path
-            if path.startswith('data/contents/'):
-                plen = len('data/contents/')
+            if path.startswith('data/'):
+                plen = len('data/')
                 path = path[plen:]
                 print("WARNING: header path stripped from fed name or path: {} for {} ({})"
                       .format(path, resource.short_id, resource.resource_type))

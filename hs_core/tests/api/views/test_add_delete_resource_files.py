@@ -77,7 +77,7 @@ class TestAddDeleteResourceFiles(MockIRODSTestCaseMixin, ViewTestCase):
         # there should be no file
         self.assertEqual(self.gen_res.files.count(), 0)
         post_data = {'files': (self.txt_file_name_1, open(self.txt_file_path_1), 'text/plain'),
-                     'file_folder': 'data/contents/foo'}
+                     'file_folder': 'data/foo'}
         url_params = {'shortkey': self.gen_res.short_id}
 
         url = reverse('add_files_to_resource', kwargs=url_params)

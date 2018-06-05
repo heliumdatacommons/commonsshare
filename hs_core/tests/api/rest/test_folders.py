@@ -98,7 +98,7 @@ class TestFolders(HSRESTTestCase):
         resfile = ResourceFile.objects.get(file_folder='foo')
         path = get_path(resfile, 'test.txt')
         self.assertEqual(path,
-                         str.format("{}/data/contents/foo/test.txt",
+                         str.format("{}/data/foo/test.txt",
                                     res_id))
 
         # list that folder: should contain one file and one folder

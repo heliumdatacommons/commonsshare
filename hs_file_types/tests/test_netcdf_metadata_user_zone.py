@@ -89,7 +89,7 @@ class NetCDFFileTypeMetaDataTest(TestCaseCommonUtilities, TransactionTestCase):
         self.assertEqual(res_file.logical_file_type_name, "GenericLogicalFile")
         # check that there is one GenericLogicalFile object
         self.assertEqual(GenericLogicalFile.objects.count(), 1)
-        fed_file_path = "data/contents/{}".format(self.netcdf_file_name)
+        fed_file_path = "data/{}".format(self.netcdf_file_name)
         self.assertEqual(os.path.join('data', 'contents', res_file.short_path), fed_file_path)
 
         # set the tif file to NetCDF file type

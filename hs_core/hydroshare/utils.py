@@ -26,7 +26,7 @@ from mezzanine.conf import settings
 from hs_core.signals import pre_create_resource, post_create_resource, pre_add_files_to_resource, \
     post_add_files_to_resource
 from hs_core.models import AbstractResource, BaseResource, ResourceFile
-from hs_core.hydroshare.hs_bagit import create_bag_files
+from hs_core.hydroshare import hs_bagit
 
 from django_irods.icommands import SessionException
 from django_irods.storage import IrodsStorage
@@ -78,12 +78,12 @@ def get_resource_by_shortkey(shortkey, or_404=True):
     return content
 
 
-def get_resource_by_doi(doi, or_404=True):
+def get_resource_by_minid(minid, or_404=True):
     try:
-        res = BaseResource.objects.get(doi=doi)
+        res = BaseResource.objects.get(minid=minid)
     except BaseResource.DoesNotExist:
         if or_404:
-            raise Http404(doi)
+            raise Http404(minid)
         else:
             raise
     content = res.get_content_model()
@@ -168,7 +168,7 @@ def is_federated(homepath):
 def get_federated_zone_home_path(filepath):
     """
     Args:
-        filepath: the iRODS data object file path that included zone name in the format of
+        filepath: the iRODS data object file path that included zone name in the format of`
         /zone_name/home/user_name/file_path
 
     Returns:
@@ -346,47 +346,6 @@ def delete_fed_zone_file(file_name_with_full_path):
     istorage = IrodsStorage('federated')
     istorage.delete(file_name_with_full_path)
 
-
-def replicate_resource_bag_to_user_zone(user, res_id):
-    """
-    Replicate resource bag to iRODS user zone
-    Args:
-        user: the requesting user
-        res_id: the resource id with its bag to be replicated to iRODS user zone
-
-    Returns:
-    None, but exceptions will be raised if there is an issue with iRODS operation
-    """
-    # do on-demand bag creation
-    res = get_resource_by_shortkey(res_id)
-    res_coll = res.root_path
-    istorage = res.get_irods_storage()
-    bag_modified = "false"
-    # needs to check whether res_id collection exists before getting/setting AVU on it to
-    # accommodate the case where the very same resource gets deleted by another request when
-    # it is getting downloaded
-    # TODO: why would we want to do anything at all if the resource does not exist???
-    if istorage.exists(res_coll):
-        bag_modified = istorage.getAVU(res_coll, 'bag_modified')
-        if bag_modified.lower() == "true":
-            # import here to avoid circular import issue
-            from hs_core.tasks import create_bag_by_irods
-            create_bag_by_irods(res_id)
-
-        # do replication of the resource bag to irods user zone
-        if not res.resource_federation_path:
-            istorage.set_fed_zone_session()
-        src_file = res.bag_path
-        # TODO: allow setting destination path
-        tgt_file = '/{userzone}/home/{username}/{resid}.zip'.format(
-            userzone=settings.HS_USER_IRODS_ZONE, username=user.username, resid=res_id)
-        fsize = istorage.size(src_file)
-        validate_user_quota(user, fsize)
-        istorage.copyFiles(src_file, tgt_file)
-    else:
-        raise ValidationError("Resource {} does not exist in iRODS".format(res.short_id))
-
-
 def copy_resource_files_and_AVUs(src_res_id, dest_res_id):
     """
     Copy resource files and AVUs from source resource to target resource including both
@@ -511,7 +470,7 @@ def resource_modified(resource, by_user=None, overwrite_bag=True):
         resource.metadata.update_element('date', res_modified_date.id)
 
     if overwrite_bag:
-        create_bag_files(resource)
+        hs_bagit.create_bag(resource)
 
     # set bag_modified-true AVU pair for the modified resource in iRODS to indicate
     # the resource is modified for on-demand bagging.
@@ -972,6 +931,7 @@ def add_file_to_resource(resource, f, folder=None, source_name='', source_size=0
         logical_file = GenericLogicalFile.create()
         ret.logical_file_content_object = logical_file
         ret.save()
+
 
     return ret
 

@@ -143,7 +143,7 @@ class GeoFeatureFileTypeMetaDataTest(MockIRODSTestCaseMixin, TransactionTestCase
         # check that we put the 3 files in a new folder
         for res_file in self.composite_resource.files.all():
             file_path, base_file_name, _ = get_resource_file_name_and_extension(res_file)
-            expected_file_path = "{}/data/contents/{}/{}"
+            expected_file_path = "{}/data{}/{}"
             res_file.file_folder = expected_folder_name
             expected_file_path = expected_file_path.format(self.composite_resource.root_path,
                                                            expected_folder_name, base_file_name)
@@ -232,7 +232,7 @@ class GeoFeatureFileTypeMetaDataTest(MockIRODSTestCaseMixin, TransactionTestCase
         # check that we put the 3 files in a new folder
         for res_file in self.composite_resource.files.all():
             file_path, base_file_name, _ = get_resource_file_name_and_extension(res_file)
-            expected_file_path = "{}/data/contents/{}/{}"
+            expected_file_path = "{}/data/{}/{}"
             res_file.file_folder = expected_folder_name
             expected_file_path = expected_file_path.format(self.composite_resource.root_path,
                                                            expected_folder_name, base_file_name)
@@ -353,7 +353,7 @@ class GeoFeatureFileTypeMetaDataTest(MockIRODSTestCaseMixin, TransactionTestCase
         # there should be 3 content files
         self.assertEqual(self.composite_resource.files.count(), 3)
         # delete the folder for the logical file
-        folder_path = "data/contents/states_required_files"
+        folder_path = "data/states_required_files"
         remove_folder(self.user, self.composite_resource.short_id, folder_path)
         # there should be no content files
         self.assertEqual(self.composite_resource.files.count(), 0)
@@ -376,24 +376,24 @@ class GeoFeatureFileTypeMetaDataTest(MockIRODSTestCaseMixin, TransactionTestCase
         self.assertEqual(self.composite_resource.files.count(), 3)
         res_file = self.composite_resource.files.first()
         self.assertEqual(res_file.file_folder, 'states_required_files')
-        src_path = 'data/contents/states_required_files/states.shp'
-        tgt_path = 'data/contents/states_required_files/states-1.shp'
+        src_path = 'data/states_required_files/states.shp'
+        tgt_path = 'data/states_required_files/states-1.shp'
         with self.assertRaises(DRF_ValidationError):
             move_or_rename_file_or_folder(self.user, self.composite_resource.short_id, src_path,
                                           tgt_path)
-        src_path = 'data/contents/states_required_files/states.dbf'
-        tgt_path = 'data/contents/states_required_files/states-1.dbf'
+        src_path = 'data/states_required_files/states.dbf'
+        tgt_path = 'data/states_required_files/states-1.dbf'
         with self.assertRaises(DRF_ValidationError):
             move_or_rename_file_or_folder(self.user, self.composite_resource.short_id, src_path,
                                           tgt_path)
         # test moving the files associated with geo raster LFO
-        src_path = 'data/contents/states_required_files/states.shx'
-        tgt_path = 'data/contents/states_required_files/states-1.shx'
+        src_path = 'data/states_required_files/states.shx'
+        tgt_path = 'data/states_required_files/states-1.shx'
         with self.assertRaises(DRF_ValidationError):
             move_or_rename_file_or_folder(self.user, self.composite_resource.short_id, src_path,
                                           tgt_path)
-        src_path = 'data/contents/states_required_files/states.shp'
-        tgt_path = 'data/contents/states_required_files-1/states.shp'
+        src_path = 'data/states_required_files/states.shp'
+        tgt_path = 'data/states_required_files-1/states.shp'
         with self.assertRaises(DRF_ValidationError):
             move_or_rename_file_or_folder(self.user, self.composite_resource.short_id, src_path,
                                           tgt_path)

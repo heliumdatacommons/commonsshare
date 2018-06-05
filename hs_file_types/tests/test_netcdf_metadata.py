@@ -343,7 +343,7 @@ class NetCDFFileTypeMetaDataTest(MockIRODSTestCaseMixin, TransactionTestCase):
         self.assertEqual(Variable.objects.count(), 5)
 
         # delete the folder for the logical file
-        folder_path = "data/contents/netcdf_valid"
+        folder_path = "data/netcdf_valid"
         remove_folder(self.user, self.composite_resource.short_id, folder_path)
         # there should no content files
         self.assertEqual(self.composite_resource.files.count(), 0)
@@ -371,24 +371,24 @@ class NetCDFFileTypeMetaDataTest(MockIRODSTestCaseMixin, TransactionTestCase):
         NetCDFLogicalFile.set_file_type(self.composite_resource, res_file.id, self.user)
         # test renaming of files that are associated with netcdf LFO - which should raise exception
         self.assertEqual(self.composite_resource.files.count(), 2)
-        src_path = 'data/contents/netcdf_valid/netcdf_valid.nc'
-        tgt_path = "data/contents/netcdf_valid/netcdf_valid_1.nc"
+        src_path = 'data/netcdf_valid/netcdf_valid.nc'
+        tgt_path = "data/netcdf_valid/netcdf_valid_1.nc"
         with self.assertRaises(DRF_ValidationError):
             move_or_rename_file_or_folder(self.user, self.composite_resource.short_id, src_path,
                                           tgt_path)
-        src_path = 'data/contents/netcdf_valid/netcdf_valid_header_info.txt'
-        tgt_path = 'data/contents/netcdf_valid/netcdf_valid_header_info_1.txt'
+        src_path = 'data/netcdf_valid/netcdf_valid_header_info.txt'
+        tgt_path = 'data/netcdf_valid/netcdf_valid_header_info_1.txt'
         with self.assertRaises(DRF_ValidationError):
             move_or_rename_file_or_folder(self.user, self.composite_resource.short_id, src_path,
                                           tgt_path)
         # test moving the files associated with netcdf LFO
-        src_path = 'data/contents/netcdf_valid/netcdf_valid.nc'
-        tgt_path = 'data/contents/netcdf_valid_1/netcdf_valid.nc'
+        src_path = 'data/netcdf_valid/netcdf_valid.nc'
+        tgt_path = 'data/netcdf_valid_1/netcdf_valid.nc'
         with self.assertRaises(DRF_ValidationError):
             move_or_rename_file_or_folder(self.user, self.composite_resource.short_id, src_path,
                                           tgt_path)
-        src_path = 'data/contents/netcdf_valid/netcdf_valid_header_info.txt'
-        tgt_path = 'data/contents/netcdf_valid_1/netcdf_valid_header_info.txt'
+        src_path = 'data/netcdf_valid/netcdf_valid_header_info.txt'
+        tgt_path = 'data/netcdf_valid_1/netcdf_valid_header_info.txt'
         with self.assertRaises(DRF_ValidationError):
             move_or_rename_file_or_folder(self.user, self.composite_resource.short_id, src_path,
                                           tgt_path)

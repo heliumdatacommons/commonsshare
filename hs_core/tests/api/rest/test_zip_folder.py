@@ -79,7 +79,7 @@ class TestPublicZipEndpoint(HSRESTTestCase):
     def test_zip_folder(self):
         zip_url = "/hsapi/resource/%s/functions/zip/" % self.pid
         response = self.client.post(zip_url, {
-            "input_coll_path": "data/contents/foo",
+            "input_coll_path": "data/foo",
             "output_zip_file_name": "test.zip",
             "remove_original_after_zip": False
         }, format="json")
@@ -88,7 +88,7 @@ class TestPublicZipEndpoint(HSRESTTestCase):
     def test_zip_folder_remove(self):
         zip_url = "/hsapi/resource/%s/functions/zip/" % self.pid
         response = self.client.post(zip_url, {
-            "input_coll_path": "data/contents/foo",
+            "input_coll_path": "data/foo",
             "output_zip_file_name": "test.zip",
             "remove_original_after_zip": True
         }, format="json")

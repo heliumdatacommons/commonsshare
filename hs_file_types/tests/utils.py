@@ -19,7 +19,7 @@ def assert_raster_file_type_metadata(self):
     # check that we put the 2 files in a new folder (small_logan)
     for res_file in self.composite_resource.files.all():
         file_path, base_file_name, _ = get_resource_file_name_and_extension(res_file)
-        expected_file_path = "{}/data/contents/small_logan/{}"
+        expected_file_path = "{}/data/small_logan/{}"
         expected_file_path = expected_file_path.format(self.composite_resource.root_path,
                                                        base_file_name)
         self.assertEqual(file_path, expected_file_path)
@@ -111,7 +111,7 @@ def assert_netcdf_file_type_metadata(self, title):
     # check that we put the 2 files in a new folder (netcdf_valid)
     for res_file in self.composite_resource.files.all():
         file_path, base_file_name = res_file.full_path, res_file.file_name
-        expected_file_path = u"{}/data/contents/netcdf_valid/{}"
+        expected_file_path = u"{}/data/netcdf_valid/{}"
         expected_file_path = expected_file_path.format(self.composite_resource.root_path,
                                                        base_file_name)
         self.assertEqual(file_path, expected_file_path)
@@ -275,7 +275,7 @@ def assert_geofeature_file_type_metadata(self, expected_folder_name):
     # check that we put the 3 files in a new folder
     for res_file in self.composite_resource.files.all():
         file_path, base_file_name, _ = get_resource_file_name_and_extension(res_file)
-        expected_file_path = "{}/data/contents/{}/{}"
+        expected_file_path = "{}/data/{}/{}"
         res_file.file_folder = expected_folder_name
         expected_file_path = expected_file_path.format(self.composite_resource.root_path,
                                                        expected_folder_name, base_file_name)
@@ -476,7 +476,7 @@ def assert_time_series_file_type_metadata(self):
     # test that we put the sqlite file into a new directory
     res_file = self.composite_resource.files.first()
     file_path, base_file_name = res_file.full_path, res_file.file_name
-    expected_file_path = u"{}/data/contents/ODM2_Multi_Site_One_Variable/{}"
+    expected_file_path = u"{}/data/ODM2_Multi_Site_One_Variable/{}"
     expected_file_path = expected_file_path.format(self.composite_resource.root_path,
                                                    base_file_name)
     self.assertEqual(file_path, expected_file_path)
