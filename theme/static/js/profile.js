@@ -171,7 +171,12 @@ $(document).ready(function () {
         }
     });
 
-    $("[data-page-mode='edit']").hide();
+    globus_ep_val = $("#globus-endpoints").val();
+    if (globus_ep_val && globus_ep_val.length > 0)
+        $("[data-page-mode='view']").hide();
+    else
+        $("[data-page-mode='edit']").hide();
+
     $("#btn-edit-profile").click(function () {
         setEditMode();
     });

@@ -542,7 +542,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title" id="license-agree-title">Resource License Agreement</h4>
+                <h4 class="modal-title" id="license-agree-title">Data Use Agreement</h4>
             </div>
             <div class="modal-body">
                 {% if rights.statement|length > 1000 %}
@@ -554,10 +554,10 @@
                 {% endif %}
                 <span class="rights-url"><a href="{{ rights.url }}">&nbsp{{ rights.url }}</a></span>
                 <p style="margin-top: 5px">
-                In downloading this resource contents you are ethically bound to respect the terms of this license.
-                Please confirm that you accept the terms of this license below before you can do any downloads for this resource.
+                In downloading this resource contents you are ethically bound to respect the terms of this agreement.
+                Please confirm that you accept the terms of this agreement before you do any downloads for this resource.
                 </p>
-                <input type="checkbox" id="agree-chk-download-bag"><label for="agree-chk-download" class="checkbox-label">I accept the terms of this license.</label>
+                <input type="checkbox" id="agree-chk-download-bag"><label for="agree-chk-download" class="checkbox-label">I accept the terms of this agreement.</label>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
