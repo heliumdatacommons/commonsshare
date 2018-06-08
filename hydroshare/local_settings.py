@@ -110,14 +110,14 @@ POSTGIS_VERSION=(2,1,1)
 USE_IRODS = True
 IRODS_ROOT = '/tmp'
 IRODS_ICOMMANDS_PATH = '/usr/bin'
-IRODS_HOST = 'test.commonsshare.org'
+IRODS_HOST = 'hydrotest41.renci.org'
 IRODS_PORT = '1247'
-IRODS_DEFAULT_RESOURCE = 'commonssharetestResc'
-IRODS_HOME_COLLECTION = '/commonssharetestZone/home/parkCommonsProxy'
-IRODS_CWD = '/commonssharetestZone/home/parkCommonsProxy'
-IRODS_ZONE = 'commonssharetestZone'
-IRODS_USERNAME = 'parkCommonsProxy'
-IRODS_AUTH = 'aesh3Meesah7fuix3uchiepho7ti9bai'
+IRODS_DEFAULT_RESOURCE = 'hydrotest41Resc'
+IRODS_HOME_COLLECTION = '/hydrotest41Zone/home/hsproxy'
+IRODS_CWD = '/hydrotest41Zone/home/hsproxy'
+IRODS_ZONE = 'hydrotest41Zone'
+IRODS_USERNAME = 'hsproxy'
+IRODS_AUTH = 'proxywater1'
 IRODS_GLOBAL_SESSION = True
 
 # Local resource iRODS configuration
