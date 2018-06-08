@@ -607,8 +607,6 @@ $(document).ready(function () {
         $("#file-multiple-irods").text("Only one file can be uploaded.");
 
         if (file_count > 0) {
-            $("#log-into-irods").hide();
-            $("#sign-in-info").hide();
             $("#btn-select-irods-file").hide();
         }
     }

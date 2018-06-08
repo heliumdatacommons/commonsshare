@@ -12,6 +12,10 @@ RUN pip install \
   nameparser \
   minid \
   bdbag
+
+pip uninstall python-irodsclient
+pip install git+https://github.com/theferrit32/python-irodsclient.git@openid
+
 ### End - HydroShare Development Image Additions ###
 
 USER root

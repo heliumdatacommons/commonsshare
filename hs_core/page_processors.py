@@ -1,10 +1,12 @@
 """Page processors for hs_core app."""
 
+import os
 from dateutil import parser
 from functools import partial, wraps
 
 from django.core.exceptions import PermissionDenied
 from django.forms.models import formset_factory
+from django.conf import settings
 
 from mezzanine.pages.page_processors import processor_for
 
@@ -82,6 +84,7 @@ def get_page_context(page, user, resource_edit=False, extended_metadata_layout=N
     just_copied = False
     create_resource_error = None
     just_published = False
+    token = ''
     if request:
         validation_error = check_for_validation(request)
 
@@ -100,6 +103,9 @@ def get_page_context(page, user, resource_edit=False, extended_metadata_layout=N
         just_published = request.session.get('just_published', False)
         if 'just_published' in request.session:
             del request.session['just_published']
+
+        if 'openid_token' in request.session:
+            token = request.session.get('openid_token')
 
     bag_url = content_model.bag_url
 
@@ -200,7 +206,9 @@ def get_page_context(page, user, resource_edit=False, extended_metadata_layout=N
                    'is_resource_specific_tab_active': False,
                    'quota_holder': qholder,
                    'belongs_to_collections': belongs_to_collections,
-                   'current_user': user
+                   'current_user': user,
+                   'current_irods_store': os.path.join(settings.IRODS_BYOD_COLLECTION, user),
+                   'openid_token': token
         }
 
         if 'task_id' in request.session:

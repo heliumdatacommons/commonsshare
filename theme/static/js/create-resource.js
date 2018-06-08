@@ -20,11 +20,6 @@ $(document).ready(function () {
     var myDropzone;
     var fileIcons = getFileIcons();
 
-    if (sessionStorage.signininfo) {
-        $("#sign-in-info").text(sessionStorage.signininfo);
-        $("#btn-select-irods-file").show();
-        $("#irods-sel-file").text("No file selected.");
-    }
     $alert_error = '<div class="alert alert-danger" id="alert_error"> \
         <button type="button" class="close" data-dismiss="alert">x</button> \
         <strong>Error! </strong> \

@@ -477,6 +477,7 @@ def oauth_return(request):
         auth_login(request, tgt_user)
         info(request, _(login_msg))
         request.session['subject_id'] = uid
+        request.session['openid_token'] = token
         return login_redirect(request)
     else:
         return HttpResponseBadRequest('Bad request - invalid access_token or failed to create linked user')

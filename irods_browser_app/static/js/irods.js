@@ -2,12 +2,9 @@ $('#btn-select-irods-file').on('click',function(event) {
     $('#res_type').val($("#form-resource-type").val());
     $('#file_struct').children().remove();
     $('.ajax-loader').hide();
-    var store = '';
-    if (sessionStorage.IRODS_signininfo) {
-        $("#irods_content_label").text(sessionStorage.IRODS_username);
-        $('#root_store').val(sessionStorage.IRODS_datastore);
-        store = sessionStorage.IRODS_datastore;
-    }
+    var iusername = $("#irods_content_label").val();
+
+    var store = $('#root_store').val();
 
     // Setting up the view tab
     $('#file_struct').attr('name',store);
@@ -91,11 +88,7 @@ function get_store(store, parent, margin) {
             type: "POST",
             data: {
                 store: store,
-                user: sessionStorage.IRODS_username,
-                password: sessionStorage.IRODS_password,
-                zone: sessionStorage.IRODS_zone,
-                port: sessionStorage.IRODS_port,
-                host: sessionStorage.IRODS_host
+                token: $('#irods-token').val()
             },
             success: function (json) {
                 return set_store_display(store, parent, margin, json);
@@ -184,12 +177,6 @@ $('#iget_irods').on('click',function() {
         selected.push($(this).attr('name'));
     });
     $('#upload_store').val(selected);
-    $("#irods-username").val(sessionStorage.IRODS_username);
-    $("#irods-password").val(sessionStorage.IRODS_password);
-    $("#irods-host").val(sessionStorage.IRODS_host);
-    $("#irods-zone").val(sessionStorage.IRODS_zone);
-    $("#irods-port").val(sessionStorage.IRODS_port);
-    $("#is_file_reference").val($('#file_ref_chk').is(":checked")? 'true' : 'false');
     $('#irodsContent .modal-backdrop.up-load').show();
     $('#irodsContent .ajax-loader').show();
 });
@@ -201,19 +188,12 @@ function irods_upload() {
         data: {
             upload: $('#upload_store').val(),
             res_type: $('#res_type').val(),
-            file_ref: $('#file_ref_chk').is(":checked")? true : false
         },
         success: function(json) {
             $("#irods-sel-file").text(json.irods_sel_file);
             $('#irods_file_names').val(json.irods_file_names);
-            $('#irods_federated').val(json.irods_federated);
-            $('#is_file_reference').val(json.is_file_reference);
             $("#file-type-error").text(json.file_type_error);
             $('#irodsContent').modal('hide');
-            if(json.irods_federated && json.is_file_reference==='false')
-                $('#irods-copy-move').show();
-            else
-                $('#irods-copy-move').hide();
         },
         error: function(xhr, errmsg, err) {
             console.log(xhr.status + ": " + xhr.responseText + ". Error message: " + errmsg);
