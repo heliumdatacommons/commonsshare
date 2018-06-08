@@ -183,9 +183,9 @@ HS_IRODS_LOCAL_ZONE_DEF_RES = 'hydroshareLocalResc'
 HS_WWW_IRODS_ZONE = ''
 HS_USER_IRODS_ZONE = 'hydroshareuserZone'
 
-SERVICE_SERVER_URL = 'https://test.commonsshare.org/'
-OAUTH_APP_KEY = '34ae3ac64794368545e3e170d2b9141d8c645791a06e7b0ec643f556bbfc989c'
-DATA_REG_API_KEY = '7c359fe1515eec571a8375cd39ca0aae71a95f8d3f177ae009d2b50bfaaa5c99'
+SERVICE_SERVER_URL = ''
+OAUTH_APP_KEY = ''
+DATA_REG_API_KEY = ''
 
 # Email configuration
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
