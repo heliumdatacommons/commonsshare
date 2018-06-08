@@ -110,29 +110,17 @@ POSTGIS_VERSION=(2,1,1)
 USE_IRODS = True
 IRODS_ROOT = '/tmp'
 IRODS_ICOMMANDS_PATH = '/usr/bin'
-IRODS_HOST = 'test.commonsshare.org'
+IRODS_HOST = 'hydrotest41.renci.org'
 IRODS_PORT = '1247'
-IRODS_DEFAULT_RESOURCE = 'commonssharetestResc'
-IRODS_HOME_COLLECTION = '/commonssharetestZone/home/parkCommonsProxy'
-IRODS_CWD = '/commonssharetestZone/home/parkCommonsProxy'
-IRODS_ZONE = 'commonssharetestZone'
-IRODS_USERNAME = 'parkCommonsProxy'
-IRODS_AUTH = 'aesh3Meesah7fuix3uchiepho7ti9bai'
+IRODS_DEFAULT_RESOURCE = 'hydrotest41Resc'
+IRODS_HOME_COLLECTION = '/hydrotest41Zone/home/hsproxy'
+IRODS_CWD = '/hydrotest41Zone/home/hsproxy'
+IRODS_ZONE = 'hydrotest41Zone'
+IRODS_USERNAME = 'hsproxy'
+IRODS_AUTH = 'proxywater1'
 IRODS_GLOBAL_SESSION = True
 
-# Local resource iRODS configuration
-#USE_IRODS = True
-#IRODS_ROOT = '/tmp'
-#IRODS_ICOMMANDS_PATH = '/usr/bin'
-#IRODS_HOST = 'hydrotest41.renci.org'
-#IRODS_PORT = '1247'
-#IRODS_DEFAULT_RESOURCE = 'hydrotest41Resc'
-#IRODS_HOME_COLLECTION = '/hydrotest41Zone/home/hsproxy'
-#IRODS_CWD = '/hydrotest41Zone/home/hsproxy'
-#IRODS_ZONE = 'hydrotest41Zone'
-#IRODS_USERNAME = 'hsproxy'
-#IRODS_AUTH = 'proxywater1'
-#IRODS_GLOBAL_SESSION = True
+IRODS_BYOD_COLLECTION = '/commonssharetestZone/byod/globus/'
 
 # Remote user zone iRODS configuration
 REMOTE_USE_IRODS = False
@@ -183,9 +171,9 @@ HS_IRODS_LOCAL_ZONE_DEF_RES = 'hydroshareLocalResc'
 HS_WWW_IRODS_ZONE = ''
 HS_USER_IRODS_ZONE = 'hydroshareuserZone'
 
-SERVICE_SERVER_URL = 'https://test.commonsshare.org/'
-OAUTH_APP_KEY = '34ae3ac64794368545e3e170d2b9141d8c645791a06e7b0ec643f556bbfc989c'
-DATA_REG_API_KEY = '7c359fe1515eec571a8375cd39ca0aae71a95f8d3f177ae009d2b50bfaaa5c99'
+SERVICE_SERVER_URL = ''
+OAUTH_APP_KEY = ''
+DATA_REG_API_KEY = ''
 
 # Email configuration
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
