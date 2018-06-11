@@ -5,6 +5,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.conf import settings
 
 from irods.session import iRODSSession
+from irods.manager.collection_manager import CollectionManager
 
 from django_irods.icommands import SessionException
 from hs_core import hydroshare
@@ -61,7 +62,8 @@ def store(request):
                               authentication_scheme='openid', openid_provider='globus',
                               port=settings.IRODS_PORT)
     datastore = str(request.POST['store'])
-    coll = irods_sess.collections.get(datastore)
+    coll_manager = CollectionManager(irods_sess)
+    coll = coll_manager.get(datastore)
     store = search_ds(coll)
 
     return_object['files'] = store['files']
