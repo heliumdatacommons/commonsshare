@@ -207,7 +207,7 @@ def get_page_context(page, user, resource_edit=False, extended_metadata_layout=N
                    'quota_holder': qholder,
                    'belongs_to_collections': belongs_to_collections,
                    'current_user': user,
-                   'current_irods_store': os.path.join(settings.IRODS_BYOD_COLLECTION, user),
+                   'current_irods_store': os.path.join(settings.IRODS_BYOD_COLLECTION, user.username),
                    'openid_token': token
         }
 

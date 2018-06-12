@@ -452,6 +452,14 @@ $(document).ready(function () {
             $('#publish-btn').attr('disabled', 'disabled');
     });
 
+    $("#make-public-agree-chk").on('click', function(e) {
+        e.stopImmediatePropagation();
+        if (e.currentTarget.checked)
+            $('#make-res-public-btn').removeAttr('disabled');
+        else
+            $('#make-res-public-btn').attr('disabled', 'disabled');
+    });
+
     $("#agree-chk-copy").on('click', function(e) {
         e.stopImmediatePropagation();
         if (e.currentTarget.checked)
@@ -474,6 +482,7 @@ $(document).ready(function () {
         else
             $('#download-file-btn').attr('disabled', 'disabled');
     });
+
     // add input element to each of the comment/rating forms to track resource mode (edit or view)
     var resourceMode = $("#resource-mode").val().toLowerCase();
     var inputElementToAdd = '<input type="hidden" name="resource-mode" value="mode_to_replace" />';

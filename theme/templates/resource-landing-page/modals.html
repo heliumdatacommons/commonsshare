@@ -606,11 +606,25 @@
                 <h4 class="modal-title" id="make-res-public-title">Make this resource public</h4>
             </div>
             <div class="modal-body">
-                Making a resource public will give anyone read access to this resource. Are you sure you want to make this resource public?
+                <p>
+                    Making a resource public will give anyone read access to this resource.
+                </p>
+                <p>
+                     Please read and confirm that you accept the CommonsShare Agreement shown below before making this resource public.
+                </p>
+                <div class="iframe-border">
+                    <iframe id="make-public-agreement-frame" scrolling="no" src="https://www.commonsshare.org/make-resource-public-agreement/"></iframe>
+                </div>
+                <input type="checkbox" id="make-public-agree-chk"><label for="make-public-agree-chk" class="checkbox-label">I accept the CommonsShare Agreement.</label>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <a id="btn-replicate" class="btn btn-danger">Make public</a>
+                <form class="pull-left" action="/hsapi/_internal/{{ cm.short_id }}/set-resource-flag/" method="POST">
+                    {% csrf_token %}
+                    <input name="flag" type="hidden" value="make_public"/>
+                    <input name="resource-mode" type="hidden" value="{{ resource_mode }}">
+                    <button type="submit" id="make-res-public-btn" class="btn btn-danger" disabled>Make Public</button>
+                </form>
             </div>
         </div>
     </div>
