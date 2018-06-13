@@ -159,9 +159,9 @@
                                     <label>To load files from your iRODS space:</label>
 
                                     <div id="irods-browse">
-                                        <input type="hidden" id="irods-token" name="irods-token" value="{{ openid_token }}">
                                         <input type="hidden" id="irods_file_names" name="irods_file_names" value="">
-
+                                        <input type="hidden" id="token" name="token" value="">
+                                        <input type="hidden" id="is_file_reference" name="is_file_reference" value="">
                                         <a id="btn-select-irods-file" type="button"
                                            class="btn btn-success"
                                            data-toggle="modal" data-target="#irodsContent">
@@ -169,6 +169,9 @@
                                         </a>
 
                                         <span id="irods-sel-file">No file selected.</span>
+                                        <div class="alert alert-danger hidden" id="sign-in-info">
+                                            <div id="sign-in-name"></div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

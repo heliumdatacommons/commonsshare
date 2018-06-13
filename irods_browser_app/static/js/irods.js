@@ -2,18 +2,23 @@ $('#btn-select-irods-file').on('click',function(event) {
     $('#res_type').val($("#form-resource-type").val());
     $('#file_struct').children().remove();
     $('.ajax-loader').hide();
-    var iusername = $("#irods_content_label").val();
-
     var store = $('#root_store').val();
-
     // Setting up the view tab
     $('#file_struct').attr('name',store);
     $('#irods_view_store').val(store);
-    // loading file structs
-    var parent = $('#file_struct');
-    get_store(store, parent, 0);
+
     $('body').off('click');
     $('body').on('click', '.folder', click_folder_opr);
+
+    var token = $('#token').val();
+    if (token.length == 0) {
+        get_token();
+    }
+    else {
+        // loading file structs
+        var parent = $('#file_struct');
+        get_store(store, parent, 0);
+    }
 });
 
 function set_store_display(store, parent, margin, json) {
@@ -79,6 +84,37 @@ function set_store_display(store, parent, margin, json) {
     });
 }
 
+function get_token() {
+    $.ajax({
+        mode: "queue",
+        url: '/irods/get_openid_token/',
+        async: true,
+        type: "POST",
+        data: {},
+        success: function (json) {
+            if ("token" in json) {
+                $('#token').val(json.token);
+                var store = $('#root_store').val();
+                // loading file structs
+                var parent = $('#file_struct');
+                get_store(store, parent, 0);
+            }
+            if ("error" in json) {
+                $("#sign-in-name").text(json.error);
+                $("#sign-in-info").show();
+            }
+            if ('authorization_url' in json)
+               window.location.href = json.authorization_url;
+        },
+
+        error: function (xhr, errmsg, err) {
+            console.log(xhr.status + ": " + xhr.responseText + ". Error message: " + errmsg);
+            $("#sign-in-name").text(errmsg);
+            $("#sign-in-info").show();
+        }
+    });
+}
+
 function get_store(store, parent, margin) {
     if (store) {
         $.ajax({
@@ -88,7 +124,7 @@ function get_store(store, parent, margin) {
             type: "POST",
             data: {
                 store: store,
-                token: $('#irods-token').val()
+                token: $('#token').val()
             },
             success: function (json) {
                 return set_store_display(store, parent, margin, json);

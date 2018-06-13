@@ -1033,7 +1033,7 @@ class GroupUpdateForm(GroupForm):
 @processor_for('my-resources')
 @login_required
 def my_resources(request, page):
-    
+
     resource_collection = get_my_resources_list(request)
     context = {'collection': resource_collection}
 
@@ -1063,11 +1063,9 @@ def add_generic_context(request, page):
 
 @login_required
 def create_resource_select(request, *args, **kwargs):
-    token = request.session.get('openid_token', '')
     context = {
         'current_user': request.user.username,
-        'current_irods_store': os.path.join(settings.IRODS_BYOD_COLLECTION, request.user.username),
-        'openid_token': token
+        'current_irods_store': os.path.join(settings.IRODS_BYOD_COLLECTION, request.user.username)
     }
     return render(request, 'pages/create-resource.html', context)
 
@@ -1085,10 +1083,12 @@ def create_resource(request, *args, **kwargs):
     irods_fsizes = []
     irods_avus = {}
     ref_files_checksums = {}
+    is_file_reference = False
     if irods_fnames:
         source_names = irods_fnames.split(',')
         try:
             irods_fsizes, irods_avus = get_size_and_avu_for_irods_ref_files(irods_fnames=irods_fnames)
+            is_file_reference = True
         except utils.ResourceFileSizeException as ex:
             ajax_response_data['message'] = ex.message
             return JsonResponse(ajax_response_data)
@@ -1134,6 +1134,7 @@ def create_resource(request, *args, **kwargs):
             source_sizes=irods_fsizes,
             # TODO: should probably be resource_federation_path like it is set to.
             fed_res_path=fed_res_path[0] if len(fed_res_path) == 1 else '',
+            is_file_reference=is_file_reference,
             content=res_title
     )
 

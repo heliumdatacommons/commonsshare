@@ -2,7 +2,6 @@ from json import dumps, loads, load
 import requests
 import time
 import os
-from urllib2 import urlopen, URLError
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
@@ -477,7 +476,6 @@ def oauth_return(request):
         auth_login(request, tgt_user)
         info(request, _(login_msg))
         request.session['subject_id'] = uid
-        request.session['openid_token'] = token
         return login_redirect(request)
     else:
         return HttpResponseBadRequest('Bad request - invalid access_token or failed to create linked user')

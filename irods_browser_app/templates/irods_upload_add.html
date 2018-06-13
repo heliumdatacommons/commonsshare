@@ -13,8 +13,8 @@
                         {% csrf_token %}
                         <input type="hidden" name="store" id="root_store" value="{{ current_irods_store }}"/>
                         <input type="hidden" name="res_id" id="res_id" value="{{ cm.short_id }}"/>
-                        <input type="hidden" id="irods-token" name="irods-token" value="{{ openid_token }}"/>
                         <input type="hidden" name="irods_file_names" id="upload_store" value=""/>
+                        <input type="hidden" id="token" name="token" value="">
                         <div>
                             <div>Viewing : <input type="text" class="form-control" id="irods_view_store" ></div>
                             <div id = "file_struct"></div>
