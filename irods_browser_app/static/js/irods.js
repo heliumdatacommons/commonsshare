@@ -10,15 +10,8 @@ $('#btn-select-irods-file').on('click',function(event) {
     $('body').off('click');
     $('body').on('click', '.folder', click_folder_opr);
 
-    var token = $('#token').val();
-    if (token.length == 0) {
-        get_token();
-    }
-    else {
-        // loading file structs
-        var parent = $('#file_struct');
-        get_store(store, parent, 0);
-    }
+    get_token();
+
 });
 
 function set_store_display(store, parent, margin, json) {
@@ -103,8 +96,10 @@ function get_token() {
                 $("#sign-in-name").text(json.error);
                 $("#sign-in-info").show();
             }
-            if ('authorization_url' in json)
-               window.location.href = json.authorization_url;
+            if ('authorization_url' in json) {
+                $('#irodsContent').modal('hide');
+                window.open(json.authorization_url);
+            }
         },
 
         error: function (xhr, errmsg, err) {
