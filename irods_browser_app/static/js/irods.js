@@ -98,7 +98,7 @@ function get_token() {
             }
             if ('authorization_url' in json) {
                 $('#irodsContent').modal('hide');
-                window.open(json.authorization_url);
+                window.open(json.authorization_url, "Refreshing your token...", "top=400, left=400, width=400, height=400");
             }
         },
 
