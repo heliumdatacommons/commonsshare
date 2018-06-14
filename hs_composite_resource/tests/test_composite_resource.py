@@ -702,12 +702,12 @@ class CompositeResourceTest(MockIRODSTestCaseMixin, TransactionTestCase):
         self.assertEqual(self.composite_resource.supports_folder_creation(new_folder_full_path),
                          True)
         # create the folder
-        new_folder_path = os.path.join("data", "contents", "my-new-folder")
+        new_folder_path = os.path.join("data", "my-new-folder")
         create_folder(self.composite_resource.short_id, new_folder_path)
         old_file_path = self.composite_resource.files.get().short_path
         # now move the file to this new folder
         move_or_rename_file_or_folder(self.user, self.composite_resource.short_id,
-                                      os.path.join("data", "contents", old_file_path),
+                                      os.path.join("data", old_file_path),
                                       os.path.join(new_folder_path, self.generic_file_name))
         # test that we should be able to create a folder inside the folder that contains
         # a resource file that is part of a Generic Logical file
@@ -759,7 +759,7 @@ class CompositeResourceTest(MockIRODSTestCaseMixin, TransactionTestCase):
         # 2. Partially qualified path data/folder
         # 3. Fully qualified path starting at root_path and containing file_path
         new_folder_full_path = os.path.join(self.composite_resource.file_path, "my-new-folder")
-        new_folder_path = os.path.join("data", "contents", "my-new-folder")
+        new_folder_path = os.path.join("data", "my-new-folder")
         self.assertTrue(self.composite_resource.supports_folder_creation(new_folder_full_path))
         # create the folder
         create_folder(self.composite_resource.short_id, new_folder_path)

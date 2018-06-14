@@ -636,7 +636,6 @@ def create_new_version_resource_public(request, pk):
 
 def publish(request, shortkey, *args, **kwargs):
     # only resource owners are allowed to change resource flags (e.g published)
-
     res, _, _ = authorize(request, shortkey, needed_permission=ACTION_TO_AUTHORIZE.SET_RESOURCE_FLAG)
 
     try:
