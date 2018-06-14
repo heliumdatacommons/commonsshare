@@ -2,7 +2,6 @@ from json import dumps, loads, load
 import requests
 import time
 import os
-from urllib2 import urlopen, URLError
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError, ObjectDoesNotExist

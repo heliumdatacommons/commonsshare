@@ -120,6 +120,8 @@ IRODS_USERNAME = 'hsproxy'
 IRODS_AUTH = 'proxywater1'
 IRODS_GLOBAL_SESSION = True
 
+IRODS_BYOD_COLLECTION = '/commonssharetestZone/byod/globus/'
+
 # Remote user zone iRODS configuration
 REMOTE_USE_IRODS = False
 

@@ -162,10 +162,6 @@ function drawInitialShape() {
         // Show save changes button
         $("#coverage-spatial").find(".btn-primary").show();
     });
-    if (sessionStorage.signininfo) {
-        $("#sign-in-info").text(sessionStorage.signininfo);
-        $("#btn-select-irods-file").show();
-    }
 }
 
 function initMap() {

@@ -392,7 +392,6 @@
 </div>
 {% endfor %}
 
-{% include "irods_signin.html" %}
 {% include "irods_upload_add.html" %}
 
 <input id="resID" type="hidden" value="{{ cm.short_id }}"/>
@@ -599,19 +598,33 @@
     </div>
 </div>
 
-<div class="modal fade" id="rep-resource-to-irods-dialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+<div class="modal fade" id="make-resource-public-dialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title" id="rep-res-to-irods-title">Copy resource bag to your iRODS user zone</h4>
+                <h4 class="modal-title" id="make-res-public-title">Make this resource public</h4>
             </div>
             <div class="modal-body">
-                Are you sure you want to copy this resource bag to your iRODS user zone?
+                <p>
+                    Making a resource public will give anyone read access to this resource.
+                </p>
+                <p>
+                     Please read and confirm that you accept the CommonsShare Agreement shown below before making this resource public.
+                </p>
+                <div class="iframe-border">
+                    <iframe id="make-public-agreement-frame" scrolling="no" src="https://www.commonsshare.org/make-resource-public-agreement/"></iframe>
+                </div>
+                <input type="checkbox" id="make-public-agree-chk"><label for="make-public-agree-chk" class="checkbox-label">I accept the CommonsShare Agreement.</label>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <a id="btn-replicate" class="btn btn-danger">Copy</a>
+                <form class="pull-left" action="/hsapi/_internal/{{ cm.short_id }}/set-resource-flag/" method="POST">
+                    {% csrf_token %}
+                    <input name="flag" type="hidden" value="make_public"/>
+                    <input name="resource-mode" type="hidden" value="{{ resource_mode }}">
+                    <button type="submit" id="make-res-public-btn" class="btn btn-danger" disabled>Make Public</button>
+                </form>
             </div>
         </div>
     </div>

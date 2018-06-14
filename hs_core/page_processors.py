@@ -1,10 +1,12 @@
 """Page processors for hs_core app."""
 
+import os
 from dateutil import parser
 from functools import partial, wraps
 
 from django.core.exceptions import PermissionDenied
 from django.forms.models import formset_factory
+from django.conf import settings
 
 from mezzanine.pages.page_processors import processor_for
 
@@ -387,6 +389,7 @@ def get_page_context(page, user, resource_edit=False, extended_metadata_layout=N
                'extended_metadata_layout': extended_metadata_layout,
                'bag_url': bag_url,
                'current_user': user,
+               'current_irods_store': os.path.join(settings.IRODS_BYOD_COLLECTION, user.username),
                'show_content_files': show_content_files,
                'validation_error': validation_error if validation_error else None,
                'discoverable': discoverable,

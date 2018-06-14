@@ -3,6 +3,7 @@ import json
 import datetime
 import pytz
 import logging
+import os
 
 from django.core.mail import send_mail
 from django.contrib.auth import authenticate, login as auth_login
@@ -1032,6 +1033,7 @@ class GroupUpdateForm(GroupForm):
 @processor_for('my-resources')
 @login_required
 def my_resources(request, page):
+
     resource_collection = get_my_resources_list(request)
     context = {'collection': resource_collection}
 
@@ -1060,60 +1062,40 @@ def add_generic_context(request, page):
 
 
 @login_required
-def create_resource_select_resource_type(request, *args, **kwargs):
-    return render_to_response('pages/create-resource.html', context_instance=RequestContext(request))
+def create_resource_select(request, *args, **kwargs):
+    context = {
+        'current_user': request.user.username,
+        'current_irods_store': os.path.join(settings.IRODS_BYOD_COLLECTION, request.user.username)
+    }
+    return render(request, 'pages/create-resource.html', context)
 
 
 @login_required
 def create_resource(request, *args, **kwargs):
     # Note: This view function must be called by ajax
-
     ajax_response_data = {'status': 'error', 'message': ''}
     resource_type = request.POST['resource-type']
     res_title = request.POST['title']
     resource_files = request.FILES.values()
     source_names = []
     irods_fnames = request.POST.get('irods_file_names')
-    federated = request.POST.get("irods_federated").lower() == 'true'
-    is_file_reference = request.POST.get("is_file_reference", 'false').lower() == 'true'
     # TODO: need to make REST API consistent with internal API. This is just "move" now there.
-    fed_copy_or_move = request.POST.get("copy-or-move")
     irods_fsizes = []
     irods_avus = {}
     ref_files_checksums = {}
+    is_file_reference = False
     if irods_fnames:
-        if federated:
-            source_names = irods_fnames.split(',')
-        else:
-            user = request.POST.get('irods-username')
-            password = request.POST.get("irods-password")
-            port = request.POST.get("irods-port")
-            host = request.POST.get("irods-host")
-            zone = request.POST.get("irods-zone")
-            if is_file_reference:
-                source_names = irods_fnames.split(',')
-                try:
-                    irods_fsizes, irods_avus = get_size_and_avu_for_irods_ref_files(username=user, password=password,
-                                                                                    host=host, port=port, zone=zone,
-                                                                                    irods_fnames=irods_fnames)
-                except utils.ResourceFileSizeException as ex:
-                    ajax_response_data['message'] = ex.message
-                    return JsonResponse(ajax_response_data)
+        source_names = irods_fnames.split(',')
+        try:
+            irods_fsizes, irods_avus = get_size_and_avu_for_irods_ref_files(irods_fnames=irods_fnames)
+            is_file_reference = True
+        except utils.ResourceFileSizeException as ex:
+            ajax_response_data['message'] = ex.message
+            return JsonResponse(ajax_response_data)
 
-                except SessionException as ex:
-                    ajax_response_data['message'] = ex.stderr
-                    return JsonResponse(ajax_response_data)
-            else:
-                try:
-                    upload_from_irods(username=user, password=password, host=host, port=port,
-                                      zone=zone, irods_fnames=irods_fnames, res_files=resource_files)
-                except utils.ResourceFileSizeException as ex:
-                    ajax_response_data['message'] = ex.message
-                    return JsonResponse(ajax_response_data)
-
-                except SessionException as ex:
-                    ajax_response_data['message'] = ex.stderr
-                    return JsonResponse(ajax_response_data)
+        except SessionException as ex:
+            ajax_response_data['message'] = ex.stderr
+            return JsonResponse(ajax_response_data)
 
     url_key = "page_redirect_url"
     try:
@@ -1152,7 +1134,6 @@ def create_resource(request, *args, **kwargs):
             source_sizes=irods_fsizes,
             # TODO: should probably be resource_federation_path like it is set to.
             fed_res_path=fed_res_path[0] if len(fed_res_path) == 1 else '',
-            move=(fed_copy_or_move == 'move'),
             is_file_reference=is_file_reference,
             content=res_title
     )

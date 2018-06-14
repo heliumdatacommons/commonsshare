@@ -148,23 +148,18 @@
             {% if can_change_resource_flags %}
                 <div class="btn-group" role="group">
                     {# -------- PUBLIC -------- #}
-                    <form class="pull-left"
-                              action="/hsapi/_internal/{{ cm.short_id }}/set-resource-flag/"
-                              method="POST">
-                            {% csrf_token %}
-                            <input name="flag" type="hidden" value="make_public"/>
-                            <input name="resource-mode" type="hidden" value="{{ resource_mode }}">
-                            <button {% if not cm.can_be_public_or_discoverable or cm.raccess.public %} disabled {% endif %}
-                                    id="btn-public" data-toggle="tooltip" data-placement="auto"
-                                    title='Can be viewed and downloaded by anyone.' type="submit"
-                                    {% if cm.raccess.public %}
-                                        class="btn btn-default active"
-                                    {% else %}
-                                        class="btn btn-default"
-                                    {% endif %}
-                                    >Public
-                            </button>
-                    </form>
+                    <span class="pull-left">
+                        <a id="btn-public" {% if not cm.can_be_public_or_discoverable or cm.raccess.public %} disabled {% endif %}
+                            data-toggle="modal"
+                            {% if cm.raccess.public %}
+                                class="btn btn-default active"
+                            {% else %}
+                                class="btn btn-default"
+                            {% endif %}
+                            data-target="#make-resource-public-dialog">
+                        <span data-toggle="tooltip" data-placement="auto" title="Can be viewed and downloaded by anyone.">Public</span>
+                        </a>
+                    </span>
                     {# -------- DISCOVERABLE -------- #}
                     <form class="pull-left"
                               action="/hsapi/_internal/{{ cm.short_id }}/set-resource-flag/"

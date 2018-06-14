@@ -98,7 +98,7 @@ def upload_from_irods(username, password, host, port, zone, irods_fnames, res_fi
 
 # Since an SessionException will be raised for all irods-related operations from django_irods
 # module, there is no need to raise iRODS SessionException from within this function
-def get_size_and_avu_for_irods_ref_files(username, password, host, port, zone, irods_fnames):
+def get_size_and_avu_for_irods_ref_files(irods_fnames='', username='', password='', host='', port='', zone=''):
     """
     use iget to transfer selected data object from irods zone to local as a NamedTemporaryFile
     :param username: iRODS login account username used to download irods data object for uploading
@@ -114,8 +114,9 @@ def get_size_and_avu_for_irods_ref_files(username, password, host, port, zone, i
              corresponding to iRODS AVUs on the file or data object with file name preappended to attributes
     """
     irods_storage = IrodsStorage()
-    irods_storage.set_user_session(username=username, password=password, host=host, port=port,
-                                   zone=zone)
+    if username and password and host and port and zone:
+        irods_storage.set_user_session(username=username, password=password, host=host, port=port,
+                                       zone=zone)
     ifnames = string.split(irods_fnames, ',')
 
     ifsizes = []
@@ -129,7 +130,8 @@ def get_size_and_avu_for_irods_ref_files(username, password, host, port, zone, i
             ifextra_mds[ukey] = val
 
     # delete the user session after iRODS file operations are done
-    irods_storage.delete_user_session()
+    if username and password and host and port and zone:
+        irods_storage.delete_user_session()
     return ifsizes, ifextra_mds
 
 def run_ssh_command(host, uname, pwd, exec_cmd):

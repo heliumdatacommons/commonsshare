@@ -1,15 +1,23 @@
 import json
 import os
 import string
-from django.http import HttpResponse, HttpResponseRedirect
+import requests
+
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, JsonResponse
+from django.conf import settings
+from django.template.response import TemplateResponse
+from django.contrib.auth.decorators import login_required
+
+from rest_framework import status
 
 from irods.session import iRODSSession
-from irods.exception import CollectionDoesNotExist
+from irods.manager.collection_manager import CollectionManager
 
 from django_irods.icommands import SessionException
 from hs_core import hydroshare
-from hs_core.views.utils import authorize, upload_from_irods, ACTION_TO_AUTHORIZE, get_size_and_avu_for_irods_ref_files
+from hs_core.views.utils import authorize, ACTION_TO_AUTHORIZE, get_size_and_avu_for_irods_ref_files
 from hs_core.hydroshare import utils
+
 
 def search_ds(coll):
     store = {}
@@ -46,52 +54,43 @@ def check_upload_files(resource_cls, fnames_list):
 
     return (valid, ext)
 
-# Create your views here.
-def login(request):
-    if request.method == 'POST':
-        port = int(request.POST['port'])
-        user = str(request.POST['username'])
-        password = str(request.POST['password'])
-        zone = str(request.POST['zone'])
-        host = str(request.POST['host'])
-        datastore = "/%s/home/%s" % (zone, user)
 
-        response_data = {}
-
-        irods_sess = iRODSSession(user=user, password=password, zone=zone, host=host, port=port)
-
-        try:
-            irods_sess.collections.get(datastore)
-        except CollectionDoesNotExist:
-            response_data['irods_loggedin'] = False
-            response_data['login_message'] = 'iRODS login failed'
-            response_data['irods_file_names'] = ''
-            response_data['error'] = "iRODS collection does not exist"
-            irods_sess.cleanup()
-            return HttpResponse(
-                json.dumps(response_data),
-                content_type="application/json"
-            )
+@login_required
+def get_openid_token(request):
+    uid = request.session.get('subject_id', '')
+    response_data = {}
+    if not uid:
+        response_data['error'] = "cannot retrieve user's subject id to request token"
+        return JsonResponse(response_data, status=status.HTTP_400_BAD_REQUEST)
+    url = 'token?uid={}&provider=globus&scope=openid%20email%20profile'.format(uid)
+    # note that trailing slash should not be added to return_to url
+    # return_url = '&return_to={}://{}/irods/openid_return'.format(request.scheme, request.get_host())
+    # req_url = '{}{}{}'.format(settings.SERVICE_SERVER_URL, url, return_url)
+    req_url = '{}{}'.format(settings.SERVICE_SERVER_URL, url)
+    auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
+    response = requests.get(req_url,
+                            headers={'Authorization': auth_header_str},
+                            verify=False)
+    if response.status_code == status.HTTP_401_UNAUTHORIZED:
+        # the user is not authorized
+        return_data = json.loads(response.text)
+        response_data['authorization_url'] = return_data['authorization_url']
+        return JsonResponse(response_data, status=status.HTTP_401_UNAUTHORIZED)
+    elif response.status_code == status.HTTP_200_OK:
+        # the user is already authorized, directly use the returned token
+        return_data = json.loads(response.content)
+        if 'access_token' in return_data:
+            response_data['token'] = return_data['access_token']
+            return JsonResponse(response_data, status=status.HTTP_200_OK)
         else:
-            response_data['user'] = user
-            response_data['password'] = password
-            response_data['port'] = port
-            response_data['host'] = host
-            response_data['zone'] = zone
-            response_data['datastore'] = datastore
-            response_data['irods_loggedin'] = True
-            response_data['irods_file_names'] = ''
-            irods_sess.cleanup()
-            return HttpResponse(
-                json.dumps(response_data),
-                content_type = "application/json"
-            )
+            response_data['error'] = 'no access_token is returned from token request:' + response.content
+            return JsonResponse(response_data, status=status.HTTP_400_BAD_REQUEST)
     else:
-        return HttpResponse(
-            json.dumps({"error": "Not POST request"}),
-            content_type="application/json"
-        )
+        response_data['error'] = response.text
+        return JsonResponse(response_data, status=status.HTTP_400_BAD_REQUEST)
 
+
+# Create your views here.
 def store(request):
     """
     Get file hierarchy (collection of subcollections and data objects) for the requested directory
@@ -100,11 +99,13 @@ def store(request):
     under the requested directory/collection/subcollection
     """
     return_object = {}
-    irods_sess = iRODSSession(user=str(request.POST['user']), password=str(request.POST['password']),
-                                  zone=str(request.POST['zone']), host=str(request.POST['host']),
-                                  port=int(request.POST['port']))
+    irods_sess = iRODSSession(user=request.user.username, access_token=str(request.POST['token']),
+                              zone=settings.IRODS_ZONE, host=settings.IRODS_HOST,
+                              authentication_scheme='openid', openid_provider='globus',
+                              port=settings.IRODS_PORT)
     datastore = str(request.POST['store'])
-    coll = irods_sess.collections.get(datastore)
+    coll_manager = CollectionManager(irods_sess)
+    coll = coll_manager.get(datastore)
     store = search_ds(coll)
 
     return_object['files'] = store['files']
@@ -130,9 +131,6 @@ def upload(request):
             response_data['irods_file_names'] = file_names
             # get selected file names without path for informational display on the page
             response_data['irods_sel_file'] = ', '.join(os.path.basename(f.rstrip(os.sep)) for f in fnames_list)
-            homepath = fnames_list[0]
-            response_data['irods_federated'] = utils.is_federated(homepath)
-            response_data['is_file_reference'] = request.POST['file_ref']
         else:
             response_data['file_type_error'] = "Invalid file type: {ext}".format(ext=ext)
             response_data['irods_file_names'] = ''
@@ -155,7 +153,6 @@ def upload_add(request):
     res_files = request.FILES.getlist('files')
     extract_metadata = request.REQUEST.get('extract-metadata', 'No')
     extract_metadata = True if extract_metadata.lower() == 'yes' else False
-    is_file_ref = request.POST.get("is_file_reference", 'false').lower() == 'true'
     irods_fnames = request.POST.get('irods_file_names', '')
     irods_fnames_list = string.split(irods_fnames, ',')
     res_cls = resource.__class__
@@ -168,39 +165,16 @@ def upload_add(request):
         request.session['file_type_error'] = "Invalid file type: {ext}".format(ext=ext)
         return HttpResponseRedirect(request.META['HTTP_REFERER'])
     else:
-        homepath = irods_fnames_list[0]
         # TODO: this should happen whether resource is federated or not
-        irods_federated = utils.is_federated(homepath)
         irods_fsizes = []
         irods_avus = {}
         if irods_fnames:
-            if irods_federated:
-                source_names = irods_fnames.split(',')
-            else:
-                user = request.POST.get('irods-username')
-                password = request.POST.get("irods-password")
-                port = request.POST.get("irods-port")
-                host = request.POST.get("irods-host")
-                zone = request.POST.get("irods-zone")
-                if is_file_ref:
-                    source_names = irods_fnames.split(',')
-                    try:
-                        irods_fsizes, irods_avus = get_size_and_avu_for_irods_ref_files(username=user,
-                                                                                              password=password,
-                                                                                              host=host,
-                                                                                              port=port,
-                                                                                              zone=zone,
-                                                                                              irods_fnames=irods_fnames)
-                    except SessionException as ex:
-                        request.session['validation_error'] = ex.stderr
-                        return HttpResponseRedirect(request.META['HTTP_REFERER'])
-                else:
-                    try:
-                        upload_from_irods(username=user, password=password, host=host, port=port,
-                                          zone=zone, irods_fnames=irods_fnames, res_files=res_files)
-                    except SessionException as ex:
-                        request.session['validation_error'] = ex.stderr
-                        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+            source_names = irods_fnames.split(',')
+            try:
+                irods_fsizes, irods_avus = get_size_and_avu_for_irods_ref_files(irods_fnames=irods_fnames)
+            except SessionException as ex:
+                request.session['validation_error'] = ex.stderr
+                return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
     try:
         utils.resource_file_add_pre_process(resource=resource, files=res_files, user=request.user,
@@ -218,7 +192,7 @@ def upload_add(request):
         hydroshare.utils.resource_file_add_process(resource=resource, files=res_files, 
                                                    user=request.user,
                                                    extract_metadata=extract_metadata,
-                                                   is_file_reference=is_file_ref,
+                                                   is_file_reference=True,
                                                    source_names=source_names,
                                                    source_sizes=irods_fsizes, folder=None)
 

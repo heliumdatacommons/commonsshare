@@ -3127,9 +3127,17 @@ span.you-flag {
 }
 #pub-agreement-frame {
 	border: 0 none;
-	height: 1500px;
+	height: 1560px;
 	margin-top: -90px;
-	margin-bottom: -950px;
+	margin-bottom: -750px;
+	width: 520px;
+}
+
+#make-public-agreement-frame {
+	border: 0 none;
+	height: 880px;
+	margin-top: -90px;
+	margin-bottom: -100px;
 	width: 520px;
 }
 

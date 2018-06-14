@@ -6,22 +6,18 @@
         <div class="modal-content">
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-            <h4 class="modal-title" id="myModalLabel">iRODS user: <span id="irods_content_label"></span> </h4>
+            <h4 class="modal-title" id="myModalLabel">iRODS user: <span id="irods_content_label">{{ current_user }}</span> </h4>
           </div>
           <form class="form-signin" role="form" action="/irods/upload/" method="post" id="irodsUpload">
             <div class="modal-body">
               {% csrf_token %}
-              <input type="hidden" name="store" id="root_store" value=""/>
+              <input type="hidden" name="store" id="root_store" value="{{ current_irods_store }}"/>
               <input type="hidden" name="res_type" id="res_type" value=""/>
               <input type="hidden" name="upload" id="upload_store" value=""/>
               <div>
                 <div>
                     <div>Viewing : <input type="text" class="form-control" id="irods_view_store" ></div>
                     <div id = "file_struct"></div>
-                    <div>
-                       <input id="file_ref_chk" type="checkbox">
-                       <label for="file_ref_chk">Add selected files as reference?</label>
-                    </div>
                 </div>
               </div>
             </div>
