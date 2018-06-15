@@ -3168,7 +3168,7 @@ class ResourceFile(ResourceFileIRODSMixin):
         """
         # must start with a / in order to concat with current_site_url.
         return '/' + os.path.join('resource', self.resource.short_id,
-                                  'data', 'contents', self.short_path)
+                                  'data', self.short_path)
 
     @property
     def irods_url(self):

@@ -129,8 +129,14 @@ def get_remote_file_manifest(tmpdir, resource):
             checksum_sha256 = mca.compute_checksum(tmpfile, hashlib.sha256())
 
             data['url'] = fetch_url
-            data['length'] = f.size
-            data['filename'] = f.file_name
+
+            if (f.reference_file_path):
+                data['length'] = istorage.size(srcfile)
+                data['filename'] = ref_file_name
+            else:
+                data['length'] = f.size
+                data['filename'] = f.file_name
+
             data['md5'] = checksum_md5
             data['sha256'] = checksum_sha256
             data_list.append(data)
