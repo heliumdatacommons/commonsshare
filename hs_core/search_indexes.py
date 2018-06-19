@@ -28,6 +28,9 @@ class BaseResourceIndex(indexes.SearchIndex, indexes.Indexable):
     public = indexes.BooleanField(faceted=True)
     discoverable = indexes.BooleanField(faceted=True)
     published = indexes.BooleanField(faceted=True)
+
+    extra_metadata = indexes.CharField()
+
     # TODO: We might need more information than a bool in the future
     is_replaced_by = indexes.BooleanField()
     created = indexes.DateTimeField(model_attr='created', faceted=True)
@@ -104,6 +107,17 @@ class BaseResourceIndex(indexes.SearchIndex, indexes.Indexable):
         if hasattr(obj, 'metadata') and obj.metadata.description is not None and \
                 obj.metadata.description.abstract is not None:
             return obj.metadata.description.abstract
+        else:
+            return 'none'
+
+    def prepare_extra_metadata(self, obj):
+        """Return extra_metadata values if exists, otherwise return none."""
+        if hasattr(obj, 'extra_metadata') and not obj.extra_metadata:
+            extra_md_list = []
+            sep = ' ; '
+            for k, v in obj.extra_metadata.items():
+                extra_md_list.append(k + sep + v)
+            return sep.join(extra_md_list)
         else:
             return 'none'
 
