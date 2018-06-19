@@ -490,7 +490,6 @@ def set_dirty_bag_flag(resource):
     bag is recreated only after multiple changes to the bag files, rather than
     after each change. It is created when someone attempts to download it.
     """
-    res_coll = resource.root_path
 
     istorage = resource.get_irods_storage()
     res_coll = resource.root_path

@@ -9,7 +9,14 @@
 {% endif %} 
 {% if object.metadata.description %} 
     {{ object.metadata.description }}
-{% endif %} 
+{% endif %}
+
+{% if object.extra_metadata.items|length > 0 %}
+    {% for extra_meta_name, extra_meta_value in object.extra_metadata.items %}
+        {{ extra_meta_name }}
+        {{ extra_meta_value }}
+    {% endfor %}
+{% endif %}
 {{ object.public }}
 {{ object.discoverable }}
 {{ object.published }}
