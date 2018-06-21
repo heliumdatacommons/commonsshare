@@ -113,6 +113,7 @@ paths:
     get:
       tags:
         - hsapi
+      summary: Download a reference time series resource bag
       responses:
         '200':
           description: OK
