@@ -966,6 +966,7 @@ paths:
     post:
       tags:
         - hsapi
+      summary: Set resource flag
       responses:
         '201':
           description: Created
