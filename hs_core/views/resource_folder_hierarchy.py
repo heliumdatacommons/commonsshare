@@ -109,7 +109,7 @@ def data_store_structure(request):
                               'pk': f.pk,
                               'logical_type': '',
                               'logical_file_id': '',
-                              'url': '/django_irods/download/' + res_id + get_resource_file_url(f)})
+                              'url': f.url})
     except SessionException as ex:
         logger.error("session exception querying store_path {} for {}".format(store_path, res_id))
         return HttpResponse(ex.stderr, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
