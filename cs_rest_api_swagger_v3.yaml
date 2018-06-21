@@ -1048,6 +1048,7 @@ paths:
     post:
       tags:
         - hsapi
+      summary: Move or rename a resource file or folder
       responses:
         '201':
           description: Created
