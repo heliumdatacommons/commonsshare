@@ -103,7 +103,10 @@ def store(request):
                               zone=settings.IRODS_ZONE, host=settings.IRODS_HOST,
                               authentication_scheme='openid', openid_provider='globus',
                               port=settings.IRODS_PORT)
-    datastore = str(request.POST['store'])
+    datastore = str(request.POST['store']).strip()
+    if datastore.endswith('/'):
+        datastore = datastore[:-1]
+
     coll_manager = CollectionManager(irods_sess)
     coll = coll_manager.get(datastore)
     store = search_ds(coll)
