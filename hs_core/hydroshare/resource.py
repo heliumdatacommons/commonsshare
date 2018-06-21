@@ -109,7 +109,10 @@ def get_resource_file(pk, filename):
     """
     resource = utils.get_resource_by_shortkey(pk)
     for f in ResourceFile.objects.filter(object_id=resource.id):
-        if os.path.basename(f.resource_file.name) == filename:
+        if f.reference_file_path:
+            if f.reference_file_path[1:] == filename:
+                return f
+        elif os.path.basename(f.resource_file.name) == filename:
             return f.resource_file
     raise ObjectDoesNotExist(filename)
 

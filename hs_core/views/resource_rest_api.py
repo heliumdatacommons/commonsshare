@@ -66,7 +66,10 @@ class ResourceToListItemMixin(object):
 class ResourceFileToListItemMixin(object):
     def resourceFileToListItem(self, f):
         site_url = hydroshare.utils.current_site_url()
-        url = site_url +'/django_irods/download/' + f.resource.short_id + f.short_path
+        if f.reference_file_path:
+            url = site_url + '/django_irods/download/' + f.resource.short_id + f.reference_file_path
+        else:
+            url = site_url +'/django_irods/download/' + f.short_path
 
         fsize = f.size
         # trailing slash confuses mime guesser

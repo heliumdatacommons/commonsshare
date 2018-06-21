@@ -3167,8 +3167,13 @@ class ResourceFile(ResourceFileIRODSMixin):
 
         """
         # must start with a / in order to concat with current_site_url.
-        return '/' + os.path.join('resource', self.resource.short_id,
-                                  'data', self.short_path)
+        # for a referecnce file must set the django download path manually since reference_file is not a resource_file
+        # and doesn't get the storage path set automatically by the model
+        # this is needed to resolve rest URL's which fetch reference files
+        if (self.reference_file_path):
+            return '/django_irods/download/' + os.path.join(self.resource.short_id, self.reference_file_path[1:])
+        else:
+            return '/' + os.path.join('resource', self.short_path)
 
     @property
     def irods_url(self):
