@@ -1603,6 +1603,7 @@ paths:
     get:
       tags:
         - hsapi
+      summary: Retrieve user list
       responses:
         '200':
           description: OK
@@ -1611,6 +1612,7 @@ paths:
     get:
       tags:
         - hsapi
+      summary: Retrieve userInfo list
       responses:
         '200':
           description: OK
