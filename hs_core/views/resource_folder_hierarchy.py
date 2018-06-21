@@ -106,9 +106,10 @@ def data_store_structure(request):
             if not f.resource_file and not f.fed_resource_file and f.reference_file_path:
                 files.append({'name': f.reference_file_path, 'size': f.reference_file_size,
                               'type': 'Reference',
-                              'pk': f.pk, 'url': '',
+                              'pk': f.pk,
                               'logical_type': '',
-                              'logical_file_id': ''})
+                              'logical_file_id': '',
+                              'url': f.url})
     except SessionException as ex:
         logger.error("session exception querying store_path {} for {}".format(store_path, res_id))
         return HttpResponse(ex.stderr, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -115,11 +115,6 @@ function updateSelectionMenuContext() {
         else {
             $("#fb-download-help").toggleClass("hidden", true);
         }
-        var type = selected.children(".fb-file-type").text();
-        if (type == 'Reference File') {
-            flagDisableDownload = true;
-            flagDisableGetLink = true;
-        }
     }
     else {                              // No files selected
         flagDisableCut = true;

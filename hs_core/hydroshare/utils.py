@@ -308,8 +308,9 @@ def get_resource_file_url(res_file):
         f_url = res_file.resource_file.url
     elif res_file.fed_resource_file:
         f_url = res_file.fed_resource_file.url
-    else:
-        f_url = ''
+    elif res_file.reference_file_path:
+        f_url = res_file.reference_file_path
+
     return f_url
 
 
