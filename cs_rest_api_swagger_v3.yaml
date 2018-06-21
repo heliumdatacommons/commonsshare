@@ -1238,6 +1238,8 @@ paths:
     post:
       tags:
         - hsapi
+      summary: Create resource custom science metadata
+      operationId: resource_scimeta_custom_create
       responses:
         '201':
           description: Created
@@ -1248,7 +1250,6 @@ paths:
           in: path
           schema:
             type: string
-      operationId: resource_scimeta_custom_create
   '/hsapi/resource/{id}/scimeta/elements/':
     get:
       description: |-
