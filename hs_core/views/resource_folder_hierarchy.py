@@ -210,6 +210,12 @@ def data_store_folder_zip(request, res_id=None):
 
 @api_view(['POST'])
 def data_store_folder_zip_public(request, pk):
+    """
+    Zip a folder in a resource
+    :param request:
+    :param pk:
+    :return:
+    """
     return data_store_folder_zip(request, res_id=pk)
 
 
@@ -470,6 +476,12 @@ def data_store_file_or_folder_move_or_rename(request, res_id=None):
 
 @api_view(['POST'])
 def data_store_file_or_folder_move_or_rename_public(request, pk):
+    """
+    Move or rename a resource file or folder
+    :param request:
+    :param pk:
+    :return:
+    """
     return data_store_file_or_folder_move_or_rename(request, res_id=pk)
 
 

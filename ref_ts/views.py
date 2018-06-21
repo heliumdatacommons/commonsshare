@@ -242,6 +242,14 @@ def download_refts_resource_bag(request, shortkey, *args, **kwargs):
 
 @api_view(['GET'])
 def rest_download_refts_resource_bag(request, shortkey, *args, **kwargs):
+    """
+    Download a reference time series resource bag
+    :param request:
+    :param shortkey:
+    :param args:
+    :param kwargs:
+    :return:
+    """
     tempdir = None
     _, authorized, _ = authorize(request, shortkey,
                                  needed_permission=ACTION_TO_AUTHORIZE.VIEW_RESOURCE,

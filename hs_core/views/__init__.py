@@ -247,6 +247,12 @@ def update_key_value_metadata(request, shortkey, *args, **kwargs):
 
 @api_view(['POST'])
 def update_key_value_metadata_public(request, pk):
+    """
+    Create resource custom science metadata
+    :param request:
+    :param pk:
+    :return:
+    """
     res, _, _ = authorize(request, pk, needed_permission=ACTION_TO_AUTHORIZE.EDIT_RESOURCE)
 
     post_data = request.data.copy()

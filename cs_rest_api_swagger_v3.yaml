@@ -1145,6 +1145,7 @@ paths:
     post:
       tags:
         - hsapi
+      summary: Zip a folder in a resource
       responses:
         '201':
           description: Created
@@ -1604,7 +1605,7 @@ paths:
     get:
       tags:
         - hsapi
-      summary: Retrieve user list
+      summary: Retrieve user info list
       responses:
         '200':
           description: OK
@@ -1613,7 +1614,7 @@ paths:
     get:
       tags:
         - hsapi
-      summary: Retrieve userInfo list
+      summary: Retrieve user info list
       responses:
         '200':
           description: OK
