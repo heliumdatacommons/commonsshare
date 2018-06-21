@@ -6,6 +6,11 @@ from theme.models import UserProfile
 
 class UserInfo(APIView):
     def get(self, request):
+        """
+        Retrieve user info list
+        :param request:
+        :return:
+        """
         if not request.user.is_authenticated():
             return Response({ "title": "None", "organization": "None"})
 

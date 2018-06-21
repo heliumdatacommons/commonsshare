@@ -247,6 +247,12 @@ def update_key_value_metadata(request, shortkey, *args, **kwargs):
 
 @api_view(['POST'])
 def update_key_value_metadata_public(request, pk):
+    """
+    Create resource custom science metadata
+    :param request:
+    :param pk:
+    :return:
+    """
     res, _, _ = authorize(request, pk, needed_permission=ACTION_TO_AUTHORIZE.EDIT_RESOURCE)
 
     post_data = request.data.copy()
@@ -580,6 +586,12 @@ def copy_resource(request, shortkey, *args, **kwargs):
 
 @api_view(['POST'])
 def copy_resource_public(request, pk):
+    """
+    Copy a resource
+    :param request:
+    :param pk:
+    :return:
+    """
     response = copy_resource(request, pk)
     return HttpResponse(response.url.split('/')[2], status=202)
 
@@ -631,6 +643,12 @@ def create_new_version_resource(request, shortkey, *args, **kwargs):
 
 @api_view(['POST'])
 def create_new_version_resource_public(request, pk):
+    """
+    Create a new version of the resource
+    :param request:
+    :param pk:
+    :return:
+    """
     redirect = create_new_version_resource(request, pk)
     return HttpResponse(redirect.url.split('/')[2], status=202)
 
@@ -675,6 +693,12 @@ def set_resource_flag(request, shortkey, *args, **kwargs):
 
 @api_view(['POST'])
 def set_resource_flag_public(request, pk):
+    """
+    Set resource flag
+    :param request:
+    :param pk:
+    :return:
+    """
     http_request = request._request
     http_request.data = request.data.copy()
     response = set_resource_flag(http_request, pk)
