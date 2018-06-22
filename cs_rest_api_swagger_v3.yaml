@@ -20,6 +20,7 @@ paths:
     get:
       tags:
         - django_irods
+      summary: Download a resource bag or file
       responses:
         '200':
           description: OK
