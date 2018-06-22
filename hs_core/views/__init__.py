@@ -250,7 +250,7 @@ def update_key_value_metadata_public(request, pk):
     """
     Create resource custom science metadata
     :param request:
-    :param pk:
+    :param pk: resource uuid
     :return:
     """
     res, _, _ = authorize(request, pk, needed_permission=ACTION_TO_AUTHORIZE.EDIT_RESOURCE)
@@ -478,7 +478,12 @@ def update_metadata_element(request, shortkey, element_name, element_id, *args, 
 
 @api_view(['GET'])
 def file_download_url_mapper(request, shortkey):
-    """ maps the file URIs in resourcemap document to django_irods download view function"""
+    """
+    maps the file URIs in resourcemap document to django_irods download view function
+    :param request:
+    :param shortkey: resource uuid
+    :return:
+    """
 
     resource, _, _ = authorize(request, shortkey, needed_permission=ACTION_TO_AUTHORIZE.VIEW_RESOURCE)
     istorage = resource.get_irods_storage()
@@ -589,7 +594,7 @@ def copy_resource_public(request, pk):
     """
     Copy a resource
     :param request:
-    :param pk:
+    :param pk: resource uuid
     :return:
     """
     response = copy_resource(request, pk)
@@ -646,7 +651,7 @@ def create_new_version_resource_public(request, pk):
     """
     Create a new version of the resource
     :param request:
-    :param pk:
+    :param pk: resource uuid
     :return:
     """
     redirect = create_new_version_resource(request, pk)
@@ -696,7 +701,7 @@ def set_resource_flag_public(request, pk):
     """
     Set resource flag
     :param request:
-    :param pk:
+    :param pk: resource uuid
     :return:
     """
     http_request = request._request

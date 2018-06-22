@@ -214,7 +214,7 @@ def data_store_folder_zip_public(request, pk):
     """
     Zip a folder in a resource
     :param request:
-    :param pk:
+    :param pk: resource uuid
     :return:
     """
     return data_store_folder_zip(request, res_id=pk)
@@ -296,8 +296,8 @@ def data_store_folder_unzip_public(request, pk, pathname):
     Public version of data_store_folder_unzip, incorporating path variables
 
     :param request:
-    :param pk:
-    :param pathname:
+    :param pk: resource uuid
+    :param pathname: path to the zip file to be unzipped
     :return HttpResponse:
     """
 
@@ -480,7 +480,7 @@ def data_store_file_or_folder_move_or_rename_public(request, pk):
     """
     Move or rename a resource file or folder
     :param request:
-    :param pk:
+    :param pk: resource uuid
     :return:
     """
     return data_store_file_or_folder_move_or_rename(request, res_id=pk)

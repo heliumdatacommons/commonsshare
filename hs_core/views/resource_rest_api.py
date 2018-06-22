@@ -228,12 +228,6 @@ class ResourceList(ResourceToListItemMixin, generics.ListAPIView):
         return serializers.ResourceListItemSerializer
 
 
-class CheckTaskStatus(generics.RetrieveAPIView):
-    def get(self, request, task_id):
-        url = reverse('rest_check_task_status', kwargs={'task_id': task_id})
-        return HttpResponseRedirect(url)
-
-
 class ResourceReadUpdateDelete(ResourceToListItemMixin, generics.RetrieveUpdateDestroyAPIView):
     """
     Read, update, or delete a resource
@@ -270,7 +264,11 @@ class ResourceReadUpdateDelete(ResourceToListItemMixin, generics.RetrieveUpdateD
     allowed_methods = ('GET', 'PUT', 'DELETE')
 
     def get(self, request, pk):
-        """ Get resource in zipped BagIt format
+        """
+        Get a resource in zipped BDBag format
+        :param request:
+        :param pk:
+        :return:
         """
         res, _, _ = view_utils.authorize(request, pk,
                                          needed_permission=ACTION_TO_AUTHORIZE.VIEW_RESOURCE)
@@ -286,10 +284,22 @@ class ResourceReadUpdateDelete(ResourceToListItemMixin, generics.RetrieveUpdateD
         return HttpResponseRedirect(bag_url)
 
     def put(self, request, pk):
+        """
+        Update a resource bag (to be implemented)
+        :param request:
+        :param pk:
+        :return:
+        """
         # TODO: update resource - involves overwriting a resource from the provided bag file
         raise NotImplementedError()
 
     def delete(self, request, pk):
+        """
+        Delete a resource
+        :param request:
+        :param pk:
+        :return:
+        """
         # only resource owners are allowed to delete
         view_utils.authorize(request, pk, needed_permission=ACTION_TO_AUTHORIZE.DELETE_RESOURCE)
         hydroshare.delete_resource(pk)
@@ -437,6 +447,11 @@ class ResourceListCreate(ResourceToListItemMixin, generics.ListCreateAPIView):
     #     return serializers.ResourceCreateRequestValidator
 
     def post(self, request):
+        """
+        Create a new resource
+        :param request:
+        :return:
+        """
         return self.create(request)
 
     # Override the create() method from the CreateAPIView class
@@ -526,6 +541,11 @@ class ResourceListCreate(ResourceToListItemMixin, generics.ListCreateAPIView):
     pagination_class = PageNumberPagination
 
     def get(self, request):
+        """
+         List existing resources
+        :param request:
+        :return:
+        """
         return self.list(request)
 
     # needed for list of resources
@@ -622,8 +642,13 @@ class AccessRulesUpdate(APIView):
     allowed_methods = ('PUT',)
 
     def put(self, request, pk):
-        """ Update access rules
         """
+        Update access rules for a resource
+        :param request:
+        :param pk: resource uuid
+        :return:
+        """
+
         # only resource owners are allowed to change resource flags (e.g., public)
         view_utils.authorize(request, pk, needed_permission=ACTION_TO_AUTHORIZE.SET_RESOURCE_FLAG)
 
@@ -872,6 +897,13 @@ class ResourceFileCRUD(APIView):
         return request
 
     def get(self, request, pk, pathname):
+        """
+        Retrieve a resource file
+        :param request:
+        :param pk:
+        :param pathname:
+        :return:
+        """
         resource, _, _ = view_utils.authorize(
                 request, pk,
                 needed_permission=ACTION_TO_AUTHORIZE.VIEW_RESOURCE)
@@ -952,6 +984,13 @@ class ResourceFileCRUD(APIView):
         return Response(data=response_data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, pk, pathname):
+        """
+        Delete a resource file
+        :param request:
+        :param pk:
+        :param pathname:
+        :return:
+        """
         resource, _, user = view_utils.authorize(
             request, pk, needed_permission=ACTION_TO_AUTHORIZE.EDIT_RESOURCE)
 
@@ -972,11 +1011,6 @@ class ResourceFileCRUD(APIView):
         response_data = {'resource_id': pk, 'file_name': pathname}
         resource_modified(resource, request.user, overwrite_bag=False)
         return Response(data=response_data, status=status.HTTP_200_OK)
-
-    def put(self, request, pk, pathname):
-        # TODO: (Brian) Currently we do not have this action for the front end. Will implement
-        # in the next iteration. Implement only after we have a decision on when to validate a file
-        raise NotImplementedError()
 
 
 class ResourceFileListCreate(ResourceFileToListItemMixin, generics.ListCreateAPIView):

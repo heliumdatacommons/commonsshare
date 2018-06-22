@@ -143,7 +143,7 @@ class CoreMetaDataSerializer(serializers.Serializer):
 
 class MetadataElementsRetrieveUpdate(generics.RetrieveUpdateDestroyAPIView):
     """
-    Retrieve resource science (Dublin Core) metadata
+    Retrieve or update resource science (Dublin Core) metadata
 
     REST URL: /hsapi/resource/{pk}/scimeta/elements/
     HTTP method: GET
@@ -180,12 +180,24 @@ class MetadataElementsRetrieveUpdate(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CoreMetaDataSerializer
 
     def get(self, request, pk):
+        """
+        Retrieve resource science (Dublin Core) metadata
+        :param request:
+        :param pk:
+        :return:
+        """
         view_utils.authorize(request, pk, needed_permission=ACTION_TO_AUTHORIZE.VIEW_METADATA)
         resource = hydroshare.get_resource_by_shortkey(shortkey=pk)
         serializer = resource.metadata.serializer
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, pk):
+        """
+        Update resource science (Dublin Core) metadata
+        :param request:
+        :param pk:
+        :return:
+        """
         # Update science metadata
         resource, _, _ = view_utils.authorize(
             request, pk,
