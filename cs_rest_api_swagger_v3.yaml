@@ -20,7 +20,6 @@ paths:
     get:
       tags:
         - django_irods
-      summary: Download a resource bag or file
       responses:
         '200':
           description: OK
@@ -112,12 +111,13 @@ paths:
           description: Created
   '/hsapi/_internal/{shortkey}/rest-download-refts-resource-bag/':
     get:
-      tags:
-        - hsapi
-      summary: Download a reference time series resource bag
-      responses:
-        '200':
-          description: OK
+      description: |-
+        Download a reference time series resource bag
+        :param request:
+        :param shortkey: resource uuid
+        :param args:
+        :param kwargs:
+        :return:
       parameters:
         - description: ''
           required: true
@@ -125,7 +125,13 @@ paths:
           in: path
           schema:
             type: string
+      tags:
+        - hsapi
+      summary: Download a reference time series resource bag
       operationId: _internal_rest-download-refts-resource-bag_list
+      responses:
+        '200':
+          description: OK
   /hsapi/dictionary/universities/:
     get:
       description: |-
@@ -140,65 +146,10 @@ paths:
           description: OK
   /hsapi/resource/:
     get:
-      description: >-
-        Create a new resource or list existing resources
-
-
-        REST URL: hsapi/resource/
-
-        HTTP method: POST
-
-
-        Request data payload parameters:
-
-        :type   resource_type: str
-
-        :type   title: str
-
-        :type   subject: str
-
-        :type   edit_users: str
-
-        :type   edit_groups: str
-
-        :type   view_users: str
-
-        :type   view_groups: str
-
-        :param  resource_type: resource type name
-
-        :param  title: (optional) title of the resource (default value:
-        'Untitled resource')
-
-        :param  edit_users: (optional) list of comma separated usernames that
-        should have edit
-
-        permission for the resource
-
-        :param  edit_groups: (optional) list of comma separated group names that
-        should have edit
-
-        permission for the resource
-
-        :param  view_users: (optional) list of comma separated usernames that
-        should have view
-
-        permission for the resource
-
-        :param  view_groups: (optional) list of comma separated group names that
-        should have view
-
-        permission for the resource
-
-        :param  metadata: (optional) data for any valid metadata element
-        including resource specific
-
-        metadata elements can be passed as json string:
-
-        example (passing data for the 'Coverage' element):
-
-        [{'coverage':{'type': 'period', 'start': '01/01/2000', 'end':
-        '12/12/2010'}}, ...]
+      description: |-
+        List existing resources
+        :param request:
+        :return:
       parameters:
         - description: A page number within the paginated result set.
           required: false
@@ -208,74 +159,19 @@ paths:
             type: integer
       tags:
         - hsapi
-      summary: Create a new resource or list existing resources
+      summary: List existing resources
       operationId: resource_list
       responses:
         '200':
           description: OK
     post:
-      description: >-
-        Create a new resource or list existing resources
-
-
-        REST URL: hsapi/resource/
-
-        HTTP method: POST
-
-
-        Request data payload parameters:
-
-        :type   resource_type: str
-
-        :type   title: str
-
-        :type   subject: str
-
-        :type   edit_users: str
-
-        :type   edit_groups: str
-
-        :type   view_users: str
-
-        :type   view_groups: str
-
-        :param  resource_type: resource type name
-
-        :param  title: (optional) title of the resource (default value:
-        'Untitled resource')
-
-        :param  edit_users: (optional) list of comma separated usernames that
-        should have edit
-
-        permission for the resource
-
-        :param  edit_groups: (optional) list of comma separated group names that
-        should have edit
-
-        permission for the resource
-
-        :param  view_users: (optional) list of comma separated usernames that
-        should have view
-
-        permission for the resource
-
-        :param  view_groups: (optional) list of comma separated group names that
-        should have view
-
-        permission for the resource
-
-        :param  metadata: (optional) data for any valid metadata element
-        including resource specific
-
-        metadata elements can be passed as json string:
-
-        example (passing data for the 'Coverage' element):
-
-        [{'coverage':{'type': 'period', 'start': '01/01/2000', 'end':
-        '12/12/2010'}}, ...]
+      description: |-
+        Create a new resource
+        :param request:
+        :return:
       tags:
         - hsapi
-      summary: Create a new resource or list existing resources
+      summary: Create a new resource
       operationId: resource_create
       responses:
         '201':
@@ -284,7 +180,11 @@ paths:
         $ref: '#/components/requestBodies/resource_createData'
   '/hsapi/resource/accessRules/{id}/':
     put:
-      description: Update access rules
+      description: |-
+        Update access rules for a resource
+        :param request:
+        :param pk: resource uuid
+        :return:
       parameters:
         - description: ''
           required: true
@@ -294,7 +194,7 @@ paths:
             type: string
       tags:
         - hsapi
-      summary: Update access rules
+      summary: Update access rules for a resource
       operationId: resource_accessRules_update
       responses:
         '200':
@@ -389,7 +289,11 @@ paths:
           description: OK
   '/hsapi/resource/{id}/':
     get:
-      description: Get resource in zipped BagIt format
+      description: |-
+        Get a resource in zipped BDBag format
+        :param request:
+        :param pk:
+        :return:
       parameters:
         - description: ''
           required: true
@@ -399,46 +303,17 @@ paths:
             type: string
       tags:
         - hsapi
-      summary: Get resource in zipped BagIt format
+      summary: Get a resource in zipped BDBag format
       operationId: resource_read
       responses:
         '200':
           description: OK
     put:
-      description: >-
-        Read, update, or delete a resource
-
-
-        REST URL: hsapi/resource/{pk}
-
-        HTTP method: GET
-
-        :return: (on success): The resource in zipped BagIt format.
-
-
-        REST URL: hsapi/resource/{pk}
-
-        HTTP method: DELETE
-
-        :return: (on success): JSON string of the format: {'resource_id':pk}
-
-
-        REST URL: hsapi/resource/{pk}
-
-        HTTP method: PUT
-
-        :return: (on success): JSON string of the format: {'resource_id':pk}
-
-
-        :type   str
-
-        :param  pk: resource id
-
-        :rtype:  JSON string for http methods DELETE and PUT, and resource file
-        data bytes for GET
-
-
-        :raises:
+      description: |-
+        Update a resource bag (to be implemented)
+        :param request:
+        :param pk:
+        :return:
       parameters:
         - description: ''
           required: true
@@ -448,7 +323,7 @@ paths:
             type: string
       tags:
         - hsapi
-      summary: 'Read, update, or delete a resource'
+      summary: Update a resource bag (to be implemented)
       operationId: resource_update
       responses:
         '200':
@@ -456,40 +331,11 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/resource_createData'
     delete:
-      description: >-
-        Read, update, or delete a resource
-
-
-        REST URL: hsapi/resource/{pk}
-
-        HTTP method: GET
-
-        :return: (on success): The resource in zipped BagIt format.
-
-
-        REST URL: hsapi/resource/{pk}
-
-        HTTP method: DELETE
-
-        :return: (on success): JSON string of the format: {'resource_id':pk}
-
-
-        REST URL: hsapi/resource/{pk}
-
-        HTTP method: PUT
-
-        :return: (on success): JSON string of the format: {'resource_id':pk}
-
-
-        :type   str
-
-        :param  pk: resource id
-
-        :rtype:  JSON string for http methods DELETE and PUT, and resource file
-        data bytes for GET
-
-
-        :raises:
+      description: |-
+        Delete a resource
+        :param request:
+        :param pk:
+        :return:
       parameters:
         - description: ''
           required: true
@@ -499,61 +345,18 @@ paths:
             type: string
       tags:
         - hsapi
-      summary: 'Read, update, or delete a resource'
+      summary: Delete a resource
       operationId: resource_delete
       responses:
         '204':
           description: No Content
   '/hsapi/resource/{id}/access/':
     get:
-      description: >-
-        Read, update, or delete access permission for a resource
-
-
-        REST URL: hsapi/resource/{pk}/access
-
-        HTTP method: GET
-
-        :return: (on success): JSON representation of resource access with
-        'groups' and 'users' keys.
-
-
-        REST URL: hsapi/resource/{pk}/access?(user_id=#|group_id=#)
-
-        HTTP method: DELETE
-
-
-        :type int
-
-        :param user_id: user ID to remove
-
-        :type int
-
-        :param group_id: group ID to remove
-
-        :return: (on success): Success or Error JSON object
-
-
-        REST URL: hsapi/resource/{pk}/access
-
-        HTTP method: PUT
-
-        :return: (on success): Success or Error JSON object
-
-
-        :type int
-
-        :param user_id: user ID to remove
-
-        :type int
-
-        :param group_id: group ID to remove
-
-        :type PrivilegeCode int
-
-        :param privilege: PrivilegeCode to specifiy access level
-
-        :return: (on success): Success or Error JSON objectit
+      description: |-
+        Retrieve access permission for a resource
+        :param request:
+        :param pk: resource uuid
+        :return:
       parameters:
         - description: ''
           required: true
@@ -569,60 +372,17 @@ paths:
             type: integer
       tags:
         - hsapi
-      summary: 'Read, update, or delete access permission for a resource'
+      summary: Retrieve access permission for a resource
       operationId: resource_access_list
       responses:
         '200':
           description: OK
     put:
-      description: >-
-        Read, update, or delete access permission for a resource
-
-
-        REST URL: hsapi/resource/{pk}/access
-
-        HTTP method: GET
-
-        :return: (on success): JSON representation of resource access with
-        'groups' and 'users' keys.
-
-
-        REST URL: hsapi/resource/{pk}/access?(user_id=#|group_id=#)
-
-        HTTP method: DELETE
-
-
-        :type int
-
-        :param user_id: user ID to remove
-
-        :type int
-
-        :param group_id: group ID to remove
-
-        :return: (on success): Success or Error JSON object
-
-
-        REST URL: hsapi/resource/{pk}/access
-
-        HTTP method: PUT
-
-        :return: (on success): Success or Error JSON object
-
-
-        :type int
-
-        :param user_id: user ID to remove
-
-        :type int
-
-        :param group_id: group ID to remove
-
-        :type PrivilegeCode int
-
-        :param privilege: PrivilegeCode to specifiy access level
-
-        :return: (on success): Success or Error JSON objectit
+      description: |-
+        Update access permission for a resource
+        :param request:
+        :param pk: resource uuid
+        :return:
       parameters:
         - description: ''
           required: true
@@ -632,7 +392,7 @@ paths:
             type: string
       tags:
         - hsapi
-      summary: 'Read, update, or delete access permission for a resource'
+      summary: Update access permission for a resource
       operationId: resource_access_update
       responses:
         '200':
@@ -649,54 +409,11 @@ paths:
                   type: string
                   description: ''
     delete:
-      description: >-
-        Read, update, or delete access permission for a resource
-
-
-        REST URL: hsapi/resource/{pk}/access
-
-        HTTP method: GET
-
-        :return: (on success): JSON representation of resource access with
-        'groups' and 'users' keys.
-
-
-        REST URL: hsapi/resource/{pk}/access?(user_id=#|group_id=#)
-
-        HTTP method: DELETE
-
-
-        :type int
-
-        :param user_id: user ID to remove
-
-        :type int
-
-        :param group_id: group ID to remove
-
-        :return: (on success): Success or Error JSON object
-
-
-        REST URL: hsapi/resource/{pk}/access
-
-        HTTP method: PUT
-
-        :return: (on success): Success or Error JSON object
-
-
-        :type int
-
-        :param user_id: user ID to remove
-
-        :type int
-
-        :param group_id: group ID to remove
-
-        :type PrivilegeCode int
-
-        :param privilege: PrivilegeCode to specifiy access level
-
-        :return: (on success): Success or Error JSON objectit
+      description: |-
+        Delete access permission for a resource
+        :param request:
+        :param pk: resource uuid
+        :return:
       parameters:
         - description: ''
           required: true
@@ -706,19 +423,18 @@ paths:
             type: string
       tags:
         - hsapi
-      summary: 'Read, update, or delete access permission for a resource'
+      summary: Delete access permission for a resource
       operationId: resource_access_delete
       responses:
         '204':
           description: No Content
   '/hsapi/resource/{id}/copy/':
     post:
-      tags:
-        - hsapi
-      summary: Copy a resource
-      responses:
-        '201':
-          description: Created
+      description: |-
+        Copy a resource
+        :param request:
+        :param pk: resource uuid
+        :return:
       parameters:
         - description: ''
           required: true
@@ -726,7 +442,13 @@ paths:
           in: path
           schema:
             type: string
+      tags:
+        - hsapi
+      summary: Copy a resource
       operationId: resource_copy_create
+      responses:
+        '201':
+          description: Created
   '/hsapi/resource/{id}/file_list/':
     get:
       description: |-
@@ -823,19 +545,11 @@ paths:
   '/hsapi/resource/{id}/files/{pathname}/':
     get:
       description: |-
-        Retrieve, add, update or delete a resource file
-
-        REST URL: hsapi/resource/{pk}/files/{filename}
-        HTTP method: GET
-
-        :type pk: str
-        :type filename: str
-        :param pk: resource id
-        :param filename: name of the file to retrieve/download
-        :return: resource file data
-        :rtype: file data bytes
-
-        REST URL: POST hsapi/resource/{pk}/files/
+        Retrieve a resource file
+        :param request:
+        :param pk:
+        :param pathname:
+        :return:
       parameters:
         - description: ''
           required: true
@@ -851,7 +565,7 @@ paths:
             type: string
       tags:
         - hsapi
-      summary: 'Retrieve, add, update or delete a resource file'
+      summary: Retrieve a resource file
       operationId: resource_files_read
       responses:
         '200':
@@ -931,19 +645,11 @@ paths:
           description: OK
     delete:
       description: |-
-        Retrieve, add, update or delete a resource file
-
-        REST URL: hsapi/resource/{pk}/files/{filename}
-        HTTP method: GET
-
-        :type pk: str
-        :type filename: str
-        :param pk: resource id
-        :param filename: name of the file to retrieve/download
-        :return: resource file data
-        :rtype: file data bytes
-
-        REST URL: POST hsapi/resource/{pk}/files/
+        Delete a resource file
+        :param request:
+        :param pk:
+        :param pathname:
+        :return:
       parameters:
         - description: ''
           required: true
@@ -959,19 +665,18 @@ paths:
             type: string
       tags:
         - hsapi
-      summary: 'Retrieve, add, update or delete a resource file'
+      summary: Delete a resource file
       operationId: resource_files_delete
       responses:
         '204':
           description: No Content
   '/hsapi/resource/{id}/flag/':
     post:
-      tags:
-        - hsapi
-      summary: Set resource flag
-      responses:
-        '201':
-          description: Created
+      description: |-
+        Set resource flag
+        :param request:
+        :param pk: resource uuid
+        :return:
       parameters:
         - description: ''
           required: true
@@ -979,7 +684,13 @@ paths:
           in: path
           schema:
             type: string
+      tags:
+        - hsapi
+      summary: Set resource flag
       operationId: resource_flag_create
+      responses:
+        '201':
+          description: Created
   '/hsapi/resource/{id}/folders/{pathname}/':
     get:
       description: list a given folder
@@ -1049,12 +760,11 @@ paths:
           description: No Content
   '/hsapi/resource/{id}/functions/move-or-rename/':
     post:
-      tags:
-        - hsapi
-      summary: Move or rename a resource file or folder
-      responses:
-        '201':
-          description: Created
+      description: |-
+        Move or rename a resource file or folder
+        :param request:
+        :param pk: resource uuid
+        :return:
       parameters:
         - description: ''
           required: true
@@ -1062,7 +772,13 @@ paths:
           in: path
           schema:
             type: string
+      tags:
+        - hsapi
+      summary: Move or rename a resource file or folder
       operationId: resource_functions_move-or-rename_create
+      responses:
+        '201':
+          description: Created
   '/hsapi/resource/{id}/functions/set-file-type/{file_path}/{hs_file_type}/':
     post:
       description: >-
@@ -1121,8 +837,8 @@ paths:
         Public version of data_store_folder_unzip, incorporating path variables
 
         :param request:
-        :param pk:
-        :param pathname:
+        :param pk: resource uuid
+        :param pathname: path to the zip file to be unzipped
         :return HttpResponse:
       parameters:
         - description: ''
@@ -1146,12 +862,11 @@ paths:
           description: Created
   '/hsapi/resource/{id}/functions/zip/':
     post:
-      tags:
-        - hsapi
-      summary: Zip a folder in a resource
-      responses:
-        '201':
-          description: Created
+      description: |-
+        Zip a folder in a resource
+        :param request:
+        :param pk: resource uuid
+        :return:
       parameters:
         - description: ''
           required: true
@@ -1159,7 +874,13 @@ paths:
           in: path
           schema:
             type: string
+      tags:
+        - hsapi
+      summary: Zip a folder in a resource
       operationId: resource_functions_zip_create
+      responses:
+        '201':
+          description: Created
   '/hsapi/resource/{id}/map/':
     get:
       description: |-
@@ -1191,15 +912,9 @@ paths:
     get:
       description: |-
         Retrieve resource science metadata
-
-        REST URL: hsapi/scimeta/{pk}
-        HTTP method: GET
-
-        :type pk: str
-        :param pk: id of the resource
-        :return: science metadata as XML document
-        :rtype: str
-        :raises:
+        :param request:
+        :param pk:
+        :return:
       parameters:
         - description: ''
           required: true
@@ -1217,15 +932,9 @@ paths:
     put:
       description: |-
         Update resource science metadata based on resourcemetadata.xml uploaded
-
-        REST URL: hsapi/scimeta/{pk}
-        HTTP method: GET
-
-        :type pk: str
-        :param pk: id of the resource
-        :return: science metadata as XML document
-        :rtype: str
-        :raises:
+        :param request:
+        :param pk:
+        :return:
       parameters:
         - description: ''
           required: true
@@ -1235,13 +944,25 @@ paths:
             type: string
       tags:
         - hsapi
-      summary: Update science metadata based on resourcemetadata.xml uploaded
+      summary: Update resource science metadata based on resourcemetadata.xml uploaded
       operationId: resource_scimeta_update
       responses:
         '200':
           description: OK
   '/hsapi/resource/{id}/scimeta/custom/':
     post:
+      description: |-
+        Create resource custom science metadata
+        :param request:
+        :param pk: resource uuid
+        :return:
+      parameters:
+        - description: ''
+          required: true
+          name: id
+          in: path
+          schema:
+            type: string
       tags:
         - hsapi
       summary: Create resource custom science metadata
@@ -1249,26 +970,13 @@ paths:
       responses:
         '201':
           description: Created
-      parameters:
-        - description: ''
-          required: true
-          name: id
-          in: path
-          schema:
-            type: string
   '/hsapi/resource/{id}/scimeta/elements/':
     get:
       description: |-
         Retrieve resource science (Dublin Core) metadata
-
-        REST URL: /hsapi/resource/{pk}/scimeta/elements/
-        HTTP method: GET
-
-        :type pk: str
-        :param pk: id of the resource
-        :return: resource science metadata as JSON document
-        :rtype: str
-        :raises:
+        :param request:
+        :param pk:
+        :return:
       parameters:
         - description: ''
           required: true
@@ -1291,16 +999,10 @@ paths:
           description: OK
     put:
       description: |-
-        Retrieve resource science (Dublin Core) metadata
-
-        REST URL: /hsapi/resource/{pk}/scimeta/elements/
-        HTTP method: GET
-
-        :type pk: str
-        :param pk: id of the resource
-        :return: resource science metadata as JSON document
-        :rtype: str
-        :raises:
+        Update resource science (Dublin Core) metadata
+        :param request:
+        :param pk:
+        :return:
       parameters:
         - description: ''
           required: true
@@ -1310,7 +1012,7 @@ paths:
             type: string
       tags:
         - hsapi
-      summary: Retrieve resource science (Dublin Core) metadata
+      summary: Update resource science (Dublin Core) metadata
       operationId: resource_scimeta_elements_update
       responses:
         '200':
@@ -1412,12 +1114,11 @@ paths:
           description: OK
   '/hsapi/resource/{id}/version/':
     post:
-      tags:
-        - hsapi
-      summary: Create a new version of the resource
-      responses:
-        '201':
-          description: Created
+      description: |-
+        Create a new version of the resource
+        :param request:
+        :param pk: resource uuid
+        :return:
       parameters:
         - description: ''
           required: true
@@ -1425,7 +1126,13 @@ paths:
           in: path
           schema:
             type: string
+      tags:
+        - hsapi
+      summary: Create a new version of the resource
       operationId: resource_version_create
+      responses:
+        '201':
+          description: Created
   /hsapi/resourceList/:
     get:
       description: Get a list of resources based on the following filter query parameters
@@ -1535,15 +1242,9 @@ paths:
     get:
       description: |-
         Retrieve resource science metadata
-
-        REST URL: hsapi/scimeta/{pk}
-        HTTP method: GET
-
-        :type pk: str
-        :param pk: id of the resource
-        :return: science metadata as XML document
-        :rtype: str
-        :raises:
+        :param request:
+        :param pk:
+        :return:
       parameters:
         - description: ''
           required: true
@@ -1560,16 +1261,10 @@ paths:
           description: OK
     put:
       description: |-
-        Update resource science metadata
-
-        REST URL: hsapi/scimeta/{pk}
-        HTTP method: GET
-
-        :type pk: str
-        :param pk: id of the resource
-        :return: science metadata as XML document
-        :rtype: str
-        :raises:
+        Update resource science metadata based on resourcemetadata.xml uploaded
+        :param request:
+        :param pk:
+        :return:
       parameters:
         - description: ''
           required: true
@@ -1579,7 +1274,7 @@ paths:
             type: string
       tags:
         - hsapi
-      summary: Update resource science metadata
+      summary: Update resource science metadata based on resourcemetadata.xml uploaded
       operationId: scimeta_update
       responses:
         '200':
@@ -1607,27 +1302,41 @@ paths:
           description: OK
   /hsapi/user/:
     get:
+      description: |-
+        Retrieve user info list
+        :param request:
+        :return:
       tags:
         - hsapi
       summary: Retrieve user info list
+      operationId: user_list
       responses:
         '200':
           description: OK
-      operationId: user_list
   /hsapi/userInfo/:
     get:
+      description: |-
+        Retrieve user info list
+        :param request:
+        :return:
       tags:
         - hsapi
       summary: Retrieve user info list
+      operationId: userInfo_list
       responses:
         '200':
           description: OK
-      operationId: userInfo_list
   '/resource/{shortkey}/data/{var}/':
     get:
       description: >-
         maps the file URIs in resourcemap document to django_irods download view
         function
+
+        :param request:
+
+        :param shortkey: resource uuid
+
+        :return:
       parameters:
         - description: ''
           required: true
