@@ -67,6 +67,12 @@ class ResourceAccessUpdateDelete(generics.RetrieveUpdateDestroyAPIView):
     allowed_methods = ('GET', 'PUT', 'DELETE')
 
     def get(self, request, pk):
+        """
+        Retrieve access permission for a resource
+        :param request:
+        :param pk: resource uuid
+        :return:
+        """
         view_utils.authorize(request, pk,
                              needed_permission=ACTION_TO_AUTHORIZE.VIEW_RESOURCE_ACCESS)
 
@@ -82,6 +88,12 @@ class ResourceAccessUpdateDelete(generics.RetrieveUpdateDestroyAPIView):
         return Response(data=response_data, status=status.HTTP_200_OK)
 
     def put(self, request, pk):
+        """
+        Update access permission for a resource
+        :param request:
+        :param pk: resource uuid
+        :return:
+        """
         view_utils.authorize(request, pk,
                              needed_permission=ACTION_TO_AUTHORIZE.EDIT_RESOURCE_ACCESS)
         user_access = UserAccess(user=request.user)
@@ -138,6 +150,12 @@ class ResourceAccessUpdateDelete(generics.RetrieveUpdateDestroyAPIView):
         )
 
     def delete(self, request, pk):
+        """
+        Delete access permission for a resource
+        :param request:
+        :param pk: resource uuid
+        :return:
+        """
         view_utils.authorize(request, pk,
                              needed_permission=ACTION_TO_AUTHORIZE.EDIT_RESOURCE_ACCESS)
         keys = request.query_params.keys()

@@ -245,7 +245,7 @@ def rest_download_refts_resource_bag(request, shortkey, *args, **kwargs):
     """
     Download a reference time series resource bag
     :param request:
-    :param shortkey:
+    :param shortkey: resource uuid
     :param args:
     :param kwargs:
     :return:
