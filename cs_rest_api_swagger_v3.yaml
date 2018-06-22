@@ -4,7 +4,7 @@ servers:
 info:
   title: CommonsShare API
   description: A web interface and web service API for sharing data and running workflows on data in a cloud-agnostic environment.
-  version: 0.1.0
+  version: 0.1.1
   termsOfService: https://beta.commonsshare.org/terms-of-use/
   contact:
     name: Hong Yi
