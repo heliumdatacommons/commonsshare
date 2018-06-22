@@ -643,7 +643,7 @@ class AccessRulesUpdate(APIView):
 
 class ScienceMetadataRetrieveUpdate(APIView):
     """
-    Retrieve resource science metadata
+    Retrieve or update resource science metadata
 
     REST URL: hsapi/scimeta/{pk}
     HTTP method: GET
@@ -678,13 +678,24 @@ class ScienceMetadataRetrieveUpdate(APIView):
     allowed_methods = ('GET', 'PUT')
 
     def get(self, request, pk):
+        """
+        Retrieve resource science metadata
+        :param request:
+        :param pk:
+        :return:
+        """
         view_utils.authorize(request, pk, needed_permission=ACTION_TO_AUTHORIZE.VIEW_METADATA)
 
         scimeta_url = hydroshare.utils.current_site_url() + AbstractResource.scimeta_url(pk)
         return redirect(scimeta_url)
 
     def put(self, request, pk):
-        # Update science metadata based on resourcemetadata.xml uploaded
+        """
+        Update resource science metadata based on resourcemetadata.xml uploaded
+        :param request:
+        :param pk:
+        :return:
+        """
         resource, authorized, user = view_utils.authorize(
             request, pk,
             needed_permission=ACTION_TO_AUTHORIZE.EDIT_RESOURCE,

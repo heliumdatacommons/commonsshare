@@ -1216,7 +1216,7 @@ paths:
           description: OK
     put:
       description: |-
-        Retrieve resource science metadata
+        Update resource science metadata based on resourcemetadata.xml uploaded
 
         REST URL: hsapi/scimeta/{pk}
         HTTP method: GET
@@ -1235,7 +1235,7 @@ paths:
             type: string
       tags:
         - hsapi
-      summary: Retrieve resource science metadata
+      summary: Update science metadata based on resourcemetadata.xml uploaded
       operationId: resource_scimeta_update
       responses:
         '200':
@@ -1560,7 +1560,7 @@ paths:
           description: OK
     put:
       description: |-
-        Retrieve resource science metadata
+        Update resource science metadata
 
         REST URL: hsapi/scimeta/{pk}
         HTTP method: GET
@@ -1579,7 +1579,7 @@ paths:
             type: string
       tags:
         - hsapi
-      summary: Retrieve resource science metadata
+      summary: Update resource science metadata
       operationId: scimeta_update
       responses:
         '200':
