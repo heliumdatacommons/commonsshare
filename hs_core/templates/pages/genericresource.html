@@ -553,7 +553,7 @@
                 <div class="tab-elements">
                     <div class="panel-tabs">
                         <ul class="nav nav-tabs">
-                            {% if not is_resource_specific_tab_active %}
+                            {% if not is_resource_specific_tab_active and page.get_content_model.extra_metadata.items|length <= 0%}
                                 <li class="active col-xs-2 col-md-2">
                             {% else %}
                                <li class="col-xs-2 col-md-2">
@@ -599,7 +599,12 @@
                                 </li>
                             {% endif %}
                             {% if metadata_form or page.get_content_model.extra_metadata.items|length > 0 %}
-                                <li class="col-xs-2 col-md-2">
+                                {% if page.get_content_model.extra_metadata.items|length > 0 %}
+                                    <li class="active col-xs-2 col-md-2">
+                                {% else %}
+                                    <li class="col-xs-2 col-md-2">
+                                {% endif %}
+
                                     <a href="#extraMetaTab" data-toggle="tab" title="Extended Metadata">
                                         <span class="glyphicon glyphicon-paperclip"> </span>
                                         &nbspExtended Metadata
@@ -628,7 +633,7 @@
                         <!-- Tab panes -->
                         <div class="tab-content">
                             <!-- ========= CONTACT TAB ========= -->
-                            <div {% if not is_resource_specific_tab_active %}class="tab-pane active"
+                            <div {% if not is_resource_specific_tab_active and page.get_content_model.extra_metadata.items|length <= 0 %}class="tab-pane active"
                                  {% else %} class="tab-pane"{% endif %} id="contactTab">
                                 {% if not metadata_form %}
                                     <h4>Authors </h4>
@@ -1073,7 +1078,8 @@
 
                             <!-- ========= EXTRA METADATA TAB ========= -->
                             {% if metadata_form or page.get_content_model.extra_metadata.items|length > 0 %}
-                                <div class="tab-pane" id="extraMetaTab">
+
+                                <div class="{% if page.get_content_model.extra_metadata.items|length <= 0 %}tab-pane{% else %}tab-pane active{% endif %}" id="extraMetaTab">
                                     {% if metadata_form %}
                                         <a id="btn-add-new-entry" type="button" class="btn btn-success">
                                             <i class="fa fa-plus"></i> Add New Entry
