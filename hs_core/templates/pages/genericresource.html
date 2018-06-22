@@ -599,7 +599,7 @@
                                 </li>
                             {% endif %}
                             {% if metadata_form or page.get_content_model.extra_metadata.items|length > 0 %}
-                                {% if not metadata_form %}
+                                {% if page.get_content_model.extra_metadata.items|length > 0 %}
                                     <li class="active col-xs-2 col-md-2">
                                 {% else %}
                                     <li class="col-xs-2 col-md-2">
