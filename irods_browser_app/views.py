@@ -3,9 +3,8 @@ import os
 import string
 import requests
 
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.conf import settings
-from django.template.response import TemplateResponse
 from django.contrib.auth.decorators import login_required
 
 from rest_framework import status
@@ -106,9 +105,13 @@ def store(request):
     datastore = str(request.POST['store']).strip()
     if datastore.endswith('/'):
         datastore = datastore[:-1]
+    try:
+        coll_manager = CollectionManager(irods_sess)
+        coll = coll_manager.get(datastore)
+    except Exception as ex:
+        res = JsonResponse({'error': ex.strerror}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return res
 
-    coll_manager = CollectionManager(irods_sess)
-    coll = coll_manager.get(datastore)
     store = search_ds(coll)
 
     return_object['files'] = store['files']
