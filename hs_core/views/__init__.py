@@ -144,8 +144,8 @@ def add_files_to_resource(request, shortkey, *args, **kwargs):
     if file_folder is not None:
         if file_folder == "data":
             file_folder = None
-        elif file_folder.startswith("data"):
-            file_folder = file_folder[len("data"):]
+        elif file_folder.startswith("data/"):
+            file_folder = file_folder[len("data/"):]
 
     try:
         utils.resource_file_add_pre_process(resource=resource, files=res_files, user=request.user,

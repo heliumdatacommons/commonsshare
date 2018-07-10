@@ -126,7 +126,7 @@ function get_store(store, parent, margin) {
             },
 
             error: function (xhr, errmsg, err) {
-                console.log(xhr.status + ": " + xhr.responseText + ". Error message: " + errmsg);
+                console.log(xhr.status + ": " + xhr.responseText);
                 return false;
             }
         });
