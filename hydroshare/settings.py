@@ -298,6 +298,7 @@ INSTALLED_APPS = (
     "widget_tweaks",
     "hs_sitemap",
     "hs_collection_resource",
+    "hs_tools_resource",
     "hs_tracking",
     "hs_file_types",
     "hs_rest_api",
