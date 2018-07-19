@@ -2,6 +2,7 @@ import os
 import hashlib
 import json
 import shutil
+import logging
 
 from uuid import uuid4
 from mezzanine.conf import settings
@@ -9,6 +10,11 @@ from mezzanine.conf import settings
 from hs_core.models import Bags, ResourceFile
 from bdbag import bdbag_api as bdb
 from minid_client import minid_client_api as mca
+from django_irods.icommands import SessionException
+
+
+logger = logging.getLogger(__name__)
+
 
 class HsBagitException(Exception):
     pass
@@ -122,8 +128,8 @@ def get_remote_file_manifest(tmpdir, resource):
 
         try:
             istorage.getFile(srcfile, tmpfile)
-        except:
-            pass
+        except SessionException as ex:
+            logger.debug(ex.stderr)
         else:
             checksum_md5 = mca.compute_checksum(tmpfile, hashlib.md5())
             checksum_sha256 = mca.compute_checksum(tmpfile, hashlib.sha256())

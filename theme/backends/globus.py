@@ -31,16 +31,15 @@ class GlobusOAuth2:
         return_data = loads(response.content)
         preferred_username = return_data['preferred_username']
         if username == preferred_username:
+            auth_header_str = 'Basic {}'.format(settings.DATA_REG_API_KEY)
             try:
                 user = User.objects.get(username=username)
-                return user
             except User.DoesNotExist:
                 user = create_account(email=username, username=username, first_name=first_name, last_name=last_name,
                                       superuser=False, active=True)
                 # create corresponding iRODS account with same username via OAuth if not exist already
                 url = '{}registration/create_account?username={}&zone={}&auth_name={}'.format(
                     settings.SERVICE_SERVER_URL, username, settings.IRODS_ZONE, uid)
-                auth_header_str = 'Basic {}'.format(settings.DATA_REG_API_KEY)
                 response = requests.get(url,
                                         headers={'Authorization': auth_header_str},
                                         verify=False)
@@ -50,16 +49,14 @@ class GlobusOAuth2:
                     user.delete()
                     return None
 
-                hashed_token = hashlib.sha256(access_token).hexdigest()[0:50]
-                url = '{}registration/add_user_oids?username={}&subjectid={}&sessionid={}'.format(
-                    settings.SERVICE_SERVER_URL,
-                    username, uid, hashed_token)
-                response = requests.get(url,
-                                        headers={'Authorization': auth_header_str},
-                                        verify=False)
-                if response.status_code != status.HTTP_200_OK:
-                    raise PermissionDenied(response.content)
-                return user
+            hashed_token = hashlib.sha256(access_token).hexdigest()[0:50]
+            url = '{}registration/add_user_oids?username={}&subjectid={}&sessionid={}'.format(
+                settings.SERVICE_SERVER_URL,
+                username, uid, hashed_token)
+            response = requests.get(url, headers={'Authorization': auth_header_str}, verify=False)
+            if response.status_code !=status.HTTP_200_OK:
+                raise PermissionDenied(response.content)
+            return user
         else:
             return None
 
