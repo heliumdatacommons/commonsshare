@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load pages_tags mezzanine_tags keyword_tags comment_tags hydroshare_tags %}
+{% block title %}Full Text Search{% endblock %}
+{% block main %}
+    <input type="hidden" id="static-url" value="{{ STATIC_URL }}">
+<div class="container" id="discover-main">
+    <div class="row">
+        <div class="col-sm-12">
+            <h2 class="page-title">Full Text Search
+                <small class="text-muted"><i>Public resources shared with the community.</i></small>
+            </h2>
+        </div>
+        <div class="col-sm-12 col-xs-12">
+            <div class="input-group">
+              <input id="q" type="text" class="form-control " placeholder="Enter a search term to search all text files in resources you have access to">
+              <span class="input-group-btn">
+                  <a id='search' class="btn btn-default"> <b><i class='fa fa-search'></i> Search</b> </a>
+              </span>
+            </div>
+            <br>
+        </div>
+
+        <div class="col-sm-12 col-xs-12" id="items">
+            <div class="tab-content">
+                <div id="list-view" class="tab-pane fade in active">
+                    <span id="discover-list-loading-spinner" class="discover-loading-icon icon-blue">
+                          <i class="fa fa-spinner fa-spin fa-2x fa-fw"></i>
+                    </span>
+                    <br />
+                    <table class="table-hover table-striped resource-custom-table" id="items-discovered">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Title</th>
+                                <th>First Author</th>
+                                <th>Date Created</th>
+                                <th>Date Created</th>{# Used in table sorting #}
+                                <th>Last Modified</th>
+                                <th>Last modified</th>{# Used in table sorting #}
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for result in page_obj.object_list %}
+                                <tr>
+                                    <td>
+                                        {% include "includes/res_type_col.html" with resource=result.object %}
+                                    </td>
+                                    <td><strong><a href="{{ result.object.get_absolute_url }}">{{ result.object.metadata.title.value }}</a></strong></td>
+                                    {% if result.object.first_creator.description %}
+                                        <td><a href="{{ result.object.first_creator.description }}">{{ result.object.first_creator.name  }}</a></td>
+                                    {% else %}
+                                        <td>{{ result.object.first_creator.name }}</td>
+                                    {% endif %}
+                                    <td>{{ result.object.created|date:"M d, Y" }} at {{ result.object.created|time }}</td>
+                                    <td>{{ result.object.created|date:"U" }}</td> {# Used in table sorting #}
+                                    <td>{{ result.object.updated|date:"M d, Y" }} at {{ result.object.updated|time }}</td>
+                                    <td>{{ result.object.updated|date:"U" }}</td> {# Used in table sorting #}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                
+                    {% if not page_obj.object_list %}
+                    <h4 class="text-muted">Sorry, no results match those criteria. Please try broadening your search.</h4>
+                    {% endif %}
+                    <div id="discover-page-options">
+                    {% if page_obj.has_previous or page_obj.has_next %}
+                            {% if page_obj.has_previous %}
+                                <a href="{{ request.get_full_path|clean_pagination_url }}&amp;page={{ page_obj.previous_page_number }}">
+                            {% endif %}&laquo; Previous
+                            {% if page_obj.has_previous %}</a>{% endif %}
+                            |
+                            {% if page_obj.has_next %}
+                                <a href="{{ request.get_full_path|clean_pagination_url }}&amp;page={{ page_obj.next_page_number }}">
+                            {% endif %}Next &raquo;{% if page_obj.has_next %}</a>{% endif %}
+                    {% endif %}
+                    {% if page_obj.has_other_pages %}
+                        {{ page_obj }} ( results {{ page_obj.start_index }} to {{ page_obj.end_index }} )  
+                    {% endif %}
+                    </div>
+                    
+                    <br>
+                    <div class="alert alert-info">
+                        <strong>
+                            <i class="glyphicon glyphicon-question-sign"></i> Not finding what you are looking for?
+                        </strong>
+                        <p>Private resources owned by you or shared with you by colleagues are searchable from
+                            <strong><a href="/my-resources">My Resources</a></strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css">
+{% endblock %}
+
+{% block extra_js %}
+    {{ block.super }}
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/fulltextsearch.js"></script>
+{% endblock %}
