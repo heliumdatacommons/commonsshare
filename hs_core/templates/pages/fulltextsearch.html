@@ -27,6 +27,14 @@
                           <i class="fa fa-spinner fa-spin fa-2x fa-fw"></i>
                     </span>
                     <br />
+
+                    <div id='searchResults'>
+                      <p id='message'></p>
+                      <table id='results' class='table'>
+
+                      </table>
+                    </div>
+
                     <table class="table-hover table-striped resource-custom-table" id="items-discovered">
                         <thead>
                             <tr>
@@ -60,7 +68,7 @@
                             {% endfor %}
                         </tbody>
                     </table>
-                
+
                     {% if not page_obj.object_list %}
                     <h4 class="text-muted">Sorry, no results match those criteria. Please try broadening your search.</h4>
                     {% endif %}
@@ -76,7 +84,7 @@
                             {% endif %}Next &raquo;{% if page_obj.has_next %}</a>{% endif %}
                     {% endif %}
                     {% if page_obj.has_other_pages %}
-                        {{ page_obj }} ( results {{ page_obj.start_index }} to {{ page_obj.end_index }} )  
+                        {{ page_obj }} ( results {{ page_obj.start_index }} to {{ page_obj.end_index }} )
                     {% endif %}
                     </div>
                     
