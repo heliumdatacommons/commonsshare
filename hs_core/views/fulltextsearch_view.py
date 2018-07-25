@@ -21,11 +21,19 @@ def ftsearchview(request):
         for doc in results['hits']['hits']:
             response_data['results'].append({
                 "id": doc['_id'],
+                "score": doc['_score'],
                 "filename": doc['_source']['filename'],
-                "desc": doc['_source']['desc']
+                "desc": doc['_source']['desc'],
+                "res_type": 'Generic',
+                "res_url": 'https://www.google.com',
+                'res_title': doc['_id'],
+                'res_creator': 'first creator',
+                'res_create_time': 'May 17, 2018 at 2:11 p.m.',
+                'res_update_time': 'May 17, 2018 at 2:11 p.m.'
             })
 
         return JsonResponse(response_data, status=status.HTTP_200_OK)
     else:
         response_data['message'] = "Please input a search term"
+        response_data['results'] = []
         return JsonResponse(response_data, status=status.HTTP_400_BAD_REQUEST)
