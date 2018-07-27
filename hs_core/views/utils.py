@@ -7,8 +7,6 @@ from collections import namedtuple
 import paramiko
 import logging
 from dateutil import parser
-from uuid import uuid4
-import hashlib
 
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import Group, User
