@@ -12,7 +12,8 @@ RUN pip install \
   jsonschema \
   nameparser \
   minid \
-  bdbag
+  bdbag \
+  elasticsearch
 
 RUN pip uninstall -y python-irodsclient
 RUN pip install git+https://github.com/theferrit32/python-irodsclient.git@openid

@@ -191,3 +191,7 @@ TIME_ZONE = "Etc/UTC"
 
 # fill out pivot/scidas url in your deployment
 PIVOT_URL = ""
+
+# full text search URL
+FTS_URL = ""
+
