@@ -1,10 +1,12 @@
+import os
 from elasticsearch import Elasticsearch
 
 from rest_framework import status
 from django.conf import settings
 from django.http import Http404, JsonResponse
 
-from hs_core.hydroshare.utils import get_resource_by_shortkey
+from hs_core.hydroshare.utils import get_resource_by_shortkey, get_resource_file_url
+from hs_core.models import ResourceFile
 
 
 es = Elasticsearch([settings.FTS_URL])
@@ -15,42 +17,52 @@ def ftsearchview(request):
 
     response_data = {}
     if term:
-        results = es.search(index="test_index", doc_type="post",
-                            body={"query": {"match": {"content": term}}})
+        results = es.search(index="fts_index", doc_type="fts_doc",
+                            body={"query": {"match": {"contents": term}}})
         response_data['message'] = "%d documents found matching the term <b><i><u>%s</u></i></b>" \
                                    % (results['hits']['total'], term)
         response_data["results"] = []
-        for doc in results['hits']['hits']:
-            #rid = doc['_id']
-            #try:
-            #    robj = get_resource_by_shortkey(rid)
-            #except Http404:
-            #    # only show resources hosted by the site
-            #    continue
-            # res_url = robj.get_absolute_url()
-            # res_type = robj.resource_type
-            # idx = res_type.find('Resource')
-            # if idx > 0:
-            #     res_type = res_type[:idx]
-            # res_title = robj.metadata.title
-            # res_creator = robj.first_creator.name
-            # res_create_time = robj.created.strftime('%m-%d-%Y at %I:%M %p')
-            # res_update_time = robj.updated.strftime('%m-%d-%Y at %I:%M %p')
-            #
-            res_url = 'https://www.google.com'
-            res_type = 'Generic'
+        hits = results['hits']['hits']
+        res_id_list = []
+        for doc in hits:
+            rid = doc['_source']['guid']
+            if rid in res_id_list:
+                continue
+            try:
+               robj = get_resource_by_shortkey(rid)
+            except Http404:
+               # only show resources hosted by the site
+               continue
+            res_url = robj.get_absolute_url()
+            res_type = robj.resource_type
+            idx = res_type.find('Resource')
+            if idx > 0:
+                res_type = res_type[:idx]
+            res_title = robj.metadata.title.value
+            res_creator = robj.first_creator.name
+            res_create_time = robj.created.strftime('%m-%d-%Y at %I:%M %p')
+            res_update_time = robj.updated.strftime('%m-%d-%Y at %I:%M %p')
+            fname = doc['_source']['filename']
+
+            f_url = ''
+            for f in ResourceFile.objects.filter(object_id=robj.id):
+                name_with_full_path = os.path.join(rid, 'data', fname)
+                if name_with_full_path == f.storage_path:
+                    f_url = get_resource_file_url(f)
+                    break
+
             response_data['results'].append({
-                "id": doc['_id'],
                 "score": doc['_score'],
-                "filename": doc['_source']['filename'],
-                "desc": doc['_source']['desc'],
+                "filename": fname,
+                'file_url': f_url,
                 "res_type": res_type,
                 "res_url": res_url,
-                'res_title': doc['_id'],
-                'res_creator': 'first creator',
-                'res_create_time': 'May 17, 2018 at 2:11 p.m.',
-                'res_update_time': 'May 17, 2018 at 2:11 p.m.'
+                'res_title': res_title,
+                'res_creator': res_creator,
+                'res_create_time': res_create_time,
+                'res_update_time': res_update_time
             })
+            res_id_list.append(rid)
 
         return JsonResponse(response_data, status=status.HTTP_200_OK)
     else:

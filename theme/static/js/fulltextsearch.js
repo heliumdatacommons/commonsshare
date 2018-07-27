@@ -11,11 +11,9 @@ function search() {
       else {
           $('#no_result').hide();
           response.results.forEach(function (result) {
-              $("#results").append("<tr><td><a href='/uploads/" + result.filename + "'>" + result.id +
-                  "</td><td> " + result.filename + "</td><td>" + result.desc + " </td></tr>");
-
               $("#fts_result").append(
-                  "<tr><td>" + result.filename + "</td><td><strong><a href='" + result.res_url +
+                  "<tr><td><strong><a href='" + result.file_url + "'>" +
+                  result.filename + "</a></strong></td><td><strong><a href='" + result.res_url +
                   "' target=\"_blank\"'>" + result.res_title + "</a></strong></td><td>" +
                   result.res_creator + "</td><td>" + result.res_create_time + "</td><td>" +
                   result.res_update_time + "</td><td>" + result.score + "</td></tr>");
