@@ -1926,6 +1926,7 @@ class AbstractResource(ResourcePermissionsMixin, ResourceIRODSMixin):
                 fl.logical_file.metadata.delete()
             # COUCH: delete of file objects now cascades.
             fl.delete()
+
         hs_bagit.delete_files_and_bag(self)
         # TODO: Pabitra - delete_all_elements() may not be needed in Django 1.8 and later
         self.metadata.delete_all_elements()
@@ -2754,6 +2755,9 @@ class ResourceFile(ResourceFileIRODSMixin):
             if resource.is_federated:
                 kwargs['resource_file'] = None
                 kwargs['fed_resource_file'] = target
+            elif is_file_reference:
+                kwargs['resource_file'] = None
+                kwargs['reference_file_path'] = target
             else:
                 kwargs['resource_file'] = target
                 kwargs['fed_resource_file'] = None
