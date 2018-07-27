@@ -71,6 +71,5 @@ def ftsearchview(request):
 
         return JsonResponse(response_data, status=status.HTTP_200_OK)
     else:
-        response_data['message'] = "Please input a search term"
         response_data['results'] = []
         return JsonResponse(response_data, status=status.HTTP_400_BAD_REQUEST)
