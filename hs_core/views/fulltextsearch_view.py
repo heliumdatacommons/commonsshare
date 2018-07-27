@@ -2,11 +2,13 @@ import os
 from elasticsearch import Elasticsearch
 
 from rest_framework import status
+from rest_framework.exceptions import NotFound
 from django.conf import settings
-from django.http import Http404, JsonResponse
+from django.http import JsonResponse
 
-from hs_core.hydroshare.utils import get_resource_by_shortkey, get_resource_file_url
+from hs_core.hydroshare.utils import get_resource_file_url
 from hs_core.models import ResourceFile
+from hs_core.views.utils import authorize, ACTION_TO_AUTHORIZE
 
 
 es = Elasticsearch([settings.FTS_URL])
@@ -19,8 +21,6 @@ def ftsearchview(request):
     if term:
         results = es.search(index="fts_index", doc_type="fts_doc",
                             body={"query": {"match": {"contents": term}}})
-        response_data['message'] = "%d documents found matching the term <b><i><u>%s</u></i></b>" \
-                                   % (results['hits']['total'], term)
         response_data["results"] = []
         hits = results['hits']['hits']
         res_id_list = []
@@ -29,8 +29,13 @@ def ftsearchview(request):
             if rid in res_id_list:
                 continue
             try:
-               robj = get_resource_by_shortkey(rid)
-            except Http404:
+                robj, authorized, _ = authorize(request, rid,
+                                                needed_permission=ACTION_TO_AUTHORIZE.VIEW_RESOURCE,
+                                                raises_exception=False)
+                if not authorized:
+                    # only show resources the user has access to
+                    continue
+            except NotFound:
                # only show resources hosted by the site
                continue
             res_url = robj.get_absolute_url()
