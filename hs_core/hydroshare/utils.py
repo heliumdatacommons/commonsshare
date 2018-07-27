@@ -397,7 +397,10 @@ def copy_resource_files_and_AVUs(src_res_id, dest_res_id):
 
     for n, f in enumerate(files):
         folder, base = os.path.split(f.short_path)  # strips object information.
-        new_resource_file = ResourceFile.create(tgt_res, base, folder=folder)
+        if f.reference_file_path is not None:
+            new_resource_file = ResourceFile.create(tgt_res, base, folder=folder, is_file_reference=True)
+        else:
+            new_resource_file = ResourceFile.create(tgt_res, base, folder=folder)
 
         # if the original file is part of a logical file, then
         # add the corresponding new resource file to the copy of that logical file

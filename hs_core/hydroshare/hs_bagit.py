@@ -7,6 +7,10 @@ import logging
 from uuid import uuid4
 from mezzanine.conf import settings
 
+from django.core.exceptions import ValidationError
+
+from django_irods.icommands import SessionException
+
 from hs_core.models import Bags, ResourceFile
 from bdbag import bdbag_api as bdb
 from minid_client import minid_client_api as mca
@@ -130,6 +134,7 @@ def get_remote_file_manifest(tmpdir, resource):
             istorage.getFile(srcfile, tmpfile)
         except SessionException as ex:
             logger.debug(ex.stderr)
+            pass
         else:
             checksum_md5 = mca.compute_checksum(tmpfile, hashlib.md5())
             checksum_sha256 = mca.compute_checksum(tmpfile, hashlib.sha256())
