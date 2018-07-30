@@ -2963,7 +2963,7 @@ class ResourceFile(ResourceFileIRODSMixin):
         """
         if test_exists:
             storage = resource.get_irods_storage()
-        locpath = os.path.join(resource.short_id, "data", "contents") + "/"
+        locpath = os.path.join(resource.short_id, "data") + "/"
         relpath = path
         fedpath = resource.resource_federation_path
         if fedpath and relpath.startswith(fedpath + '/'):
@@ -3059,7 +3059,7 @@ class ResourceFile(ResourceFileIRODSMixin):
         from hs_core.views.utils import create_folder
         path_is_allowed(folder)
         # TODO: move code from location used below to here
-        create_folder(resource.short_id, os.path.join('data', 'contents', folder))
+        create_folder(resource.short_id, os.path.join('data', folder))
 
     # TODO: move to BaseResource as instance method
     @classmethod
@@ -3069,7 +3069,7 @@ class ResourceFile(ResourceFileIRODSMixin):
         from hs_core.views.utils import remove_folder
         path_is_allowed(folder)
         # TODO: move code from location used below to here
-        remove_folder(user, resource.short_id, os.path.join('data', 'contents', folder))
+        remove_folder(user, resource.short_id, os.path.join('data', folder))
 
     @property
     def has_logical_file(self):
