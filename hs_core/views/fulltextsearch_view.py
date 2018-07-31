@@ -21,15 +21,9 @@ def ftsearchview(request):
     response_data = {}
     response_data["results"] = []
     if term:
-        # check if term includes AND bool operator
-        term_split = term.lower().split()
-        if 'and' in term_split:
-            opr_str = 'AND'
-        else:
-            opr_str = 'OR'
         try:
             results = es.search(index="fts_index", doc_type="fts_doc",
-                                default_operator=opr_str, q=term,
+                                q='contents:' + term,
                                 _source_exclude=['contents'])
             hits = results['hits']['hits']
             res_id_list = []
