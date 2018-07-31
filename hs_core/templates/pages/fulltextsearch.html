@@ -12,8 +12,12 @@
         </div>
         <div class="col-sm-12 col-xs-12">
             <div class="input-group">
-              <input id="q" type="text" class="form-control " placeholder="Enter a search term to search all text files in resources you have access to">
+              <input id="q" type="text" class="form-control " placeholder="Enter a search term (Lucene query syntax is supported) to search all text files in resources you have access to">
               <span class="input-group-btn">
+                  <button id="fts-help-info" class="btn btn-info" data-toggle="popover"
+                    data-placement="right">
+                        <i class="glyphicon glyphicon-info-sign"></i>
+                  </button>
                   <a id='search' class="btn btn-default"> <b><i class='fa fa-search'></i> Search</b> </a>
               </span>
             </div>

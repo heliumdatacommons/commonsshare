@@ -29,4 +29,10 @@ $(document).ready(function () {
             search();
         }
     });
+    $("#fts-help-info").popover({
+        html: true,
+        container: '#body',
+        content: '<p>Type a query term to search for all variations of the term. Apache Lucene query syntax is supported. For example, you can add case sensitive boolean operators, e.g., AND, OR, NOT, in your search term query. Visit <a href="https://lucene.apache.org/core/2_9_4/queryparsersyntax.html" target="_blank">Apache Lucene Query Parser Syntax</a> for details.</p>',
+        trigger: 'click'
+    });
 });
