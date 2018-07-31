@@ -195,3 +195,5 @@ PIVOT_URL = ""
 # full text search URL
 FTS_URL = ""
 
+# full text index URL
+FTS_INDEX_URL = ""
