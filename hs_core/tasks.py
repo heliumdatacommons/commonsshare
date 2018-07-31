@@ -7,8 +7,10 @@ import sys
 import traceback
 import zipfile
 import logging
+import requests
 
 from celery import shared_task
+from django.conf import settings
 
 from hs_core.models import BaseResource
 from hs_core.hydroshare import utils
@@ -69,3 +71,9 @@ def add_zip_file_contents_to_resource(pk, zip_file_path):
     finally:
         # Delete upload file
         os.unlink(zip_file_path)
+
+
+@shared_task
+def notify_fts_indexer(res_id):
+    url = '{}{}'.format(settings.FTS_INDEX_URL, '?guid='+res_id)
+    response = requests.get(url)
