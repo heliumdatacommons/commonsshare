@@ -15,7 +15,7 @@ from django.contrib.messages import info
 from django.utils.translation import ugettext_lazy as _
 from django.db.models import Q
 from django.db import transaction
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.utils.http import int_to_base36
@@ -479,6 +479,14 @@ def oauth_return(request):
         return login_redirect(request)
     else:
         return HttpResponseBadRequest('Bad request - invalid access_token or failed to create linked user')
+
+
+@login_required
+def generate_token(request, uid):
+    response_data = {}
+    response_data['result'] = uid + ': aaaaaaaaaaaaa'
+
+    return JsonResponse(response_data, status=status.HTTP_200_OK)
 
 
 @login_required

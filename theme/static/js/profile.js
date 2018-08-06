@@ -131,7 +131,21 @@ function irods_status_info(alert_type, status, title) {
             "<strong>" + title + "</strong><div>" + status + "</div></div></div>"
 }
 
+
+function generate_new_token() {
+    $.get('/generate_token/uid', function(response) {
+        if (response.result.length === 0)
+            $('#token_display').val('Failed to generate a new token');
+        else {
+            $('#token_display').val('The generated new token: ' + response.result);
+        }
+    })
+}
+
+
 $(document).ready(function () {
+    $('#gen_new_token').click(generate_new_token);
+
     // Change country first empty option to 'Unspecified'
     var option = $("select[name='country'] option:first-child");
     option.val("Unspecified");
