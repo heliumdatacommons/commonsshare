@@ -490,6 +490,27 @@ def generate_token(request, uid):
 
 
 @login_required
+def get_all_tokens(request, uid):
+    response_data = {}
+    response_data["results"] = []
+
+    response_data['results'].append({
+        "value": uid
+    })
+
+    response_data['results'].append({
+        "value": 'aaaaaaa'
+    })
+    response_data['results'].append({
+        "value": 'bbbbbbb'
+    })
+    response_data['results'].append({
+        "value": 'ccccccc'
+    })
+    return JsonResponse(response_data, status=status.HTTP_200_OK)
+
+
+@login_required
 def retrieve_globus_buckets(request):
     # note that trailing slash should not be added to return_to url
     return_url = '&return_to={}://{}/gdo_return'.format(request.scheme, request.get_host())

@@ -132,19 +132,79 @@ function irods_status_info(alert_type, status, title) {
 }
 
 
-function generate_new_token() {
-    $.get('/generate_token/uid', function(response) {
-        if (response.result.length === 0)
-            $('#token_display').val('Failed to generate a new token');
-        else {
-            $('#token_display').val('The generated new token: ' + response.result);
-        }
-    })
-}
-
-
 $(document).ready(function () {
-    $('#gen_new_token').click(generate_new_token);
+    $('#gen_new_token').on('click', function(event) {
+        $.ajax({
+            mode: "queue",
+            url: '/generate_token/' + $('#uid').val(),
+            async: true,
+            type: "GET",
+            success: function (response) {
+                if (response.result.length === 0)
+                    $('#new_token_message').text('Failed to generate a new token');
+                else {
+                    $('#new_token_content').html('The generated new token: <strong>' + response.result + '</strong>');
+                    $('#new_token_message').html('<strong>Please record the access token to use for user authentication to access API or iRODS</strong>');
+                }
+            },
+            error: function(xhr, errmsg, err) {
+                console.log(xhr.status + ": " + xhr.responseText + ". Error message: " + errmsg);
+                $('#new_token_message').text('Failed to generate a new token: ' + xhr.responseText);
+            }
+        });
+        //don't submit the form
+        //return false;
+    });
+
+    $('#show_all_tokens').on('click', function(event) {
+        $.ajax({
+            mode: "queue",
+            url: '/get_all_tokens/' + $('#uid').val(),
+            async: true,
+            type: "GET",
+            success: function (response) {
+                $('#token_list').empty();
+                if (response.results.length === 0)
+                    $('#token_no_result').show();
+                else {
+                    $('#token_no_result').hide();
+                    response.results.forEach(function (result) {
+                        $("#token_list").append(
+                          "<option value='" + result.value + "'>" + result.value + "</option>");
+                    });
+                }
+            },
+            error: function(xhr, errmsg, err) {
+                $('#token_list').empty();
+                console.log(xhr.status + ": " + xhr.responseText + ". Error message: " + errmsg);
+                $('#token_no_result').show();
+            }
+        });
+    });
+
+    $('#revoke_token').on('click', function(event) {
+        //var list = document.getElementById('token_list');
+        //var index = list.selectedIndex;
+        //if (index < 0)
+        //    $('#revoke_token_message').text('Select a token to revoke');
+        //else
+        //    $('#revoke_token_message').text(list[index].value + ' token is revoked successfully');
+        var tstr = '';
+        $('#token_list option:selected').each(function() {
+            tstr += $(this).val() + ' ';
+        });
+        if (tstr.length === 0) {
+            $('#revoke_token_message').text('Select tokens to revoke');
+        }
+        else {
+            var msgstr = 'Tokens ' + tstr + 'have been revoked successfully';
+            $('#revoke_token_message').text(msgstr);
+        }
+        // have to do an ajax call here to revoke tokens
+        
+        //don't submit the form
+        return false;
+    });
 
     // Change country first empty option to 'Unspecified'
     var option = $("select[name='country'] option:first-child");
