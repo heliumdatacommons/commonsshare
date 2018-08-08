@@ -1926,6 +1926,7 @@ class AbstractResource(ResourcePermissionsMixin, ResourceIRODSMixin):
                 fl.logical_file.metadata.delete()
             # COUCH: delete of file objects now cascades.
             fl.delete()
+
         hs_bagit.delete_files_and_bag(self)
         # TODO: Pabitra - delete_all_elements() may not be needed in Django 1.8 and later
         self.metadata.delete_all_elements()
@@ -2754,6 +2755,9 @@ class ResourceFile(ResourceFileIRODSMixin):
             if resource.is_federated:
                 kwargs['resource_file'] = None
                 kwargs['fed_resource_file'] = target
+            elif is_file_reference:
+                kwargs['resource_file'] = None
+                kwargs['reference_file_path'] = target
             else:
                 kwargs['resource_file'] = target
                 kwargs['fed_resource_file'] = None
@@ -2959,7 +2963,7 @@ class ResourceFile(ResourceFileIRODSMixin):
         """
         if test_exists:
             storage = resource.get_irods_storage()
-        locpath = os.path.join(resource.short_id, "data", "contents") + "/"
+        locpath = os.path.join(resource.short_id, "data") + "/"
         relpath = path
         fedpath = resource.resource_federation_path
         if fedpath and relpath.startswith(fedpath + '/'):
@@ -3055,7 +3059,7 @@ class ResourceFile(ResourceFileIRODSMixin):
         from hs_core.views.utils import create_folder
         path_is_allowed(folder)
         # TODO: move code from location used below to here
-        create_folder(resource.short_id, os.path.join('data', 'contents', folder))
+        create_folder(resource.short_id, os.path.join('data', folder))
 
     # TODO: move to BaseResource as instance method
     @classmethod
@@ -3065,7 +3069,7 @@ class ResourceFile(ResourceFileIRODSMixin):
         from hs_core.views.utils import remove_folder
         path_is_allowed(folder)
         # TODO: move code from location used below to here
-        remove_folder(user, resource.short_id, os.path.join('data', 'contents', folder))
+        remove_folder(user, resource.short_id, os.path.join('data', folder))
 
     @property
     def has_logical_file(self):

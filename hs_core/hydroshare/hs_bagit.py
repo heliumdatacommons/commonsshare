@@ -126,26 +126,22 @@ def get_remote_file_manifest(tmpdir, resource):
 
         istorage = resource.get_irods_storage()
 
-        try:
-            istorage.getFile(srcfile, tmpfile)
-        except SessionException as ex:
-            logger.debug(ex.stderr)
+        checksum = istorage.get_checksum(srcfile)
+
+        data['url'] = fetch_url
+
+        if (f.reference_file_path):
+            data['length'] = istorage.size(srcfile)
+            data['filename'] = ref_file_name
         else:
-            checksum_md5 = mca.compute_checksum(tmpfile, hashlib.md5())
-            checksum_sha256 = mca.compute_checksum(tmpfile, hashlib.sha256())
+            data['length'] = f.size
+            data['filename'] = f.file_name
 
-            data['url'] = fetch_url
-
-            if (f.reference_file_path):
-                data['length'] = istorage.size(srcfile)
-                data['filename'] = ref_file_name
-            else:
-                data['length'] = f.size
-                data['filename'] = f.file_name
-
-            data['md5'] = checksum_md5
-            data['sha256'] = checksum_sha256
-            data_list.append(data)
+        if checksum.startswith('sha'):
+            data['sha256'] = checksum[4:]
+        elif checksum.startswith('md5'):
+            data['md5'] = checksum[4:]
+        data_list.append(data)
 
     return data_list
 
