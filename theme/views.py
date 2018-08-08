@@ -483,14 +483,16 @@ def oauth_return(request):
 
 @login_required
 def generate_token(request, uid):
+    lbl = request.POST.get('label', '')
     response_data = {}
-    response_data['result'] = uid + ': aaaaaaaaaaaaa'
+    response_data['result'] = uid + '---' + lbl
 
     return JsonResponse(response_data, status=status.HTTP_200_OK)
 
 
 @login_required
 def get_all_tokens(request, uid):
+
     response_data = {}
     response_data["results"] = []
 

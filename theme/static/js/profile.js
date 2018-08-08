@@ -138,7 +138,10 @@ $(document).ready(function () {
             mode: "queue",
             url: '/generate_token/' + $('#uid').val(),
             async: true,
-            type: "GET",
+            type: "POST",
+            data: {
+                'label': $('#token_lbl').val()
+            },
             success: function (response) {
                 if (response.result.length === 0)
                     $('#new_token_message').text('Failed to generate a new token');
@@ -201,7 +204,7 @@ $(document).ready(function () {
             $('#revoke_token_message').text(msgstr);
         }
         // have to do an ajax call here to revoke tokens
-        
+
         //don't submit the form
         return false;
     });
