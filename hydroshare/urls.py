@@ -11,11 +11,11 @@ import autocomplete_light
 
 from hs_core.views.discovery_view import DiscoveryView
 from hs_core.views.discovery_json_view import DiscoveryJsonView
+from hs_core.views.fulltextsearch_view import ftsearchview
 from theme import views as theme
 from hs_tracking import views as tracking
 from hs_core import views as hs_core_views
 from hs_app_timeseries import views as hs_ts_views
-from hs_app_netCDF import views as nc_views
 
 
 autocomplete_light.autodiscover()
@@ -66,6 +66,9 @@ urlpatterns = i18n_patterns("",
     url(r'^autocomplete/', include('autocomplete_light.urls')),
     url(r'^search/$', DiscoveryView.as_view(), name='haystack_search'),
     url(r'^searchjson/$', DiscoveryJsonView.as_view(), name='haystack_json_search'),
+
+    url(r'^ftsearch/$', ftsearchview, name='fulltext_search'),
+
     url(r'^sitemap/$', 'hs_sitemap.views.sitemap', name='sitemap'),
     url(r'^collaborate/$', hs_core_views.CollaborateView.as_view(), name='collaborate'),
     url(r'^my-groups/$', hs_core_views.MyGroupsView.as_view(), name='my_groups'),

@@ -11,14 +11,13 @@ from django.core.files.uploadedfile import UploadedFile
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.db import transaction
 
-from rest_framework import status
-
 from hs_core.hydroshare import hs_bagit
 from hs_core.models import ResourceFile
 from hs_core import signals
 from hs_core.hydroshare import utils
 from hs_access_control.models import ResourceAccess, UserResourcePrivilege, PrivilegeCodes
 from hs_labels.models import ResourceLabels
+from hs_core.tasks import notify_fts_indexer
 
 from minid_client import minid_client_api as mca
 
@@ -481,6 +480,7 @@ def create_resource(
     # set quota of this resource to this creator
     resource.set_quota_holder(owner, owner)
 
+    notify_fts_indexer(resource.short_id)
     return resource
 
 
@@ -674,6 +674,8 @@ def add_resource_files(pk, *files, **kwargs):
     # make sure data directory exists if not exist already
     utils.create_empty_contents_directory(resource)
 
+    notify_fts_indexer(pk)
+
     return ret
 
 
@@ -776,6 +778,9 @@ def delete_resource(pk):
             obsolete_res.raccess.immutable = False
             obsolete_res.raccess.save()
     res.delete()
+
+    notify_fts_indexer(pk)
+
     return pk
 
 
@@ -804,6 +809,7 @@ def delete_resource_file_only(resource, f):
     """
     short_path = f.short_path
     f.delete()
+    notify_fts_indexer(resource.short_id)
     return short_path
 
 
