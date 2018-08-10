@@ -15,13 +15,13 @@ from django.contrib.messages import info
 from django.utils.translation import ugettext_lazy as _
 from django.db.models import Q
 from django.db import transaction
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadRequest, \
+    HttpResponseServerError
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.utils.http import int_to_base36
 from django.template.response import TemplateResponse
 from rest_framework import status
-from django.http import HttpResponseBadRequest
 from django.conf import settings as ds
 
 from mezzanine.conf import settings
@@ -484,6 +484,13 @@ def oauth_return(request):
 @login_required
 def generate_token(request, uid):
     lbl = request.POST.get('label', '')
+    url = '{}apikey/{}/new'.format(settings.SERVICE_SERVER_URL, uid)
+    auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
+    response = requests.get(url, params={'label': lbl}, headers={'Authorization': auth_header_str})
+    if response.status_code != status.HTTP_200_OK:
+        return HttpResponseBadRequest(content=response.text)
+    return_data = loads(response.content)
+
     response_data = {}
     response_data['result'] = uid + '---' + lbl
 
@@ -492,7 +499,12 @@ def generate_token(request, uid):
 
 @login_required
 def get_all_tokens(request, uid):
-
+    url = '{}apikey/{}'.format(settings.SERVICE_SERVER_URL, uid)
+    auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
+    response = requests.get(url, headers={'Authorization': auth_header_str})
+    if response.status_code != status.HTTP_200_OK:
+        return HttpResponseBadRequest(content=response.text)
+    return_data = loads(response.content)
     response_data = {}
     response_data["results"] = []
 
@@ -510,6 +522,19 @@ def get_all_tokens(request, uid):
         "value": 'ccccccc'
     })
     return JsonResponse(response_data, status=status.HTTP_200_OK)
+
+
+@login_required
+def delete_all_tokens(request, uid):
+    url = '{}apikey/{}'.format(settings.SERVICE_SERVER_URL, uid)
+    auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
+    tokens_str = request.POST.get('tokens', '')
+    token_list = tokens_str.split(' ')
+    response = requests.post(url, data={'tokens': token_list}, headers={'Authorization': auth_header_str})
+    if response.status_code != status.HTTP_200_OK:
+        return HttpResponseServerError(content=response.text)
+    else:
+        return JsonResponse({}, status=status.HTTP_200_OK)
 
 
 @login_required

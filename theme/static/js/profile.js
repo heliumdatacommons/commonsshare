@@ -203,8 +203,23 @@ $(document).ready(function () {
             var msgstr = 'Tokens ' + tstr + 'have been revoked successfully';
             $('#revoke_token_message').text(msgstr);
         }
-        // have to do an ajax call here to revoke tokens
-
+        // do an ajax call here to revoke tokens
+        $.ajax({
+            mode: "queue",
+            url: '/delete_all_tokens/' + $('#uid').val(),
+            async: true,
+            type: "POST",
+            data: {'tokens': tstr},
+            success: function (response) {
+                var msgstr = 'Tokens ' + tstr + 'have been revoked successfully';
+                $('#revoke_token_message').text(msgstr);
+            },
+            error: function(xhr, errmsg, err) {
+                console.log(xhr.status + ": " + xhr.responseText + ". Error message: " + errmsg);
+                var msgstr = 'Server error:' + xhr.responseText;
+                $('#revoke_token_message').text(msgstr);
+            }
+        });
         //don't submit the form
         return false;
     });
