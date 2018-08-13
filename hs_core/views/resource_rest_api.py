@@ -468,11 +468,11 @@ class ResourceListCreate(ResourceToListItemMixin, generics.ListCreateAPIView):
         resource_type = validated_request_data['resource_type']
 
         res_title = validated_request_data.get('title', 'Untitled resource')
-        keywords = validated_request_data.get('keywords', None)
+        keywords = validated_request_data.get('keywords', [])
         abstract = validated_request_data.get('abstract', None)
         metadata = validated_request_data.get('metadata', None)
         extra_metadata = validated_request_data.get('extra_metadata', None)
-        reference_files = validated_request_data.get('reference_files', None)
+        reference_files = validated_request_data.get('reference_files', [])
 
         num_files = len(request.FILES)
         # TODO: (Couch) reconsider whether multiple file upload should be
