@@ -472,6 +472,7 @@ class ResourceListCreate(ResourceToListItemMixin, generics.ListCreateAPIView):
         abstract = validated_request_data.get('abstract', None)
         metadata = validated_request_data.get('metadata', None)
         extra_metadata = validated_request_data.get('extra_metadata', None)
+        reference_files = validated_request_data.get('reference_files', None)
 
         num_files = len(request.FILES)
         # TODO: (Couch) reconsider whether multiple file upload should be
@@ -517,7 +518,9 @@ class ResourceListCreate(ResourceToListItemMixin, generics.ListCreateAPIView):
                     keywords=keywords,
                     metadata=metadata,
                     extra_metadata=extra_metadata,
-                    files=files
+                    files=files,
+                    source_names=reference_files,
+                    is_file_reference=True if len(reference_files) > 0 else False
             )
             if abstract:
                 resource.metadata.create_element('description', abstract=abstract)
