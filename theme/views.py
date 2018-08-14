@@ -2,6 +2,7 @@ from json import dumps, loads, load
 import requests
 import time
 import os
+import logging
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
@@ -15,8 +16,7 @@ from django.contrib.messages import info
 from django.utils.translation import ugettext_lazy as _
 from django.db.models import Q
 from django.db import transaction
-from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadRequest, \
-    HttpResponseServerError
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadRequest
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.utils.http import int_to_base36
@@ -45,6 +45,9 @@ from theme.models import UserProfile
 from theme.utils import get_quota_message
 
 from .forms import SignupForm
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_user_profile_context_data(pu, request=None):
@@ -488,11 +491,11 @@ def generate_token(request, uid):
     auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
     response = requests.get(url, params={'label': lbl}, headers={'Authorization': auth_header_str})
     if response.status_code != status.HTTP_200_OK:
-        return HttpResponseBadRequest(content=response.text)
+        return JsonResponse({'message': response.text}, status=response.status_code)
     return_data = loads(response.content)
 
     response_data = {}
-    response_data['result'] = uid + '---' + lbl
+    response_data['result'] = return_data['key'] + '    This key is labeled as ' + lbl
 
     return JsonResponse(response_data, status=status.HTTP_200_OK)
 
@@ -503,24 +506,20 @@ def get_all_tokens(request, uid):
     auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
     response = requests.get(url, headers={'Authorization': auth_header_str})
     if response.status_code != status.HTTP_200_OK:
-        return HttpResponseBadRequest(content=response.text)
+        return JsonResponse({'message': response.text}, status=response.status_code)
+
     return_data = loads(response.content)
     response_data = {}
     response_data["results"] = []
+    if 'keys' in return_data:
+        for key in return_data['keys']:
+            response_data['results'].append({
+                "id": key['id'],
+                "hash": key['hash'],
+                "label": key['label'],
+                "creation_time": key['creation_time']
+            })
 
-    response_data['results'].append({
-        "value": uid
-    })
-
-    response_data['results'].append({
-        "value": 'aaaaaaa'
-    })
-    response_data['results'].append({
-        "value": 'bbbbbbb'
-    })
-    response_data['results'].append({
-        "value": 'ccccccc'
-    })
     return JsonResponse(response_data, status=status.HTTP_200_OK)
 
 
@@ -528,13 +527,35 @@ def get_all_tokens(request, uid):
 def delete_all_tokens(request, uid):
     url = '{}apikey/{}'.format(settings.SERVICE_SERVER_URL, uid)
     auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
-    tokens_str = request.POST.get('tokens', '')
-    token_list = tokens_str.split(' ')
-    response = requests.post(url, data={'tokens': token_list}, headers={'Authorization': auth_header_str})
-    if response.status_code != status.HTTP_200_OK:
-        return HttpResponseServerError(content=response.text)
+    tokens_list_str = request.POST.get('tokens', '')
+
+    if not tokens_list_str:
+        return JsonResponse({'message': 'Please select tokens to revoke'},
+                            status=status.HTTP_200_OK)
+
+    deleted_token_list = []
+    tokens_list = loads(tokens_list_str)
+    for token_dict in tokens_list:
+        key = token_dict.get('key', '')
+        value = token_dict.get('value', '')
+        if key and value:
+            response = requests.get(url + '/' + key, headers={'Authorization': auth_header_str})
+            if response.status_code != status.HTTP_200_OK:
+                logger.debug("Failed to delete selected token " + key + ": " + response.text)
+                continue
+            else:
+                deleted_token_list.append(value)
+
+    if not deleted_token_list:
+        ret_msg = 'Server error: selected tokens cannot be deleted successfully. ' \
+                  'Check server log for details'
+    elif len(deleted_token_list) == len(tokens_list):
+        ret_msg = "All selected tokens have been deleted successfully."
     else:
-        return JsonResponse({}, status=status.HTTP_200_OK)
+        ret_msg = "Only the following subset of selected tokens are deleted successfully: "
+        ret_msg += ','.join(deleted_token_list)
+
+    return JsonResponse({'message': ret_msg}, status=status.HTTP_200_OK)
 
 
 @login_required

@@ -173,7 +173,7 @@ $(document).ready(function () {
                     $('#token_no_result').hide();
                     response.results.forEach(function (result) {
                         $("#token_list").append(
-                          "<option value='" + result.value + "'>" + result.value + "</option>");
+                          "<option value='" + result.id + "' title='hashed token: " + result.hash + "'>" + result.label + " created at " + result.creation_time + "</option>");
                     });
                 }
             },
@@ -192,34 +192,31 @@ $(document).ready(function () {
         //    $('#revoke_token_message').text('Select a token to revoke');
         //else
         //    $('#revoke_token_message').text(list[index].value + ' token is revoked successfully');
-        var tstr = '';
+        var token_list = [] ;
         $('#token_list option:selected').each(function() {
-            tstr += $(this).val() + ' ';
+            token_list.push({key: $(this).val(), value: $(this).text()});
         });
-        if (tstr.length === 0) {
+        if (token_list.length === 0) {
             $('#revoke_token_message').text('Select tokens to revoke');
         }
         else {
-            var msgstr = 'Tokens ' + tstr + 'have been revoked successfully';
-            $('#revoke_token_message').text(msgstr);
+            // do an ajax call here to revoke tokens
+            $.ajax({
+                mode: "queue",
+                url: '/delete_all_tokens/' + $('#uid').val(),
+                async: true,
+                type: "POST",
+                data: {'tokens': JSON.stringify(token_list)},
+                success: function (response) {
+                    $('#revoke_token_message').text(response.message);
+                },
+                error: function (xhr, errmsg, err) {
+                    console.log(xhr.status + ": " + xhr.responseText + ". Error message: " + errmsg);
+                    var msgstr = 'Server error:' + xhr.responseText;
+                    $('#revoke_token_message').text(msgstr);
+                }
+            });
         }
-        // do an ajax call here to revoke tokens
-        $.ajax({
-            mode: "queue",
-            url: '/delete_all_tokens/' + $('#uid').val(),
-            async: true,
-            type: "POST",
-            data: {'tokens': tstr},
-            success: function (response) {
-                var msgstr = 'Tokens ' + tstr + 'have been revoked successfully';
-                $('#revoke_token_message').text(msgstr);
-            },
-            error: function(xhr, errmsg, err) {
-                console.log(xhr.status + ": " + xhr.responseText + ". Error message: " + errmsg);
-                var msgstr = 'Server error:' + xhr.responseText;
-                $('#revoke_token_message').text(msgstr);
-            }
-        });
         //don't submit the form
         return false;
     });
