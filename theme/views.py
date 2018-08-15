@@ -539,7 +539,7 @@ def delete_all_tokens(request, uid):
         key = token_dict.get('key', '')
         value = token_dict.get('value', '')
         if key and value:
-            response = requests.get(url + '/' + key, headers={'Authorization': auth_header_str})
+            response = requests.delete(url + '/' + key, headers={'Authorization': auth_header_str})
             if response.status_code != status.HTTP_200_OK:
                 logger.debug("Failed to delete selected token " + key + ": " + response.text)
                 continue
@@ -550,7 +550,10 @@ def delete_all_tokens(request, uid):
         ret_msg = 'Server error: selected tokens cannot be deleted successfully. ' \
                   'Check server log for details'
     elif len(deleted_token_list) == len(tokens_list):
-        ret_msg = "All selected tokens have been deleted successfully."
+        if len(deleted_token_list) == 1:
+            ret_msg = "The selected token has been deleted successfully."
+        else:
+            ret_msg = "All selected tokens have been deleted successfully."
     else:
         ret_msg = "Only the following subset of selected tokens are deleted successfully: "
         ret_msg += ','.join(deleted_token_list)
