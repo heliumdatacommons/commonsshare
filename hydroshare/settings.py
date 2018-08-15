@@ -378,7 +378,6 @@ MIDDLEWARE_CLASSES = (
 
 AUTHENTICATION_BACKENDS = (
     'theme.backends.globus.GlobusOAuth2',
-    'theme.backends.auth.APIKey',
     'mezzanine.core.auth_backends.MezzanineBackend',
 )
 
@@ -483,7 +482,7 @@ REST_FRAMEWORK = {
     'PAGE_SIZE_QUERY_PARAM': 'PAGE_SIZE',
     'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.TokenAuthentication',
+        'theme.backends.apikey_auth.APIKeyAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'oauth2_provider.ext.rest_framework.OAuth2Authentication',
     ),
@@ -699,12 +698,5 @@ SESSION_COOKIE_SECURE = USE_SECURITY
 CSRF_COOKIE_SECURE = USE_SECURITY
 
 SWAGGER_SETTINGS = {
-    "VALIDATOR_URL": False,
-    'SECURITY_DEFINITIONS': {
-        'api_key': {
-            'type': 'apiKey',
-            'in': 'header',
-            'name': 'Authorization'
-        }
-    }
+    "VALIDATOR_URL": False
 }
