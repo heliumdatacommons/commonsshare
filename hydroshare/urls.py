@@ -108,6 +108,12 @@ urlpatterns += patterns('',
     url('^hsapi/', include('hs_app_netCDF.urls')),
 )
 
+# DOS API URLs
+urlpatterns += patterns('',
+    url('^dosapi/', include('hs_dos_api.urls'))
+)
+
+
 # robots.txt URLs for django-robots
 urlpatterns += patterns('',
     (r'^robots\.txt$', include('robots.urls')),
