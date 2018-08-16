@@ -146,7 +146,8 @@ $(document).ready(function () {
                 if (response.result.length === 0)
                     $('#new_token_message').text('Failed to generate a new token');
                 else {
-                    $('#new_token_content').html('The generated new token: <strong>' + response.result + '</strong>');
+                    $('#new_token_content').html('The generated new token: <code>' + response.result + '</code>');
+                    $('#new_token_label').html('This token is labeled as : <code>' + response.label + '</code>');
                     $('#new_token_message').html('<strong>Please record the access token to use for user authentication to access API or iRODS</strong>');
                 }
             },
