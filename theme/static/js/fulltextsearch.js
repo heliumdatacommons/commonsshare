@@ -1,10 +1,6 @@
 function search() {
-    $("#message").html("<span><i class='fa fa-refresh fa-spin'></i> querying documents... </span>");
     var term = $("#q").val();
     $.get('/ftsearch/?q=' + term , function(response) {
-      $("#message").html(response.message);
-      $("#results").empty();
-      $("#results").append("<th>ID</th><th>Filename</th><th>Description</th>");
       $("#fts_result").empty();
       if (response.results.length === 0)
           $('#no_result').show();
