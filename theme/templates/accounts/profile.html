@@ -99,6 +99,29 @@
                                             </div>
                                         </div>
                                     </div>
+                                    {#        Manage your personal access tokens       #}
+                                    <div class="panel panel-default">
+                                        <div class="panel-heading">
+                                            <h4 class="panel-title">
+                                                <span class="glyphicon glyphicon-tags"></span>
+                                                <a data-toggle="collapse" class="accordion-toggle" data-parent="#accordion" href="#manage-tokens">
+                                                    &nbsp;&nbsp;Manage your access tokens</a></h4>
+                                        </div>
+                                        <div id="manage-tokens" class="facet-list panel-collapse collapse in">
+                                            <div class="panel-body" style="margin-top: 8px; margin-bottom: 8px">
+                                                <input type="hidden" id="uid" value="{{ uid }}"/>
+                                                <fieldset class="col-sm-12">
+                                                <input class="form-control" id="token_lbl", type="text", name="token_lbl" placeholder="Input label for new token"/>
+                                                <a id="gen_new_token" type="button" data-toggle="modal"
+                                                data-target="#showGeneratedToken">Generate new</a>
+                                                </fieldset>
+
+                                                <hr>
+                                                <a id="show_all_tokens" type="button" data-toggle="modal"
+                                                data-target="#showTokenContent">Revoke existing</a>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             {% endif %}
@@ -671,6 +694,55 @@
             </div>
 
             {% if profile_user.id == user.id %}
+            <!-- Show all tokens modal for revoking selected token-->
+            <div class="modal fade" id="showTokenContent" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"
+                                    aria-label="Close"><span aria-hidden="true">&times;</span>
+                            </button>
+                            <h4 class="modal-title">Revoke existing tokens</h4>
+                        </div>
+                        <div class="modal-body">
+                            <label for="token_list">Select tokens from the list to revoke:</label>
+                            <br>
+                            <select id="token_list" multiple></select>
+                            <div id="token_no_result" hidden>You don't have any existing tokens</div>
+                            <div id="revoke_token_message"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">
+                                Close
+                            </button>
+                            <button class="btn btn-primary" id="revoke_token">Revoke</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Show generated token modal -->
+            <div class="modal fade" id="showGeneratedToken" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"
+                                    aria-label="Close"><span aria-hidden="true">&times;</span>
+                            </button>
+                            <h4 class="modal-title">Show generated token</h4>
+                        </div>
+                        <div class="modal-body">
+                            <div id='new_token_content'></div>
+                            <div id='new_token_message'></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Delete picture modal -->
             <div class="modal fade" id="delete-picture" tabindex="-1" role="dialog"
                  aria-labelledby="deleteProfilePicture">

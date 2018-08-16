@@ -131,7 +131,96 @@ function irods_status_info(alert_type, status, title) {
             "<strong>" + title + "</strong><div>" + status + "</div></div></div>"
 }
 
+
 $(document).ready(function () {
+    $('#gen_new_token').on('click', function(event) {
+        $.ajax({
+            mode: "queue",
+            url: '/generate_token/' + $('#uid').val(),
+            async: true,
+            type: "POST",
+            data: {
+                'label': $('#token_lbl').val()
+            },
+            success: function (response) {
+                if (response.result.length === 0)
+                    $('#new_token_message').text('Failed to generate a new token');
+                else {
+                    $('#new_token_content').html('The generated new token: <strong>' + response.result + '</strong>');
+                    $('#new_token_message').html('<strong>Please record the access token to use for user authentication to access API or iRODS</strong>');
+                }
+            },
+            error: function(xhr, errmsg, err) {
+                console.log(xhr.status + ": " + xhr.responseText + ". Error message: " + errmsg);
+                $('#new_token_message').text('Failed to generate a new token: ' + xhr.responseText);
+            }
+        });
+        //don't submit the form
+        //return false;
+    });
+
+    $('#show_all_tokens').on('click', function(event) {
+        $.ajax({
+            mode: "queue",
+            url: '/get_all_tokens/' + $('#uid').val(),
+            async: true,
+            type: "GET",
+            success: function (response) {
+                $('#token_list').empty();
+                if (response.results.length === 0)
+                    $('#token_no_result').show();
+                else {
+                    $('#token_no_result').hide();
+                    response.results.forEach(function (result) {
+                        $("#token_list").append(
+                          "<option value='" + result.id + "' title='hashed token: " + result.hash + "'>" + result.label + " created at " + result.creation_time + "</option>");
+                    });
+                }
+            },
+            error: function(xhr, errmsg, err) {
+                $('#token_list').empty();
+                console.log(xhr.status + ": " + xhr.responseText + ". Error message: " + errmsg);
+                $('#token_no_result').show();
+            }
+        });
+    });
+
+    $('#revoke_token').on('click', function(event) {
+        //var list = document.getElementById('token_list');
+        //var index = list.selectedIndex;
+        //if (index < 0)
+        //    $('#revoke_token_message').text('Select a token to revoke');
+        //else
+        //    $('#revoke_token_message').text(list[index].value + ' token is revoked successfully');
+        var token_list = [] ;
+        $('#token_list option:selected').each(function() {
+            token_list.push({key: $(this).val(), value: $(this).text()});
+        });
+        if (token_list.length === 0) {
+            $('#revoke_token_message').text('Select tokens to revoke');
+        }
+        else {
+            // do an ajax call here to revoke tokens
+            $.ajax({
+                mode: "queue",
+                url: '/delete_all_tokens/' + $('#uid').val(),
+                async: true,
+                type: "POST",
+                data: {'tokens': JSON.stringify(token_list)},
+                success: function (response) {
+                    $('#revoke_token_message').text(response.message);
+                },
+                error: function (xhr, errmsg, err) {
+                    console.log(xhr.status + ": " + xhr.responseText + ". Error message: " + errmsg);
+                    var msgstr = 'Server error:' + xhr.responseText;
+                    $('#revoke_token_message').text(msgstr);
+                }
+            });
+        }
+        //don't submit the form
+        return false;
+    });
+
     // Change country first empty option to 'Unspecified'
     var option = $("select[name='country'] option:first-child");
     option.val("Unspecified");
