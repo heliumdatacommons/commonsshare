@@ -495,7 +495,8 @@ def generate_token(request, uid):
     return_data = loads(response.content)
 
     response_data = {}
-    response_data['result'] = return_data['key'] + '    This key is labeled as ' + lbl
+    response_data['result'] = return_data['key']
+    response_data['label'] =  lbl
 
     return JsonResponse(response_data, status=status.HTTP_200_OK)
 
