@@ -7,13 +7,16 @@ function hd_search() {
       else {
           $('#hd_no_result').hide();
           response.results.forEach(function (result) {
+              var defi_res = '';
+              if (result.definitions)
+                  defi_res = result.definitions;
               $("#hd_result").append(
                   "<tr><td>" + result.iri + "</td><td>" + result.labels + "</td><td>" +
                   result.curie + "</td><td>" + result.categories + "</td><td>" +
-                  result.synonyms + "</td><td>" + result.definitions + "</td></tr>");
+                  result.synonyms + "</td><td>" + defi_res + "</td></tr>");
           });
       }
-    })
+    });
 }
 
 $(document).ready(function () {

@@ -3,8 +3,8 @@ from json import loads
 
 from rest_framework import status
 
-
 from django.http import JsonResponse
+from django.utils.http import urlquote
 
 
 def hdsearchview(request):
@@ -12,7 +12,8 @@ def hdsearchview(request):
     response_data = {}
     response_data["results"] = []
     if term:
-        url = 'https://scigraph-ontology.monarchinitiative.org/scigraph/vocabulary/search/{}/'.format(term)
+        url = 'https://scigraph-ontology.monarchinitiative.org/scigraph/vocabulary/search/{}/'.\
+            format(urlquote(term))
         response = requests.get(url)
         if response.status_code != status.HTTP_200_OK:
             return JsonResponse({'message': response.text}, status=response.status_code)
