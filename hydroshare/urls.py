@@ -12,6 +12,8 @@ import autocomplete_light
 from hs_core.views.discovery_view import DiscoveryView
 from hs_core.views.discovery_json_view import DiscoveryJsonView
 from hs_core.views.fulltextsearch_view import ftsearchview
+from hs_core.views.harmonizedata_view import hdsearchview
+
 from theme import views as theme
 from hs_tracking import views as tracking
 from hs_core import views as hs_core_views
@@ -71,6 +73,7 @@ urlpatterns = i18n_patterns("",
     url(r'^searchjson/$', DiscoveryJsonView.as_view(), name='haystack_json_search'),
 
     url(r'^ftsearch/$', ftsearchview, name='fulltext_search'),
+    url(r'^hdsearch/$', hdsearchview, name='harmonizedata_search'),
 
     url(r'^sitemap/$', 'hs_sitemap.views.sitemap', name='sitemap'),
     url(r'^collaborate/$', hs_core_views.CollaborateView.as_view(), name='collaborate'),

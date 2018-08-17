@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load pages_tags mezzanine_tags keyword_tags comment_tags hydroshare_tags %}
+{% block title %}Harmonize Data{% endblock %}
+{% block main %}
+    <input type="hidden" id="static-url" value="{{ STATIC_URL }}">
+<div class="container" id="discover-main">
+    <div class="row">
+        <div class="col-sm-12">
+            <h2 class="page-title">Harmonize Data</h2>
+        </div>
+        <div class="col-sm-12 col-xs-12">
+            <div class="input-group">
+              <input id="hd_q" type="text" class="form-control " placeholder="Search string, e.g., phenotypic variables">
+              <span class="input-group-btn">
+                  <button id="hd-help-info" class="btn btn-info" data-toggle="popover"
+                    data-placement="right">
+                        <i class="glyphicon glyphicon-info-sign"></i>
+                  </button>
+                  <a id='hd_search' class="btn btn-default"> <b><i class='fa fa-search'></i> Search</b> </a>
+              </span>
+            </div>
+            <br>
+        </div>
+
+        <div class="col-sm-12 col-xs-12" id="items">
+            <div id="list-view" class="tab-pane fade in active">
+                <table class="table-hover table-striped table-bordered" id="items-discovered">
+                    <thead>
+                        <tr>
+                            <th class="text-center">iri</th>
+                            <th class="text-center">labels</th>
+                            <th class="text-center">curie</th>
+                            <th class="text-center">categories</th>
+                            <th class="text-center">synonyms</th>
+                            <th class="text-center">definitions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="hd_result">
+                    </tbody>
+                </table>
+                <h4 id='hd_no_result' class="text-muted" hidden>Sorry, no results match search string.</h4>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css">
+{% endblock %}
+
+{% block extra_js %}
+    {{ block.super }}
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/harmonizedata.js"></script>
+{% endblock %}
