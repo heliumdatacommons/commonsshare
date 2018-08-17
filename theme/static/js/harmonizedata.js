@@ -29,7 +29,7 @@ $(document).ready(function () {
     $("#hd-help-info").popover({
         html: true,
         container: '#body',
-        content: '<p>Type a search term to search for all variations of the term.</p>',
+        content: '<p>Type a search term to search for all variations of the term. It uses SciGraph Ontology services in the Monarch initiative. Visit <a href="https://monarchinitiative.org/page/services" target="_blank">Monarch Initiative Services</a> for details.</p>',
         trigger: 'click'
     });
 });
