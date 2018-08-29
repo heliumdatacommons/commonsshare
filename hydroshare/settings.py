@@ -289,6 +289,7 @@ INSTALLED_APPS = (
     "haystack",
     "jquery_ui",
     "rest_framework",
+    "longerusername",
     "robots",
     "hs_core",
     "hs_access_control",
@@ -500,6 +501,8 @@ HAYSTACK_CONNECTIONS = {
 }
 HAYSTACK_SIGNAL_PROCESSOR = "hs_core.hydro_realtime_signal_processor.HydroRealtimeSignalProcessor"
 
+
+MAX_USERNAME_LENGTH = 64  # used by longerusername Django app to extend default 30 to 64
 
 # customized value for password reset token and email verification link token to expire in 1 day
 PASSWORD_RESET_TIMEOUT_DAYS = 1
