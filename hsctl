@@ -249,6 +249,8 @@ migrate_hs() {
     docker exec -u hydro-service hydroshare python manage.py migrate --fake-initial --noinput
     echo "  - docker exec -u hydro-service hydroshare python manage.py fix_permissions"
     docker exec -u hydro-service hydroshare python manage.py fix_permissions
+    echo "  - docker exec -u hydro-service hydroshare python manage.py patch_user_model"
+    docker exec -u hydro-service hydroshare python manage.py patch_user_model
 }
 
 manage_py_hs() {
