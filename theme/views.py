@@ -431,7 +431,7 @@ def send_verification_mail_for_password_reset(request, user):
 def oauth_request(request):
     # note that trailing slash should not be added to return_to url
     return_url = '&return_to={}://{}/oauth_return'.format(request.scheme, request.get_host())
-    url = '{}authorize?provider=globus&scope=openid%20email%20profile{}'.format(settings.SERVICE_SERVER_URL, return_url)
+    url = '{}authorize?provider=globus&scope=openid%20email%20profile{}'.format(settings.OAUTH_SERVICE_SERVER_URL, return_url)
     auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
     response = requests.get(url,
                             headers={'Authorization': auth_header_str},
@@ -487,7 +487,7 @@ def oauth_return(request):
 @login_required
 def generate_token(request, uid):
     lbl = request.POST.get('label', '')
-    url = '{}apikey/{}/new'.format(settings.SERVICE_SERVER_URL, uid)
+    url = '{}apikey/{}/new'.format(settings.OAUTH_SERVICE_SERVER_URL, uid)
     auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
     response = requests.get(url, params={'label': lbl}, headers={'Authorization': auth_header_str})
     if response.status_code != status.HTTP_200_OK:
@@ -503,7 +503,7 @@ def generate_token(request, uid):
 
 @login_required
 def get_all_tokens(request, uid):
-    url = '{}apikey/{}'.format(settings.SERVICE_SERVER_URL, uid)
+    url = '{}apikey/{}'.format(settings.OAUTH_SERVICE_SERVER_URL, uid)
     auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
     response = requests.get(url, headers={'Authorization': auth_header_str})
     if response.status_code != status.HTTP_200_OK:
@@ -526,7 +526,7 @@ def get_all_tokens(request, uid):
 
 @login_required
 def delete_all_tokens(request, uid):
-    url = '{}apikey/{}'.format(settings.SERVICE_SERVER_URL, uid)
+    url = '{}apikey/{}'.format(settings.OAUTH_SERVICE_SERVER_URL, uid)
     auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
     tokens_list_str = request.POST.get('tokens', '')
 
@@ -571,7 +571,7 @@ def retrieve_globus_buckets(request):
         return HttpResponseBadRequest(content='user subject id is empty')
 
     url = 'token?uid={}&provider=globus&scope=urn:globus:auth:scope:transfer.api.globus.org:all'.format(uid)
-    req_url = '{}{}{}'.format(settings.SERVICE_SERVER_URL, url, return_url)
+    req_url = '{}{}{}'.format(settings.OAUTH_SERVICE_SERVER_URL, url, return_url)
 
     auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
     response = requests.get(req_url,
@@ -602,7 +602,7 @@ def globus_data_auth_return(request):
         return HttpResponseBadRequest('Bad request - no valid access_token is provided')
 
     # get avaiable endpoints for a given globus user
-    url = '{}registration/get_buckets?provider=globus&token={}'.format(settings.SERVICE_SERVER_URL, token)
+    url = '{}registration/get_buckets?provider=globus&token={}'.format(settings.DATA_REG_SERVICE_SERVER_URL, token)
     auth_header_str = 'Basic {}'.format(settings.DATA_REG_API_KEY)
     response = requests.get(url,
                             headers={'Authorization': auth_header_str},

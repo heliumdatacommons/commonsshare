@@ -64,8 +64,8 @@ def get_openid_token(request):
     url = 'token?uid={}&provider=globus&scope=openid%20email%20profile'.format(uid)
     # note that trailing slash should not be added to return_to url
     # return_url = '&return_to={}://{}/irods/openid_return'.format(request.scheme, request.get_host())
-    # req_url = '{}{}{}'.format(settings.SERVICE_SERVER_URL, url, return_url)
-    req_url = '{}{}'.format(settings.SERVICE_SERVER_URL, url)
+    # req_url = '{}{}{}'.format(settings.OAUTH_SERVICE_SERVER_URL, url, return_url)
+    req_url = '{}{}'.format(settings.OAUTH_SERVICE_SERVER_URL, url)
     auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
     response = requests.get(req_url,
                             headers={'Authorization': auth_header_str},

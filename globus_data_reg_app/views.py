@@ -21,10 +21,10 @@ def store(request):
     if path:
         # list file/dir entries for a given globus storage bucket id
         url = '{}registration/list_bucket_path?provider=globus&token={}&bucket_id={}&path={}'.format(
-            settings.SERVICE_SERVER_URL, token, ds_uuid, path)
+            settings.DATA_REG_SERVICE_SERVER_URL, token, ds_uuid, path)
     else:
         # list file/dir entries for a given globus storage bucket id
-        url = '{}registration/list_bucket?provider=globus&token={}&bucket_id={}'.format(settings.SERVICE_SERVER_URL,
+        url = '{}registration/list_bucket?provider=globus&token={}&bucket_id={}'.format(settings.DATA_REG_SERVICE_SERVER_URL,
                                                                                         token, ds_uuid)
     auth_header_str = 'Basic {}'.format(settings.DATA_REG_API_KEY)
     response = requests.get(url,
@@ -58,7 +58,7 @@ def register(request):
 
         # create iRODS resource first before registering the path
         url = '{}registration/create_resource?provider=globus&bucket_id={}&subjectid={}'.format(
-            settings.SERVICE_SERVER_URL, ds_uuid, uid)
+            settings.DATA_REG_SERVICE_SERVER_URL, ds_uuid, uid)
         auth_header_str = 'Basic {}'.format(settings.DATA_REG_API_KEY)
 
         response = requests.get(url, headers={'Authorization': auth_header_str}, verify=False)
@@ -75,7 +75,7 @@ def register(request):
         }
 
         # list file/dir entries for a given globus storage bucket id
-        url = '{}registration/register_paths'.format(settings.SERVICE_SERVER_URL)
+        url = '{}registration/register_paths'.format(settings.DATA_REG_SERVICE_SERVER_URL)
         response = requests.post(url, data=json.dumps(p_data), headers={'Authorization': auth_header_str}, verify=False)
         if response.status_code != status.HTTP_200_OK:
             # request fails

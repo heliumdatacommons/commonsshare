@@ -171,8 +171,9 @@ HS_IRODS_LOCAL_ZONE_DEF_RES = 'hydroshareLocalResc'
 HS_WWW_IRODS_ZONE = ''
 HS_USER_IRODS_ZONE = 'hydroshareuserZone'
 
-SERVICE_SERVER_URL = ''
+OAUTH_SERVICE_SERVER_URL = ''
 OAUTH_APP_KEY = ''
+DATA_REG_SERVICE_SERVER_URL = ''
 DATA_REG_API_KEY = ''
 
 # Email configuration
