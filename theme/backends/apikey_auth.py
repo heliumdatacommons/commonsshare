@@ -26,7 +26,7 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
             except User.DoesNotExist:
                 raise AuthenticationFailed('User does not exist')
 
-            url = '{}apikey/verify'.format(settings.SERVICE_SERVER_URL)
+            url = '{}apikey/verify'.format(settings.OAUTH_SERVICE_SERVER_URL)
             auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
             response = requests.get(url, headers={'Authorization': auth_header_str},
                                     params={'username': username,

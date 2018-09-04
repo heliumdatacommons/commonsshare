@@ -39,7 +39,7 @@ class GlobusOAuth2:
                                       superuser=False, active=True)
                 # create corresponding iRODS account with same username via OAuth if not exist already
                 url = '{}registration/create_account?username={}&zone={}&auth_name={}'.format(
-                    settings.SERVICE_SERVER_URL, username, settings.IRODS_ZONE, uid)
+                    settings.DATA_REG_SERVICE_SERVER_URL, username, settings.IRODS_ZONE, uid)
                 response = requests.get(url,
                                         headers={'Authorization': auth_header_str},
                                         verify=False)
@@ -51,7 +51,7 @@ class GlobusOAuth2:
 
             hashed_token = hashlib.sha256(access_token).hexdigest()[0:50]
             url = '{}registration/add_user_oids?username={}&subjectid={}&sessionid={}'.format(
-                settings.SERVICE_SERVER_URL,
+                settings.DATA_REG_SERVICE_SERVER_URL,
                 username, uid, hashed_token)
             response = requests.get(url, headers={'Authorization': auth_header_str}, verify=False)
             if response.status_code !=status.HTTP_200_OK:
