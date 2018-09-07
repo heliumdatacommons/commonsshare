@@ -483,6 +483,7 @@ REST_FRAMEWORK = {
     'PAGE_SIZE_QUERY_PARAM': 'PAGE_SIZE',
     'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'theme.backends.oauth2.OAuth2Authentication',
         'theme.backends.apikey_auth.APIKeyAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'oauth2_provider.ext.rest_framework.OAuth2Authentication',
