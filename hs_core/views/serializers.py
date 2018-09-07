@@ -115,6 +115,14 @@ class ResourceFileSerializer(serializers.Serializer):
     content_type = serializers.CharField(max_length=255)
 
 
+class DataObjectListItemSerializer(serializers.Serializer):
+    dataobject_name= serializers.CharField(max_length=200)
+    dataobject_id = serializers.CharField(max_length=100)
+    date_created = serializers.DateTimeField(format='%m-%d-%Y')
+    date_last_updated = serializers.DateTimeField(format='%m-%d-%Y')
+    urls = serializers.JSONField(required=False)
+
+
 class ResourceType(object):
     def __init__(self, resource_type):
         self.resource_type = resource_type
@@ -143,6 +151,12 @@ ResourceFileItem = namedtuple('ResourceFileItem',
                                'size',
                                'content_type'])
 
+DataObjectListItem = namedtuple('DataObjectListItem',
+                              ['dataobject_id',
+                               'dataobject_name',
+                               'date_created',
+                               'date_last_updated',
+                               'urls'])
 
 class UserAuthenticateRequestValidator(serializers.Serializer):
     username = serializers.CharField()

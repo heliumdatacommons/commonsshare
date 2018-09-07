@@ -126,7 +126,7 @@ def get_remote_file_manifest(tmpdir, resource):
 
         istorage = resource.get_irods_storage()
 
-        checksum = istorage.get_checksum(srcfile)
+        checksum = istorage.checksum(srcfile)
 
         data['url'] = fetch_url
 
