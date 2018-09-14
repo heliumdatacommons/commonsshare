@@ -34,9 +34,8 @@ class ResourceToDataObjectListItemMixin(object):
                 url = site_url + '/django_irods/download/' + f.short_path
                 srcfile = os.path.join(irods_dest_prefix, f.storage_path)
 
-            fsize = f.size
+            fsize = istorage.size(srcfile)
             checksum = istorage.get_checksum(srcfile)
-            #checksum = 0;
 
             # trailing slash confuses mime guesser
             mimetype = mimetypes.guess_type(url)
@@ -44,7 +43,6 @@ class ResourceToDataObjectListItemMixin(object):
                 ftype = mimetype[0]
             else:
                 ftype = repr(None)
-
 
             urls.append({"url": url, "size": fsize, "mime_type": ftype, "checksum": checksum,
                          "checksum_type": 'sha256'})
