@@ -31,7 +31,7 @@ class ResourceToDataObjectListItemMixin(object):
                 url = site_url + '/django_irods/download/' + f.resource.short_id + f.reference_file_path
                 srcfile = f.reference_file_path
             else:
-                url = site_url + '/django_irods/download/' + f.short_path
+                url = site_url + '/django_irods/download/' + f.resource.short_id + '/data/' + f.short_path
                 srcfile = os.path.join(irods_dest_prefix, f.storage_path)
 
             fsize = istorage.size(srcfile)

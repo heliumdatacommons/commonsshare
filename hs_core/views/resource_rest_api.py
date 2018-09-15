@@ -70,7 +70,7 @@ class ResourceFileToListItemMixin(object):
         if f.reference_file_path:
             url = site_url + '/django_irods/download/' + f.resource.short_id + f.reference_file_path
         else:
-            url = site_url +'/django_irods/download/' + f.short_path
+            url = site_url +'/django_irods/download/' + f.resource.short_id + '/data/' + f.short_path
 
         fsize = f.size
         # trailing slash confuses mime guesser
