@@ -105,23 +105,22 @@ def create_bag(resource):
 
 def get_remote_file_manifest(tmpdir, resource):
     data_list = []
+
+    from hs_core.hydroshare import utils
+
     for f in ResourceFile.objects.filter(object_id=resource.id):
         data = {}
-
-        from hs_core.hydroshare import utils
 
         if f.reference_file_path:
             irods_file_name = f.reference_file_path
             srcfile = irods_file_name
             last_sep_pos = irods_file_name.rfind('/')
             ref_file_name = irods_file_name[last_sep_pos+1:]
-            tmpfile = os.path.join(tmpdir, ref_file_name)
             fetch_url = '{0}/django_irods/download/{1}'.format(utils.current_site_url(), resource.short_id + irods_file_name)
         else:
             irods_file_name = f.storage_path
             irods_dest_prefix = "/" + settings.IRODS_ZONE + "/home/" + settings.IRODS_USERNAME
             srcfile = os.path.join(irods_dest_prefix, irods_file_name)
-            tmpfile = os.path.join(tmpdir, f.file_name)
             fetch_url = '{0}/django_irods/download/{1}'.format(utils.current_site_url(), irods_file_name)
 
         istorage = resource.get_irods_storage()
@@ -141,6 +140,7 @@ def get_remote_file_manifest(tmpdir, resource):
             data['sha256'] = checksum[4:]
         elif checksum.startswith('md5'):
             data['md5'] = checksum[4:]
+
         data_list.append(data)
 
     return data_list

@@ -13,7 +13,6 @@ from rest_framework import authentication
 from django.contrib.auth.models import User
 from django.conf import settings
 
-
 class OAuth2Authentication(authentication.BaseAuthentication):
     def authenticate(self, request):
         auth_header = request.META.get('HTTP_AUTHORIZATION').strip()
@@ -21,8 +20,8 @@ class OAuth2Authentication(authentication.BaseAuthentication):
         if auth_strs[0] == 'Bearer':
             token = auth_strs[1]
 
-            url = '{}validate_token'.format(settings.SERVICE_SERVER_URL)
-            auth_header_str = 'Basic {}'.format(settings.OAUTH2_APP_KEY)
+            url = '{}validate_token'.format(settings.OAUTH_SERVICE_SERVER_URL)
+            auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
             response = requests.get(url, headers={'Authorization': auth_header_str},
                                     params={'provider': 'globus',
                                             'access_token': token})
