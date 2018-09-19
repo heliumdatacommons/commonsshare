@@ -117,15 +117,15 @@ def get_remote_file_manifest(tmpdir, resource):
             last_sep_pos = irods_file_name.rfind('/')
             ref_file_name = irods_file_name[last_sep_pos+1:]
             fetch_url = '{0}/django_irods/download/{1}'.format(utils.current_site_url(), resource.short_id + irods_file_name)
+            checksum = istorage.get_checksum(srcfile)
         else:
             irods_file_name = f.storage_path
             irods_dest_prefix = "/" + settings.IRODS_ZONE + "/home/" + settings.IRODS_USERNAME
             srcfile = os.path.join(irods_dest_prefix, irods_file_name)
             fetch_url = '{0}/django_irods/download/{1}'.format(utils.current_site_url(), irods_file_name)
+            checksum = istorage.checksum(srcfile)
 
         istorage = resource.get_irods_storage()
-
-        checksum = istorage.checksum(srcfile)
 
         data['url'] = fetch_url
 
