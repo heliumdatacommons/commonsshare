@@ -108,6 +108,8 @@ def get_remote_file_manifest(tmpdir, resource):
 
     from hs_core.hydroshare import utils
 
+    istorage = resource.get_irods_storage()
+
     for f in ResourceFile.objects.filter(object_id=resource.id):
         data = {}
 
@@ -124,8 +126,6 @@ def get_remote_file_manifest(tmpdir, resource):
             srcfile = os.path.join(irods_dest_prefix, irods_file_name)
             fetch_url = '{0}/django_irods/download/{1}'.format(utils.current_site_url(), irods_file_name)
             checksum = istorage.checksum(srcfile)
-
-        istorage = resource.get_irods_storage()
 
         data['url'] = fetch_url
 
