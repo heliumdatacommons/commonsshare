@@ -38,7 +38,8 @@ class ResourceToDataObjectListItemMixin(object):
             fsize = istorage.size(srcfile)
             checksum = istorage.get_checksum(srcfile)
 
-            decoded_checksum = base64.b64decode(checksum).encode('hex')
+            if checksum is not None:
+                checksum = base64.b64decode(checksum).encode('hex')
 
             # trailing slash confuses mime guesser
             mimetype = mimetypes.guess_type(url)
@@ -47,7 +48,7 @@ class ResourceToDataObjectListItemMixin(object):
             else:
                 ftype = repr(None)
 
-            urls.append({"url": url, "size": fsize, "mime_type": ftype, "checksum": decoded_checksum,
+            urls.append({"url": url, "size": fsize, "mime_type": ftype, "checksum": checksum,
                          "checksum_type": 'sha256'})
 
         data_object_listitem = serializers.DataObjectListItem(dataobject_id=r.short_id,
