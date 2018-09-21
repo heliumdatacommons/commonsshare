@@ -153,7 +153,7 @@
             <a class='btn btn-primary' href="{{ tool_homepage_url }}" target="_blank">Open Web App</a>
         {% endif %}
 
-        {% if request.user.is_authenticated or relevant_tools and relevant_tools.open_with_app_counter > 0 %}
+        {% if request.user.is_authenticated and cm.resource_type != 'ToolResource' or relevant_tools and relevant_tools.open_with_app_counter > 0 %}
         <span id="apps-dropdown"/>
           <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Open with...
                 <span class="caret"></span></button>

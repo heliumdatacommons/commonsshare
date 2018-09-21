@@ -2,6 +2,7 @@ from json import dumps, loads, load
 import requests
 import time
 import os
+import re
 import logging
 
 from django.contrib.auth.decorators import login_required
@@ -726,10 +727,20 @@ def create_scidas_virtual_app(request, res_id, cluster):
         return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
     app_id = p_data['id']
+
+    # validate app_id
+    id_validation_failure_msg = 'appliance or container id {} failed validation - id can only ' \
+                                'contain dash, underline, letters, and numbers'
+    id_re = re.compile('^[a-zA-Z0-9_-]+$')
+    if not id_re.match(app_id):
+        return HttpResponseBadRequest(content=id_validation_failure_msg.format(app_id))
+
     # the data field has been changed in the updated PIVOT API, so comment this out for now
     # p_data['containers'][0]['data'] = file_data_list
 
     for con in p_data['containers']:
+        if con['id'] and not id_re.match(con['id']):
+            return HttpResponseBadRequest(content=id_validation_failure_msg.format(con['id']))
         if cluster_name:
             con['rack'] = cluster_name
         if 'env' in con:
