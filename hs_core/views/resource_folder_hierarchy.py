@@ -93,9 +93,12 @@ def data_store_structure(request):
                         logical_file_type = f.logical_file_type_name
                         logical_file_id = f_logical.id
                     break
-
-            if f_pk:  # file is found in Django
-                files.append({'name': fname, 'size': size, 'type': mtype, 'pk': f_pk, 'url': f_url,
+            lower_fname = fname.lower()
+            is_pivot_config = False
+            if lower_fname.startswith('pivot') and lower_fname.endswith('.json'):
+                is_pivot_config = True
+            if f_pk and not is_pivot_config :  # file is found in Django
+                files.append({'name': fnames, 'size': size, 'type': mtype, 'pk': f_pk, 'url': f_url,
                               'logical_type': logical_file_type,
                               'logical_file_id': logical_file_id})
             else:  # file is not found in Django
