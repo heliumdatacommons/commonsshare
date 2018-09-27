@@ -12,9 +12,7 @@ from bdbag import bdbag_api as bdb
 from minid_client import minid_client_api as mca
 from django_irods.icommands import SessionException
 
-
 logger = logging.getLogger(__name__)
-
 
 class HsBagitException(Exception):
     pass
@@ -119,31 +117,39 @@ def get_remote_file_manifest(tmpdir, resource):
             last_sep_pos = irods_file_name.rfind('/')
             ref_file_name = irods_file_name[last_sep_pos+1:]
             fetch_url = '{0}/django_irods/download/{1}'.format(utils.current_site_url(), resource.short_id + irods_file_name)
-            checksum = istorage.get_checksum(srcfile)
         else:
             irods_file_name = f.storage_path
             irods_dest_prefix = "/" + settings.IRODS_ZONE + "/home/" + settings.IRODS_USERNAME
             srcfile = os.path.join(irods_dest_prefix, irods_file_name)
             fetch_url = '{0}/django_irods/download/{1}'.format(utils.current_site_url(), irods_file_name)
-            checksum = istorage.checksum(srcfile)
 
-        data['url'] = fetch_url
 
-        if (f.reference_file_path):
-            data['length'] = istorage.size(srcfile)
-            data['filename'] = ref_file_name
-        else:
-            data['length'] = f.size
-            data['filename'] = f.file_name
+        try:
+            checksum = istorage.get_checksum(srcfile)
+            if checksum is None:
+                checksum = istorage.checksum(srcfile)
+        except SessionException as ex:
+            logger.error("IRODS Checksum failed for " + srcfile + " when creating bdbag for resource "
+                         + resource.short_id + " " + ex.message())
+        finally:
+            data['url'] = fetch_url
 
-        if checksum.startswith('sha'):
-            data['sha256'] = checksum[4:]
-        elif checksum.startswith('md5'):
-            data['md5'] = checksum[4:]
+            if (f.reference_file_path):
+                data['length'] = istorage.size(srcfile)
+                data['filename'] = ref_file_name
+            else:
+                data['length'] = f.size
+                data['filename'] = f.file_name
 
-        data_list.append(data)
+            if checksum is not None:
+                if checksum.startswith('sha'):
+                    data['sha256'] = checksum[4:]
+                elif checksum.startswith('md5'):
+                    data['md5'] = checksum[4:]
 
-    return data_list
+            data_list.append(data)
+
+            return data_list
 
 def get_metadata_json(resource):
     data = {}
