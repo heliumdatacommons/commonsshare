@@ -31,7 +31,7 @@ class OAuth2Authentication(authentication.BaseAuthentication):
                 return_data = loads(response.content)
                 active = return_data['active']
                 if not active:
-                    raise AuthenticationFailed("Token: " + token + " is expired")
+                    raise AuthenticationFailed("Token is expired")
                 else:
                     username = return_data['username']
 
