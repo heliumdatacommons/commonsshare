@@ -18,25 +18,18 @@ from hs_core.hydroshare.users import create_account
 
 class GlobusOAuth2:
     def authenticate(self, request, username=None, access_token=None, first_name=None, last_name=None, uid=None):
-
+        AUTH_URL = 'https://auth.globus.org/v2/oauth2/userinfo'
         if not access_token or not username:
             return None
 
-        url = '{}validate_token'.format(settings.OAUTH_SERVICE_SERVER_URL)
-        auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
-        response = requests.get(url, headers={'Authorization': auth_header_str},
-                                params={'provider': 'auth0',
-                                        'access_token': access_token})
+        response = requests.get(AUTH_URL,
+                                headers={'Authorization': 'Bearer ' + access_token})
+
         if response.status_code != status.HTTP_200_OK:
             return None
-        else:
-            return_data = loads(response.content)
-            active = return_data['active']
-            if not active:
-                return None
-            else:
-                preferred_username = return_data['username']
 
+        return_data = loads(response.content)
+        preferred_username = return_data['preferred_username']
         if username == preferred_username:
             auth_header_str = 'Basic {}'.format(settings.DATA_REG_API_KEY)
             try:
