@@ -25,7 +25,7 @@ class GlobusOAuth2:
         url = '{}validate_token'.format(settings.OAUTH_SERVICE_SERVER_URL)
         auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
         response = requests.get(url, headers={'Authorization': auth_header_str},
-                                params={'provider': 'globus',
+                                params={'provider': 'auth0',
                                         'access_token': access_token})
         if response.status_code != status.HTTP_200_OK:
             return None
