@@ -12,7 +12,7 @@ from django.core.exceptions import ValidationError
 from django_irods.icommands import SessionException
 
 from hs_core.hydroshare.utils import get_file_mime_type, \
-    get_resource_file_url, resolve_request
+    get_resource_file_url, resolve_request, is_pivot_config_file
 from hs_core.views.utils import authorize, ACTION_TO_AUTHORIZE, zip_folder, unzip_file, \
     create_folder, remove_folder, move_or_rename_file_or_folder, move_to_folder, \
     rename_file_or_folder, get_coverage_data_dict, irods_path_is_directory
@@ -93,8 +93,7 @@ def data_store_structure(request):
                         logical_file_type = f.logical_file_type_name
                         logical_file_id = f_logical.id
                     break
-
-            if f_pk:  # file is found in Django
+            if f_pk and not is_pivot_config_file(fname) :  # file is found in Django
                 files.append({'name': fname, 'size': size, 'type': mtype, 'pk': f_pk, 'url': f_url,
                               'logical_type': logical_file_type,
                               'logical_file_id': logical_file_id})

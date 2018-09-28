@@ -416,6 +416,9 @@ def create_resource(
             # few seconds.  We may want to add the option to do this
             # asynchronously if the file size is large and would take
             # more than ~15 seconds to complete.
+            utils.save_pivot_appliance_info(resource, files)
+
+
             add_resource_files(resource.short_id, *files, source_names=source_names, source_sizes=source_sizes,
                                move=move, is_file_reference=is_file_reference)
 

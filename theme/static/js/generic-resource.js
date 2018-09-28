@@ -444,6 +444,38 @@ $(document).ready(function () {
         }
     });
 
+    $('#pivot-optimal').click(function() {
+       $('#pivot_url').val($('#pivot_optimal_url').val());
+    });
+
+    $('#pivot-aws').click(function() {
+       $('#pivot_url').val($('#pivot_aws_url').val());
+    });
+
+    $('#pivot-gcp').click(function() {
+       $('#pivot_url').val($('#pivot_gcp_url').val());
+    });
+
+    $('#btn-launch-pivot').on('click', function(e) {
+        $.ajax({
+            type: "POST",
+            url: $('#pivot_url').val(),
+            dataType: "json",
+            data: {
+                'num_instances': $('#txtInstance').val(),
+                'num_cpus': $('#txtCPU').val(),
+                'mem_size': $('#txtMEM').val()
+            },
+            success: function(result) {
+                window.location.href = result.url
+            },
+            error: function (xhr, errmsg, err) {
+                    console.log(errmsg, err);
+                    alert(xhr.responseText)
+            }
+        });
+    });
+
     $("#agree-chk").on('click', function(e) {
         e.stopImmediatePropagation();
         if (e.currentTarget.checked)
