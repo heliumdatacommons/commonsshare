@@ -784,7 +784,7 @@ def create_scidas_virtual_app(request, res_id, cluster):
     is_deleted = False
     idx = 0
     # check the appliance is indeed deleted successfully
-    timeout_threshold = 20
+    timeout_threshold = 60
     elapsed_time = 0
     while idx < 2:
         get_response = requests.get(app_url)
