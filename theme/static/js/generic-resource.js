@@ -467,9 +467,11 @@ $(document).ready(function () {
                 'mem_size': $('#txtMEM').val()
             },
             success: function(result) {
+                window.location.href = result.url
             },
             error: function (xhr, errmsg, err) {
                     console.log(errmsg, err);
+                    alert(xhr.responseText)
             }
         });
     });

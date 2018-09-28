@@ -689,8 +689,13 @@ def email_verify_password_reset(request, uidb36=None, token=None):
 def create_scidas_virtual_app(request, res_id, cluster):
     user = get_user(request)
     if not user.is_authenticated() or not user.is_active:
-        messages.error(request, "Only authorized user can make appliance provision request.")
-        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+        errmsg = "Only authorized user can make appliance provision request."
+        messages.error(request, errmsg)
+        if request.is_ajax():
+            return JsonResponse(data={'error': errmsg},
+                                status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
     res, _, _ = authorize(request, res_id, needed_permission=ACTION_TO_AUTHORIZE.VIEW_RESOURCE)
     cluster_name = cluster
@@ -726,8 +731,13 @@ def create_scidas_virtual_app(request, res_id, cluster):
     url = settings.PIVOT_URL
 
     if not p_data:
-        messages.error(request, "The resource must include the JSON request file in order to launch PIVOT")
-        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+        errmsg = "The resource must include the JSON request file in order to launch PIVOT"
+        messages.error(request, errmsg)
+        if request.is_ajax():
+            return JsonResponse(data={'error': errmsg},
+                                      status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
     app_id = p_data['id']
 
@@ -736,7 +746,11 @@ def create_scidas_virtual_app(request, res_id, cluster):
                                 'contain dash, underline, letters, and numbers'
     id_re = re.compile('^[a-zA-Z0-9_-]+$')
     if not id_re.match(app_id):
-        return HttpResponseBadRequest(content=id_validation_failure_msg.format(app_id))
+        if request.is_ajax():
+            return JsonResponse(data={'error': id_validation_failure_msg.format(app_id)},
+                                      status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return HttpResponseBadRequest(content=id_validation_failure_msg.format(app_id))
 
     # the data field has been changed in the updated PIVOT API, so comment this out for now
     # p_data['containers'][0]['data'] = file_data_list
@@ -790,15 +804,26 @@ def create_scidas_virtual_app(request, res_id, cluster):
         errmsg = 'The old appliance '+app_id+' cannot be deleted successfully within ' + \
                  str(timeout_threshold) + ' seconds'
         messages.error(request, errmsg)
-        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+        if request.is_ajax():
+            return JsonResponse(data={'error': errmsg},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return HttpResponseRedirect(request.META['HTTP_REFERER'])
     
     response = requests.post(url, data=dumps(p_data))
     if response.status_code != status.HTTP_200_OK and \
             response.status_code != status.HTTP_201_CREATED:
-        return HttpResponseBadRequest(content=response.text)
+        if request.is_ajax():
+            return JsonResponse(data={'error': response.text}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return HttpResponseBadRequest(content=response.text)
 
     redirect_url = app_url + '/ui'
-    return HttpResponseRedirect(redirect_url)
+
+    if request.is_ajax():
+        return JsonResponse(data={'url': redirect_url})
+    else:
+        return HttpResponseRedirect(redirect_url)
 
     # if preset_url:
     #     app_url = preset_url
