@@ -76,7 +76,7 @@ def get_resource_by_shortkey(shortkey, or_404=True):
             raise
     content = res.get_content_model()
     assert content, (res, res.content_model)
-    return res
+    return content
 
 
 def get_resource_by_minid(minid, or_404=True):
