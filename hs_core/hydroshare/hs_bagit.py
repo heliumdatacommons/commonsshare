@@ -13,10 +13,6 @@ from django_irods.icommands import SessionException
 
 logger = logging.getLogger(__name__)
 
-class HsBagitException(Exception):
-    pass
-
-
 def delete_files_and_bag(resource):
     """
     delete the resource bag and all resource files.
@@ -127,24 +123,24 @@ def get_remote_file_manifest(resource):
         try:
             checksum = istorage.checksum(srcfile)
         except SessionException as ex:
-            raise HsBagitException(ex.stderr)
+            logger.error(ex.stderr)
+        finally:
+            data['url'] = fetch_url
 
-        data['url'] = fetch_url
+            if (f.reference_file_path):
+                data['length'] = istorage.size(srcfile)
+                data['filename'] = ref_file_name
+            else:
+                data['length'] = f.size
+                data['filename'] = f.file_name
 
-        if (f.reference_file_path):
-            data['length'] = istorage.size(srcfile)
-            data['filename'] = ref_file_name
-        else:
-            data['length'] = f.size
-            data['filename'] = f.file_name
+            if checksum is not None:
+                if checksum.startswith('sha'):
+                    data['sha256'] = base64.b64decode(checksum[4:]).encode('hex')
+                elif checksum.startswith('md5'):
+                    data['md5'] = base64.b64decode(checksum[4:]).encode('hex')
 
-        if checksum is not None:
-            if checksum.startswith('sha'):
-                data['sha256'] = base64.b64decode(checksum[4:]).encode('hex')
-            elif checksum.startswith('md5'):
-                data['md5'] = base64.b64decode(checksum[4:]).encode('hex')
-        
-        data_list.append(data)
+            data_list.append(data)
 
     return data_list
 
