@@ -839,7 +839,10 @@ class Identifier(AbstractMetaDataElement):
                 if not resource.minid:
                     raise ValidationError("Identifier of 'MINID' type can't be created for a "
                                           "resource that has not been assigned a MINID yet.")
-
+            if kwargs['name'].lower() == 'doi':
+                if not resource.doi:
+                    raise ValidationError("Identifier of 'DOI' type can't be created for a "
+                                          "resource that has not been assigned a DOI yet.")
             return super(Identifier, cls).create(**kwargs)
 
         else:
@@ -859,6 +862,9 @@ class Identifier(AbstractMetaDataElement):
 
                 if idf.name.lower() == 'minid':
                     raise ValidationError("Identifier name 'MINID' can't be changed.")
+
+                if idf.name.lower() == 'doi':
+                    raise ValidationError("Identifier name 'DOI' can't be changed.")
 
                 # check this new identifier name not already exists
                 if Identifier.objects.filter(name__iexact=kwargs['name'], object_id=idf.object_id,
@@ -894,6 +900,12 @@ class Identifier(AbstractMetaDataElement):
             if resource.minid:
                 raise ValidationError("CommonsShare identifier:%s can't be deleted for a resource "
                                       "that has been assigned a MINID." % idf.name)
+
+        if idf.name.lower() == 'doi':
+                if resource.doi:
+                    raise ValidationError("CommonsShare identifier:%s can't be deleted for a resource "
+                                          "that has been assigned a DOI." % idf.name)
+
         idf.delete()
 
 
@@ -1602,6 +1614,9 @@ class AbstractResource(ResourcePermissionsMixin, ResourceIRODSMixin):
 
     minid = models.CharField(max_length=1024, null=True, blank=True, db_index=True,
                            help_text='MINID created for this resource.')
+    doi = models.CharField(max_length=1024, null=True, blank=True, db_index=True,
+                             help_text='DOI created for this resource.')
+
     comments = CommentsField()
     rating = RatingField()
 
@@ -2060,6 +2075,8 @@ class AbstractResource(ResourcePermissionsMixin, ResourceIRODSMixin):
 
         if self.metadata.identifiers.all().filter(name="minid"):
             hs_identifier = self.metadata.identifiers.all().filter(name="minid")[0]
+        elif self.metadata.identifiers.all().filter(name="doi"):
+                hs_identifier = self.metadata.identifiers.all().filter(name="doi")[0]
         elif self.metadata.identifiers.all().filter(name="hydroShareIdentifier"):
             hs_identifier = self.metadata.identifiers.all().filter(name="hydroShareIdentifier")[0]
         else:
