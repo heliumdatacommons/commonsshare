@@ -1044,7 +1044,6 @@ def publish_resource(user, pk, publish_type):
             doi = return_data['@id']
             resource.doi = doi
             resource.minid = ''
-            logger.info("DOI: " + doi)
             ident_md_args = {'name': 'doi',
                        'url': 'https://doi.org/' + doi[5:]}
     resource.save()

@@ -127,7 +127,7 @@ def get_remote_file_manifest(resource):
         try:
             checksum = istorage.checksum(srcfile)
         except SessionException as ex:
-            raise HsBagitException(ex.message)
+            raise HsBagitException(ex.stderr)
 
         data['url'] = fetch_url
 
@@ -146,7 +146,7 @@ def get_remote_file_manifest(resource):
         
         data_list.append(data)
 
-return data_list
+    return data_list
 
 def get_metadata_json(resource):
     data = {}
