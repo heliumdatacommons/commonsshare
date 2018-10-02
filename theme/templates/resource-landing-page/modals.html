@@ -2352,6 +2352,44 @@
     </div>
 </div>
 
+<div class="modal fade" id="pivot-dialog" tabindex="-1" role="dialog"
+     aria-labelledby="pivot_dialog" aria-hidden="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                <h4 class="modal-title">Input PIVOT appliance worker container configuration</h4>
+            </div>
+
+            <div class="modal-body">
+                <input type="hidden" id="pivot_url"/>
+                {# Number of instances #}
+                <div class="form-group">
+                    <fieldset>
+                        <label for="txtInstance" class="col-sm-4 control-label">Number of instances: </label>
+                        <input id="txtInstance" class="col-sm-8 modal-only-required" value="{{ cm.extra_data.num_instances }}">
+                    </fieldset>
+                </div>
+                {# Resources #}
+                <div class="form-group">
+                    <fieldset>
+                        <label for="txtCPU" class="col-sm-4 control-label">Number of CPUs: </label>
+                        <input id="txtCPU" class="col-sm-8 modal-only-required" value="{{ cm.extra_data.num_cpus }}">
+                        <label for="txtMEM" class="col-sm-4 control-label">Memory (bytes): </label>
+                        <input id="txtMEM" class="col-sm-8 modal-only-required" value="{{ cm.extra_data.mem_size }}">
+                    </fieldset>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" id="btn-launch-pivot" class="btn btn-primary" data-dismiss="modal">Launch PIVOT
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% block extra_js %}
     <script type="text/javascript" src="{{ STATIC_URL }}js/modals.js"></script>
 {% endblock %}

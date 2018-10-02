@@ -105,11 +105,12 @@ def store(request):
     datastore = str(request.POST['store']).strip()
     if datastore.endswith('/'):
         datastore = datastore[:-1]
+
     try:
         coll_manager = CollectionManager(irods_sess)
         coll = coll_manager.get(datastore)
     except Exception as ex:
-        res = JsonResponse({'error': ex.strerror}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        res = JsonResponse({'error': ex.message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return res
 
     store = search_ds(coll)

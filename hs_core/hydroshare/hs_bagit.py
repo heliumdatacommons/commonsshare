@@ -143,10 +143,10 @@ def get_remote_file_manifest(resource):
                 data['sha256'] = base64.b64decode(checksum[4:]).encode('hex')
             elif checksum.startswith('md5'):
                 data['md5'] = base64.b64decode(checksum[4:]).encode('hex')
-
+        
         data_list.append(data)
 
-    return data_list
+return data_list
 
 def get_metadata_json(resource):
     data = {}

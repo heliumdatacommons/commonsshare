@@ -2,6 +2,7 @@ from json import dumps, loads, load
 import requests
 import time
 import os
+import re
 import logging
 
 from django.contrib.auth.decorators import login_required
@@ -688,8 +689,13 @@ def email_verify_password_reset(request, uidb36=None, token=None):
 def create_scidas_virtual_app(request, res_id, cluster):
     user = get_user(request)
     if not user.is_authenticated() or not user.is_active:
-        messages.error(request, "Only authorized user can make appliance provision request.")
-        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+        errmsg = "Only authorized user can make appliance provision request."
+        messages.error(request, errmsg)
+        if request.is_ajax():
+            return JsonResponse(data={'error': errmsg},
+                                status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
     res, _, _ = authorize(request, res_id, needed_permission=ACTION_TO_AUTHORIZE.VIEW_RESOURCE)
     cluster_name = cluster
@@ -699,6 +705,9 @@ def create_scidas_virtual_app(request, res_id, cluster):
     p_data = {}
     file_path = '/'+ds.IRODS_ZONE+'/home/'+ds.IRODS_USERNAME
     pub_key = ''
+    num_insts = request.POST.get('num_instances', None)
+    num_cpus = request.POST.get('num_cpus', None)
+    mem_size = request.POST.get('mem_size', None)
     for rf in ResourceFile.objects.filter(object_id=res.id):
         if pub_key and p_data:
             break
@@ -722,20 +731,46 @@ def create_scidas_virtual_app(request, res_id, cluster):
     url = settings.PIVOT_URL
 
     if not p_data:
-        messages.error(request, "The resource must include the JSON request file in order to launch PIVOT")
-        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+        errmsg = "The resource must include the JSON request file in order to launch PIVOT"
+        messages.error(request, errmsg)
+        if request.is_ajax():
+            return JsonResponse(data={'error': errmsg},
+                                      status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
     app_id = p_data['id']
+
+    # validate app_id
+    id_validation_failure_msg = 'appliance or container id {} failed validation - id can only ' \
+                                'contain dash, underline, letters, and numbers'
+    id_re = re.compile('^[a-zA-Z0-9_-]+$')
+    if not id_re.match(app_id):
+        if request.is_ajax():
+            return JsonResponse(data={'error': id_validation_failure_msg.format(app_id)},
+                                      status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return HttpResponseBadRequest(content=id_validation_failure_msg.format(app_id))
+
     # the data field has been changed in the updated PIVOT API, so comment this out for now
     # p_data['containers'][0]['data'] = file_data_list
 
     for con in p_data['containers']:
+        if con['id'] and not id_re.match(con['id']):
+            return HttpResponseBadRequest(content=id_validation_failure_msg.format(con['id']))
         if cluster_name:
             con['rack'] = cluster_name
         if 'env' in con:
             con['env']['SSH_PUBKEY'] = pub_key
         else:
             con['env'] = {'SSH_PUBKEY': pub_key}
+        if con['id'] == 'workers':
+            if num_insts:
+                con['instances'] = int(num_insts)
+            if num_cpus:
+                con['resources']['cpus'] = int(num_cpus)
+            if mem_size:
+                con['resources']['mem'] = int(mem_size)
 
     if 'endpoints' in p_data['containers'][0]:
         if p_data['containers'][0]['endpoints']:
@@ -745,35 +780,46 @@ def create_scidas_virtual_app(request, res_id, cluster):
 
     # delete the appliance before posting to create a new one in case it already exists
     app_url = url+'/'+app_id
-    response = requests.delete(app_url)
+    requests.delete(app_url)
     is_deleted = False
-    if response.status_code != status.HTTP_404_NOT_FOUND and \
-           response.status_code != status.HTTP_200_OK:
-        idx = 0
-        while idx < 2:
-            get_response = requests.get(app_url)
-            idx += 1
-            if get_response.status_code == status.HTTP_404_NOT_FOUND:
-                is_deleted = True
-                break
-            else:
-                # appliance is not deleted successfully yet, wait and poll 
-                # again one more time
-                time.sleep(2) 
-    else:
-        is_deleted = True
+    # check the appliance is indeed deleted successfully
+    timeout_threshold = 60
+    elapsed_time = 0
+    while elapsed_time < timeout_threshold:
+        get_response = requests.get(app_url)
+        if get_response.status_code == status.HTTP_404_NOT_FOUND:
+            is_deleted = True
+            break
+        else:
+            # appliance is not deleted successfully yet, wait and poll
+            # again one more time
+            time.sleep(2)
+            elapsed_time += 2
+
     if not is_deleted:
-        errmsg = 'The old appliance '+app_id+' cannot be deleted successfully'
+        errmsg = 'The old appliance '+app_id+' cannot be deleted successfully within ' + \
+                 str(timeout_threshold) + ' seconds'
         messages.error(request, errmsg)
-        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+        if request.is_ajax():
+            return JsonResponse(data={'error': errmsg},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return HttpResponseRedirect(request.META['HTTP_REFERER'])
     
     response = requests.post(url, data=dumps(p_data))
     if response.status_code != status.HTTP_200_OK and \
             response.status_code != status.HTTP_201_CREATED:
-        return HttpResponseBadRequest(content=response.text)
+        if request.is_ajax():
+            return JsonResponse(data={'error': response.text}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return HttpResponseBadRequest(content=response.text)
 
     redirect_url = app_url + '/ui'
-    return HttpResponseRedirect(redirect_url)
+
+    if request.is_ajax():
+        return JsonResponse(data={'url': redirect_url})
+    else:
+        return HttpResponseRedirect(redirect_url)
 
     # if preset_url:
     #     app_url = preset_url
