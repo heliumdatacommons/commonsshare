@@ -136,10 +136,11 @@ def get_remote_file_manifest(tmpdir, resource):
             data['length'] = f.size
             data['filename'] = f.file_name
 
-        if checksum.startswith('sha'):
-            data['sha256'] = checksum[4:]
-        elif checksum.startswith('md5'):
-            data['md5'] = checksum[4:]
+        if checksum is not None:
+            if checksum.startswith('sha'):
+                data['sha256'] = checksum[4:]
+            elif checksum.startswith('md5'):
+                data['md5'] = checksum[4:]
 
         data_list.append(data)
 
