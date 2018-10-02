@@ -15,6 +15,8 @@ from hs_core import hydroshare
 from hs_core.views import serializers
 from hs_core.views.utils import authorize, ACTION_TO_AUTHORIZE
 
+from django_irods.icommands import SessionException
+
 logger = logging.getLogger(__name__)
 
 
@@ -36,20 +38,32 @@ class ResourceToDataObjectListItemMixin(object):
                 srcfile = os.path.join(irods_dest_prefix, f.storage_path)
 
             fsize = istorage.size(srcfile)
-            checksum = istorage.get_checksum(srcfile)
 
-            if checksum is not None:
-                checksum = base64.b64decode(checksum).encode('hex')
+            checksum = None
+            checksum_type = None
 
-            # trailing slash confuses mime guesser
-            mimetype = mimetypes.guess_type(url)
-            if mimetype[0]:
-                ftype = mimetype[0]
-            else:
-                ftype = repr(None)
+            try:
+                checksum = istorage.checksum(srcfile)
+            except SessionException:
+                logger.error("Error computing checksum", exc_info=True)
+            finally:
+                if checksum is not None:
+                    if checksum.startswith('sha'):
+                        checksum_type = 'sha256'
+                        checksum = base64.b64decode(checksum[4:]).encode('hex')
+                    elif checksum.startswith('md5'):
+                        checksum_type = 'md5'
+                        checksum = base64.b64decode(checksum[3:]).encode('hex')
 
-            urls.append({"url": url, "size": fsize, "mime_type": ftype, "checksum": checksum,
-                         "checksum_type": 'sha256'})
+                # trailing slash confuses mime guesser
+                mimetype = mimetypes.guess_type(url)
+                if mimetype[0]:
+                    ftype = mimetype[0]
+                else:
+                    ftype = repr(None)
+
+                urls.append({"url": url, "size": fsize, "mime_type": ftype, "checksum": checksum,
+                             "checksum_type": checksum_type})
 
         data_object_listitem = serializers.DataObjectListItem(dataobject_id=r.short_id,
                                                 dataobject_name=r.metadata.title.value,

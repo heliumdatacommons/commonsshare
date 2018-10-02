@@ -2,7 +2,11 @@ import os
 import zipfile
 import shutil
 import logging
+import requests
+import json
+import datetime
 from uuid import uuid4
+
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -10,6 +14,7 @@ from django.core.files import File
 from django.core.files.uploadedfile import UploadedFile
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.db import transaction
+from rest_framework import status
 
 from hs_core.hydroshare import hs_bagit
 from hs_core.models import ResourceFile
@@ -28,6 +33,8 @@ METADATA_STATUS_INSUFFICIENT = 'Insufficient to publish or make public'
 
 logger = logging.getLogger(__name__)
 
+class PublishException(Exception):
+    pass
 
 def get_resource(pk):
     """
@@ -917,7 +924,7 @@ def delete_resource_file(pk, filename_or_id, user, delete_logical_file=True):
     raise ObjectDoesNotExist(str.format("resource {}, file {} not found",
                                         resource.short_id, filename_or_id))
 
-def publish_resource(user, pk):
+def publish_resource(user, pk, publish_type):
     """
     Formally publishes a resource in CommonsShare. Triggers the creation of a MINID for the resource,
     and triggers the exposure of the resource to the CommonsShare DataONE Member Node. The user must
@@ -927,6 +934,7 @@ def publish_resource(user, pk):
         user - requesting user to publish the resource who must be one of the owners of the resource
         pk - Unique CommonsShare identifier for the resource to be formally published.
         request - request triggering this action
+        publish_type - type of identifier minted when the resource is published i.e. DOI or MINID
 
     Returns:    The id of the resource that was published
 
@@ -945,6 +953,7 @@ def publish_resource(user, pk):
     resource = utils.get_resource_by_shortkey(pk)
     res_coll = resource.root_path
     istorage = resource.get_irods_storage()
+    resource_url = '{0}/resource/{1}'.format(utils.current_site_url(), resource.short_id)
 
     # TODO: whether a resource can be published is not considered in can_be_published
     # TODO: can_be_published is currently an alias for can_be_public_or_discoverable
@@ -960,7 +969,6 @@ def publish_resource(user, pk):
     else:
         raise ValidationError("Resource {} does not exist in iRODS".format(resource.short_id))
 
-    # create minid for the bag, using the checksum of the zip
     tmpdir = os.path.join(settings.TEMP_FILE_DIR, uuid4().hex)
     tmpfile = os.path.join(tmpdir, 'bag.zip')
     os.makedirs(tmpdir)
@@ -969,17 +977,76 @@ def publish_resource(user, pk):
     irods_dest_prefix = "/" + settings.IRODS_ZONE + "/home/" + settings.IRODS_USERNAME
     srcfile = os.path.join(irods_dest_prefix, bag_full_name)
     istorage.getFile(srcfile, tmpfile)
-    checksum = mca.compute_checksum(tmpfile)
-    resource_url = '{0}/resource/{1}'.format(utils.current_site_url(), resource.short_id)
+    sha_checksum = mca.compute_checksum(tmpfile)
+    size = istorage.size(srcfile)
     download_bag_url = '{0}/django_irods/download/bags/{1}.zip'.format(utils.current_site_url(), resource.short_id)
-    locations = [resource_url, download_bag_url]
-    config= mca.parse_config('hydroshare/minid-config.cfg')
-    minid = mca.register_entity(config['minid_server'],
-                                checksum,
-                                config['email'],
-                                config['code'],
-                                locations, 'MINID for ' + resource.title, True)
-    resource.minid = minid
+
+    if publish_type.lower() == "minid":
+        # create minid for the bag, using the checksum of the zip
+        locations = [resource_url, download_bag_url]
+        config= mca.parse_config('hydroshare/minid-config.cfg')
+        minid = mca.register_entity(config['minid_server'],
+                                    sha_checksum,
+                                    config['email'],
+                                    config['code'],
+                                    locations, 'MINID for ' + resource.title, True)
+        resource.minid = minid
+        resource.doi = ''
+        ident_md_args = {'name': 'minid',
+                   'url': 'http://minid.bd2k.org/minid/landingpage/' + resource.minid + ', http://n2t.net/' + resource.minid}
+    elif publish_type.lower() == "doi":
+        # create DOI using DataCite API
+        doi_put_url = settings.DOI_PUT_URL + settings.DOI_OAUTH_TOKEN
+        request_data = {}
+        request_data['@context'] = 'https://schema.org'
+        request_data['@type'] = 'Dataset'
+
+        property_value_data = {}
+        property_value_data['@type'] = 'PropertyValue'
+        property_value_data['name'] = 'sha256'
+        property_value_data['value'] = sha_checksum
+        request_data['identifier'] = [property_value_data]
+
+        request_data['url'] = resource_url
+        request_data['name'] = 'DOI for ' + resource.title
+
+        #request_data['additionalType'] = 'crai'
+
+        author_data = {}
+        author_data['@type'] = 'Organization'
+        author_data['@id'] = 'doi:/10.25491/5e92-ht74'
+        author_data['name'] = 'Renaissance Computing Institute (RENCI) at the University of North Carolina at Chapel Hill'
+        request_data['author'] = [author_data]
+
+        publisher_data = {}
+        publisher_data['@type'] = 'Organization'
+        publisher_data['name'] = 'CommonsShare'
+        publisher_data['url'] = 'www.commonsshare.org'
+        request_data['publisher'] = [publisher_data]
+
+        request_data['datePublished'] = repr(datetime.date.today().year)
+
+        request_data['fileFormat'] = 'application/zip'
+        request_data['contentSize'] = repr(size)
+        request_data['contentUrl'] = [download_bag_url]
+
+        response = requests.put(doi_put_url,
+                                data=json.dumps(request_data),
+                                headers={"Content-Type": "application/json"})
+
+        if response.status_code != status.HTTP_200_OK:
+            logger.error("Error retrieving DOI from datacite service")
+            logger.error(response.status_code)
+            logger.error(response.text)
+            raise PublishException("Unable to retrieve a DOI from DataCite. Resource cannot be published.")
+        else:
+            return_data = json.loads(response.content)
+            doi = return_data['@id']
+            resource.doi = doi
+            resource.minid = ''
+            logger.info("DOI: " + doi)
+            ident_md_args = {'name': 'doi',
+                       'url': 'https://doi.org/' + doi[5:]}
     resource.save()
 
     resource.set_public(True)  # also sets discoverable to True
@@ -999,9 +1066,7 @@ def publish_resource(user, pk):
     # create published date
     resource.metadata.create_element('date', type='published', start_date=resource.updated)
 
-    md_args = {'name': 'minid',
-               'url': 'http://minid.bd2k.org/minid/landingpage/' + resource.minid + ', http://n2t.net/' + resource.minid}
-    resource.metadata.create_element('Identifier', **md_args)
+    resource.metadata.create_element('Identifier', **ident_md_args)
 
     utils.resource_modified(resource, user, overwrite_bag=False)
 
@@ -1029,6 +1094,30 @@ def resolve_minid(minid):
     """
     return utils.get_resource_by_minid(minid).short_id
 
+
+def resolve_doi(doi):
+    """
+    Takes as input a DOI and returns the internal CommonsShare identifier (pid) for a resource.
+    This method will be used to get the CommonsShare pid for a resource identified by a doi for
+    further operations using the web service API.
+
+    REST URL:  GET /resolveDOI/{doi}
+
+    Parameters:    doi - A doi assigned to a resource in CommonsShare.
+
+    Returns:    The doi of the resource that was published
+
+    Return Type:    pid
+
+    Raises:
+    Exceptions.NotAuthorized - The user is not authorized
+    Exceptions.NotFound - The resource identified by pid does not exist
+    Exception.ServiceFailure - The service is unable to process the request
+
+    Note:  All CommonsShare methods (except this one) will use CommonsShare internal identifiers
+    (pids). This method exists so that a program can resolve the pid for a DOI.
+    """
+    return utils.get_resource_by_doi(doi).short_id
 
 def create_metadata_element(resource_short_id, element_model_name, **kwargs):
     """
