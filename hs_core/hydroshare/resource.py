@@ -4,6 +4,7 @@ import shutil
 import logging
 import requests
 import json
+import datetime
 from uuid import uuid4
 
 
@@ -920,7 +921,7 @@ def delete_resource_file(pk, filename_or_id, user, delete_logical_file=True):
     raise ObjectDoesNotExist(str.format("resource {}, file {} not found",
                                         resource.short_id, filename_or_id))
 
-def publish_resource(user, pk, identifier_type):
+def publish_resource(user, pk, publish_type):
     """
     Formally publishes a resource in CommonsShare. Triggers the creation of a MINID for the resource,
     and triggers the exposure of the resource to the CommonsShare DataONE Member Node. The user must
@@ -930,6 +931,7 @@ def publish_resource(user, pk, identifier_type):
         user - requesting user to publish the resource who must be one of the owners of the resource
         pk - Unique CommonsShare identifier for the resource to be formally published.
         request - request triggering this action
+        publish_type - type of identifier minted when the resource is published i.e. DOI or MINID
 
     Returns:    The id of the resource that was published
 
@@ -972,47 +974,57 @@ def publish_resource(user, pk, identifier_type):
     irods_dest_prefix = "/" + settings.IRODS_ZONE + "/home/" + settings.IRODS_USERNAME
     srcfile = os.path.join(irods_dest_prefix, bag_full_name)
     istorage.getFile(srcfile, tmpfile)
-    checksum = mca.compute_checksum(tmpfile)
+    sha_checksum = mca.compute_checksum(tmpfile)
     size = istorage.size(srcfile)
     download_bag_url = '{0}/django_irods/download/bags/{1}.zip'.format(utils.current_site_url(), resource.short_id)
 
-    if identifier_type == "minid":
+    if publish_type.lower() == "minid":
         # create minid for the bag, using the checksum of the zip
         locations = [resource_url, download_bag_url]
         config= mca.parse_config('hydroshare/minid-config.cfg')
         minid = mca.register_entity(config['minid_server'],
-                                    checksum,
+                                    sha_checksum,
                                     config['email'],
                                     config['code'],
                                     locations, 'MINID for ' + resource.title, True)
         resource.minid = minid
+        resource.doi = ''
         ident_md_args = {'name': 'minid',
                    'url': 'http://minid.bd2k.org/minid/landingpage/' + resource.minid + ', http://n2t.net/' + resource.minid}
-    elif identifier_type == "doi":
+    elif publish_type.lower() == "doi":
         # create DOI using DataCite API
-        doi_put_url = 'https://ors.test.datacite.org/doi/put?code='+settings.DOI_OAUTH_TOKEN
+        doi_put_url = settings.DOI_PUT_URL + settings.DOI_OAUTH_TOKEN
         request_data = {}
         request_data['@context'] = 'https://schema.org'
         request_data['@type'] = 'Dataset'
+
         property_value_data = {}
         property_value_data['@type'] = 'PropertyValue'
-        property_value_data['name'] = 'md5'
-        property_value_data['value'] = checksum
+        property_value_data['name'] = 'sha256'
+        property_value_data['value'] = sha_checksum
         request_data['identifier'] = [property_value_data]
+
         request_data['url'] = resource_url
         request_data['name'] = 'DOI for ' + resource.title
-        request_data['additionalType'] = 'crai'
+
+        #request_data['additionalType'] = 'crai'
+
         author_data = {}
-        author_data['@type'] = 'Person'
-        author_data['name'] = 'Isma Gilani'
+        author_data['@type'] = 'Organization'
+        author_data['@id'] = 'doi:/10.25491/5e92-ht74'
+        author_data['name'] = 'Renaissance Computing Institute (RENCI) at the University of North Carolina at Chapel Hill'
         request_data['author'] = [author_data]
+
         publisher_data = {}
         publisher_data['@type'] = 'Organization'
-        publisher_data['name'] = 'KC2'
+        publisher_data['name'] = 'CommonsShare'
+        publisher_data['url'] = 'www.commonsshare.org'
         request_data['publisher'] = [publisher_data]
-        request_data['datePublished'] = '2018'
-        request_data['fileFormat'] = 'text/plain'
-        request_data['contentSize'] = size
+
+        request_data['datePublished'] = repr(datetime.date.today().year)
+
+        request_data['fileFormat'] = 'application/zip'
+        request_data['contentSize'] = repr(size)
         request_data['contentUrl'] = [download_bag_url]
 
         response = requests.put(doi_put_url,
@@ -1021,12 +1033,14 @@ def publish_resource(user, pk, identifier_type):
 
         if response.status_code != status.HTTP_200_OK:
             logger.error("Error retrieving DOI from datacite service")
-            logger.info(response.status_code)
+            logger.error(response.status_code)
+            logger.error(response.text)
             raise PublishException("Unable to retrieve a DOI from DataCite. Resource cannot be published.")
         else:
             return_data = json.loads(response.content)
             doi = return_data['@id']
             resource.doi = doi
+            resource.minid = ''
             logger.info("DOI: " + doi)
             ident_md_args = {'name': 'doi',
                        'url': 'https://doi.org/' + doi[5:]}

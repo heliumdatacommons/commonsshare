@@ -658,12 +658,12 @@ def create_new_version_resource_public(request, pk):
     return HttpResponse(redirect.url.split('/')[2], status=202)
 
 
-def publish(request, shortkey, *args, **kwargs):
+def publish(request, shortkey, publish_type, *args, **kwargs):
     # only resource owners are allowed to change resource flags (e.g published)
     res, _, _ = authorize(request, shortkey, needed_permission=ACTION_TO_AUTHORIZE.SET_RESOURCE_FLAG)
 
     try:
-        hydroshare.publish_resource(request.user, shortkey)
+        hydroshare.publish_resource(request.user, shortkey, publish_type)
     except ValidationError as exp:
         request.session['validation_error'] = exp.message
     else:
@@ -1061,12 +1061,10 @@ class GroupUpdateForm(GroupForm):
 @processor_for('my-resources')
 @login_required
 def my_resources(request, page):
-
     resource_collection = get_my_resources_list(request)
     context = {'collection': resource_collection}
 
     return context
-
 
 @processor_for(GenericResource)
 def add_generic_context(request, page):

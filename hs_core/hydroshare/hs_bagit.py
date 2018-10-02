@@ -1,7 +1,7 @@
 import os
-import hashlib
 import json
 import shutil
+import base64
 import logging
 
 from uuid import uuid4
@@ -9,12 +9,9 @@ from mezzanine.conf import settings
 
 from hs_core.models import Bags, ResourceFile
 from bdbag import bdbag_api as bdb
-from minid_client import minid_client_api as mca
 from django_irods.icommands import SessionException
 
-
 logger = logging.getLogger(__name__)
-
 
 class HsBagitException(Exception):
     pass
@@ -56,7 +53,7 @@ def create_bag(resource):
     os.makedirs(tmpdir)
 
     # generate remote-file-mainfest for fetch.txt
-    remote_file_manifest_json = get_remote_file_manifest(tmpdir, resource)
+    remote_file_manifest_json = get_remote_file_manifest(resource)
 
     # generate metatdata json for bag-info.txt
     metadata_json = get_metadata_json(resource)
@@ -103,7 +100,7 @@ def create_bag(resource):
 
     return b
 
-def get_remote_file_manifest(tmpdir, resource):
+def get_remote_file_manifest(resource):
     data_list = []
 
     from hs_core.hydroshare import utils
@@ -119,13 +116,18 @@ def get_remote_file_manifest(tmpdir, resource):
             last_sep_pos = irods_file_name.rfind('/')
             ref_file_name = irods_file_name[last_sep_pos+1:]
             fetch_url = '{0}/django_irods/download/{1}'.format(utils.current_site_url(), resource.short_id + irods_file_name)
-            checksum = istorage.get_checksum(srcfile)
         else:
             irods_file_name = f.storage_path
             irods_dest_prefix = "/" + settings.IRODS_ZONE + "/home/" + settings.IRODS_USERNAME
             srcfile = os.path.join(irods_dest_prefix, irods_file_name)
             fetch_url = '{0}/django_irods/download/{1}'.format(utils.current_site_url(), irods_file_name)
+
+        checksum = None
+
+        try:
             checksum = istorage.checksum(srcfile)
+        except SessionException as ex:
+            raise HsBagitException(ex.message)
 
         data['url'] = fetch_url
 
@@ -138,9 +140,9 @@ def get_remote_file_manifest(tmpdir, resource):
 
         if checksum is not None:
             if checksum.startswith('sha'):
-                data['sha256'] = checksum[4:]
+                data['sha256'] = base64.b64decode(checksum[4:]).encode('hex')
             elif checksum.startswith('md5'):
-                data['md5'] = checksum[4:]
+                data['md5'] = base64.b64decode(checksum[4:]).encode('hex')
 
         data_list.append(data)
 
