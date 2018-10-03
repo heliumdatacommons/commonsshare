@@ -3,24 +3,18 @@ servers:
   - url: 'https://helium.commonsshare.org/'
 info:
   title: CommonsShare API
-  description: >-
-    A web interface and web service API for sharing data and running workflows on data in a cloud-agnostic environment.
+  description: A web interface and web service API for sharing data and running workflows on data in a cloud-agnostic environment.
   version: 0.1.2
   termsOfService: https://helium.commonsshare.org/terms-of-use/
   contact:
     name: Hong Yi
-    x-role: responsible developer
     email: hongyi@renci.org
-	x-id: https://orcid.org/0000-0002-5699-1259
-x-externalResources:
-  - x-url: 'https://helium.commonsshare.org/hsapi/'
-    x-type: api documentation	
 tags:
-  - name: NIHdatacommons
-  - name: Helium
-  - name: CommonsShare
-  - name: Portals
-  - name: WebServices	
+- name: NIHdatacommons
+- name: Helium
+- name: CommonsShare
+- name: Portals
+- name: WebServices
 paths:
   '/django_irods/rest_download/{path}':
     get:
