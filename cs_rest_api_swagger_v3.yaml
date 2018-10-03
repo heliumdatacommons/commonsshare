@@ -8,22 +8,25 @@ info:
   termsOfService: https://helium.commonsshare.org/terms-of-use/
   contact:
     name: Hong Yi
+    x-role: responsible developer
     email: hongyi@renci.org
+    x-id: https://orcid.org/0000-0002-5699-1259
 tags:
-- name: NIHdatacommons
-- name: Helium
-- name: CommonsShare
-- name: Portals
-- name: WebServices
+  - name: NIHdatacommons
+  - name: Helium
+  - name: CommonsShare
+  - name: Portals
+  - name: WebServices	
 paths:
   '/django_irods/rest_download/{path}':
     get:
-      tags:
-        - django_irods
-      summary: Download a resource bag or file
-      responses:
-        '200':
-          description: OK
+      description: |-
+        download a resource bag or file
+        :param request:
+        :param path:
+        :param args:
+        :param kwargs:
+        :return:
       parameters:
         - description: ''
           required: true
@@ -31,7 +34,113 @@ paths:
           in: path
           schema:
             type: string
+      tags:
+        - django_irods
+      summary: download a resource bag or file
       operationId: rest_download_read
+      responses:
+        '200':
+          description: OK
+  /dosapi/dataobjects/:
+    get:
+      description: >-
+        Get a list of data objects based on the following filter query
+        parameters
+
+
+        REST URL: dosapi/dataobjects/
+
+        HTTP method: GET
+
+
+        Supported query parameters (all are optional):
+
+
+        :type   owner: str
+
+        :type   from_date:  str (e.g., 2015-04-01)
+
+        :type   to_date:    str (e.g., 2015-05-01)
+
+        :param  owner: (optional) - to get a list of resources owned by a
+        specified username
+
+        :param  from_date: (optional) - to get a list of resources created on or
+        after this date
+
+        :param  to_date: (optional) - to get a list of resources created on or
+        before this date
+
+        :rtype:  json string
+
+        :return:  a paginated list of resources with data for resource id,
+        title, resource type,
+
+        creator, public, date created, date last updated, resource bag url path,
+        and science
+
+        metadata url path
+
+
+        example return JSON format for GET /dosapi/dataobjects/:
+
+
+        {   "count":n
+
+        "next": link to next page
+
+        "previous": link to previous page
+
+        "results":[
+
+        {"resource_id": resource id,
+
+        "date_last_updated": date resource last updated,
+
+        "public": true or false,
+
+        "resource_url": link to resource landing HTML page,
+
+        ]
+
+        }
+      parameters:
+        - description: A page number within the paginated result set.
+          required: false
+          name: page
+          in: query
+          schema:
+            type: integer
+      tags:
+        - dosapi
+      summary: >-
+        Get a list of data objects based on the following filter query
+        parameters
+      operationId: dataobjects_list
+      responses:
+        '200':
+          description: OK
+  '/dosapi/dataobjects/{id}/':
+    get:
+      description: |-
+        Get a dataobject in json format
+        :param request:
+        :param pk:
+        :return:
+      parameters:
+        - description: ''
+          required: true
+          name: id
+          in: path
+          schema:
+            type: string
+      tags:
+        - dosapi
+      summary: Get a dataobject in json format
+      operationId: dataobjects_read
+      responses:
+        '200':
+          description: OK
   /hsapi/_internal/data-store-move-to-folder/:
     post:
       description: >-
