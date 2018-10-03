@@ -8,12 +8,7 @@ info:
   termsOfService: https://helium.commonsshare.org/terms-of-use/
   contact:
     name: Hong Yi
-    x-role: responsible developer
     email: hongyi@renci.org
-        x-id: https://orcid.org/0000-0002-5699-1259
-x-externalResources:
-  - x-url: 'https://helium.commonsshare.org/hsapi/'
-    x-type: api documentation
 tags:
 - name: NIHdatacommons
 - name: Helium
