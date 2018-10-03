@@ -11,12 +11,12 @@ info:
     name: Hong Yi
     x-role: responsible developer
     email: hongyi@renci.org
-  tags:
-    - name: NIHdatacommons
-    - name: Helium
-    - name: CommonsShare
-    - name: Portals
-    - name: WebServices	
+tags:
+  - name: NIHdatacommons
+  - name: Helium
+  - name: CommonsShare
+  - name: Portals
+  - name: WebServices	
 paths:
   '/django_irods/rest_download/{path}':
     get:
