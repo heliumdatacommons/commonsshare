@@ -431,6 +431,10 @@ def send_verification_mail_for_password_reset(request, user):
 
 def oauth_request(request):
     # note that trailing slash should not be added to return_to url
+    #import sys
+    #sys.path.append("/pycharm-debug")
+    #import pydevd
+    #pydevd.settrace('172.17.0.1', port=21000, suspend=False)
     return_url = '&return_to={}://{}/oauth_return'.format(request.scheme, request.get_host())
     url = '{}authorize?provider=globus&scope=openid%20email%20profile{}'.format(settings.OAUTH_SERVICE_SERVER_URL, return_url)
     auth_header_str = 'Basic {}'.format(settings.OAUTH_APP_KEY)
@@ -771,6 +775,14 @@ def create_scidas_virtual_app(request, res_id, cluster):
                 con['resources']['cpus'] = int(num_cpus)
             if mem_size:
                 con['resources']['mem'] = int(mem_size)
+        if con['id'] == 'master':
+            whitelist = []
+            for owner in res.raccess.owners.all():
+                uname = owner.username
+                if '@' in uname:
+                    uname = uname.replace('@', '%at%', 1)
+                whitelist.append(uname)
+            con['env']['OAUTH_WHITELIST'] = whitelist
 
     if 'endpoints' in p_data['containers'][0]:
         if p_data['containers'][0]['endpoints']:
@@ -805,7 +817,7 @@ def create_scidas_virtual_app(request, res_id, cluster):
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             return HttpResponseRedirect(request.META['HTTP_REFERER'])
-    
+    dumped_data = dumps(p_data)
     response = requests.post(url, data=dumps(p_data))
     if response.status_code != status.HTTP_200_OK and \
             response.status_code != status.HTTP_201_CREATED:
