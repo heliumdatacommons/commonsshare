@@ -4,7 +4,7 @@ servers:
 info:
   title: CommonsShare API
   description: A web interface and web service API for sharing data and running workflows on data in a cloud-agnostic environment.
-  version: 0.1.1
+  version: 0.1.2
   termsOfService: https://helium.commonsshare.org/terms-of-use/
   contact:
     name: Hong Yi
