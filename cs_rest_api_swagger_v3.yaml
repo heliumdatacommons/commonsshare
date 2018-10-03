@@ -1,8 +1,20 @@
 openapi: 3.0.0
+servers:
+  - url: 'https://helium.commonsshare.org/'
 info:
   title: CommonsShare API
-  description: ''
-  version: ''
+  description: A web interface and web service API for sharing data and running workflows on data in a cloud-agnostic environment.
+  version: 0.1.2
+  termsOfService: https://beta.commonsshare.org/terms-of-use/
+  contact:
+    name: Hong Yi
+	email: hongyi@renci.org
+  tags:
+    - name: NIHdatacommons
+    - name: Helium
+    - name: CommonsShare
+    - name: Portals
+    - name: WebServices	
 paths:
   '/django_irods/rest_download/{path}':
     get:
@@ -1455,8 +1467,6 @@ paths:
       responses:
         '200':
           description: OK
-servers:
-  - url: 'https://helium.commonsshare.org/'
 components:
   requestBodies:
     resource_createData:
