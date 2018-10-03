@@ -9,7 +9,7 @@ info:
   termsOfService: https://helium.commonsshare.org/terms-of-use/
   contact:
     name: Hong Yi
-	x-role: responsible developer
+    x-role: responsible developer
     email: hongyi@renci.org
   tags:
     - name: NIHdatacommons
