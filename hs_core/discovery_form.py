@@ -43,28 +43,6 @@ class DiscoveryForm(FacetedSearchForm):
                 .filter(SQ(text__startswith=cdata) | SQ(text=cdata))\
                 .filter(is_replaced_by=False)
 
-        geo_sq = None
-        if self.cleaned_data['NElng'] and self.cleaned_data['SWlng']:
-            if float(self.cleaned_data['NElng']) > float(self.cleaned_data['SWlng']):
-                geo_sq = SQ(coverage_east__lte=float(self.cleaned_data['NElng']))
-                geo_sq.add(SQ(coverage_east__gte=float(self.cleaned_data['SWlng'])), SQ.AND)
-            else:
-                geo_sq = SQ(coverage_east__gte=float(self.cleaned_data['SWlng']))
-                geo_sq.add(SQ(coverage_east__lte=float(180)), SQ.OR)
-                geo_sq.add(SQ(coverage_east__lte=float(self.cleaned_data['NElng'])), SQ.AND)
-                geo_sq.add(SQ(coverage_east__gte=float(-180)), SQ.AND)
-
-        if self.cleaned_data['NElat'] and self.cleaned_data['SWlat']:
-            # latitude might be specified without longitude
-            if geo_sq is None:
-                geo_sq = SQ(coverage_north__lte=float(self.cleaned_data['NElat']))
-            else:
-                geo_sq.add(SQ(coverage_north__lte=float(self.cleaned_data['NElat'])), SQ.AND)
-            geo_sq.add(SQ(coverage_north__gte=float(self.cleaned_data['SWlat'])), SQ.AND)
-
-        if geo_sq is not None:
-            sqs = sqs.filter(geo_sq)
-
         # Check to see if a start_date was chosen.
         if self.cleaned_data['start_date']:
             sqs = sqs.filter(coverage_start_date__gte=self.cleaned_data['start_date'])

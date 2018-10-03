@@ -947,6 +947,44 @@ def add_file_to_resource(resource, f, folder=None, source_name='', source_size=0
     return ret
 
 
+def item_generator(json_input, lookup_id_key, id_prefix):
+    """
+    yield a list of id values
+    :param json_input: json-ld metadata
+    :param lookup_id_key: the id key to look up for
+    :param id_prefix: the id value prefix requirement
+    :return: a list of id values
+    """
+    if isinstance(json_input, dict):
+        for k, v in json_input.iteritems():
+            if k == lookup_id_key and isinstance(v, string):
+                if v.startswith(id_prefix):
+                    yield v
+            else:
+                for child_val in item_generator(v, lookup_id_key, id_prefix):
+                    yield child_val
+    elif isinstance(json_input, list):
+        for item in json_input:
+            for item_val in item_generator(item, lookup_id_key, id_prefix):
+                yield item_val
+
+
+def harvest_ontology_ids_from_metadata(resource, f, id_prefix = 'UBERON:'):
+    """
+    harvest all ontology ids from json-ld metadata file
+    :param f: json-ld metadata file being uploaded
+    :return: list of ontology ids
+    """
+    openfile = File(f) if not isinstance(f, UploadedFile) else f
+    md = json.load(openfile)
+    ids_str = ''
+    for id in item_generator(md, 'identifier', id_prefix):
+        ids_str += id +','
+    if ids_str:
+        ids_str = ids_str[-1]
+        resource.extra_data = {'ontology_ids': ids_str}
+
+
 def add_metadata_element_to_xml(root, md_element, md_fields):
     """
     helper function to generate xml elements for a given metadata element that belongs to

@@ -662,7 +662,13 @@ def add_resource_files(pk, *files, **kwargs):
         assert len(kwargs) == 0
 
     for f in files:
-        ret.append(utils.add_file_to_resource(resource, f, folder=folder))
+        file_ext = os.path.splitext(f.name)[1]
+        if file_ext.lower() == 'jsonld':
+            # treat the file as semantic metadata
+            utils.harvest_ontology_ids_from_metadata(resource, f)
+            ret.append(utils.add_file_to_resource(resource, f, folder='metadata'))
+        else:
+            ret.append(utils.add_file_to_resource(resource, f, folder=folder))
 
     if len(source_names) > 0:
         if len(source_names) != len(source_sizes):

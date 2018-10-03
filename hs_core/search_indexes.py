@@ -42,12 +42,6 @@ class BaseResourceIndex(indexes.SearchIndex, indexes.Indexable):
     rating = indexes.IntegerField(model_attr='rating_sum')
     coverages = indexes.MultiValueField()
     coverage_types = indexes.MultiValueField()
-    coverage_east = indexes.FloatField()
-    coverage_north = indexes.FloatField()
-    coverage_northlimit = indexes.FloatField()
-    coverage_eastlimit = indexes.FloatField()
-    coverage_southlimit = indexes.FloatField()
-    coverage_westlimit = indexes.FloatField()
     coverage_start_date = indexes.DateField()
     coverage_end_date = indexes.DateField()
     formats = indexes.MultiValueField()
@@ -86,6 +80,9 @@ class BaseResourceIndex(indexes.SearchIndex, indexes.Indexable):
     units_types = indexes.MultiValueField(faceted=True)
     aggregation_statistics = indexes.MultiValueField(faceted=True)
     absolute_url = indexes.CharField(indexed=False)
+
+    # ontology index ids for semantic search
+    id = indexes.MultiValueField()
 
     def get_model(self):
         """Return BaseResource model."""
@@ -276,74 +273,7 @@ class BaseResourceIndex(indexes.SearchIndex, indexes.Indexable):
         else:
             return []
 
-    def prepare_coverage_east(self, obj):
-        """Return resource coverage east bound if exists, otherwise return none."""
-        if hasattr(obj, 'metadata'):
-            for coverage in obj.metadata.coverages.all():
-                if coverage.type == 'point':
-                    return float(coverage.value["east"])
-                # TODO: this returns the box center, not the extent
-                elif coverage.type == 'box':
-                    return (float(coverage.value["eastlimit"]) +
-                            float(coverage.value["westlimit"])) / 2
-        else:
-            return 'none'
-
-    def prepare_coverage_north(self, obj):
-        """Return resource coverage north bound if exists, otherwise return none."""
-        if hasattr(obj, 'metadata'):
-            for coverage in obj.metadata.coverages.all():
-                if coverage.type == 'point':
-                    return float(coverage.value["north"])
-                # TODO: This returns the box center, not the extent
-                elif coverage.type == 'box':
-                    return (float(coverage.value["northlimit"]) +
-                            float(coverage.value["southlimit"])) / 2
-        else:
-            return 'none'
-
-    def prepare_coverage_northlimit(self, obj):
-        """Return resource coverage north limit if exists, otherwise return none."""
-        if hasattr(obj, 'metadata'):
-            # TODO: does not index properly if there are multiple coverages of the same type.
-            for coverage in obj.metadata.coverages.all():
-                if coverage.type == 'box':
-                    return coverage.value["northlimit"]
-        else:
-            return 'none'
-
-    def prepare_coverage_eastlimit(self, obj):
-        """Return resource coverage east limit if exists, otherwise return none."""
-        if hasattr(obj, 'metadata'):
-            # TODO: does not index properly if there are multiple coverages of the same type.
-            for coverage in obj.metadata.coverages.all():
-                if coverage.type == 'box':
-                    return coverage.value["eastlimit"]
-        else:
-            return 'none'
-
-    def prepare_coverage_southlimit(self, obj):
-        """Return resource coverage south limit if exists, otherwise return none."""
-        if hasattr(obj, 'metadata'):
-            # TODO: does not index properly if there are multiple coverages of the same type.
-            for coverage in obj.metadata.coverages.all():
-                if coverage.type == 'box':
-                    return coverage.value["southlimit"]
-        else:
-            return 'none'
-
-    def prepare_coverage_westlimit(self, obj):
-        """Return resource coverage west limit if exists, otherwise return none."""
-        if hasattr(obj, 'metadata'):
-            # TODO: does not index properly if there are multiple coverages of the same type.
-            for coverage in obj.metadata.coverages.all():
-                if coverage.type == 'box':
-                    return coverage.value["westlimit"]
-        else:
-            return 'none'
-
     # TODO: time coverages do not specify timezone, and timezone support is active.
-
     def prepare_coverage_start_date(self, obj):
         """Return resource coverage start date if exists, otherwise return none."""
         if hasattr(obj, 'metadata'):
@@ -691,3 +621,10 @@ class BaseResourceIndex(indexes.SearchIndex, indexes.Indexable):
     def prepare_absolute_url(self, obj):
         """Return absolute URL of object."""
         return obj.get_absolute_url()
+
+    def prepare_id(self, obj):
+        ids = []
+        if 'ontology_ids' in obj.extra_data:
+            ids_str = obj.extra_data['ontology_ids']
+            
+        return ids
