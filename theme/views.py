@@ -771,6 +771,14 @@ def create_scidas_virtual_app(request, res_id, cluster):
                 con['resources']['cpus'] = int(num_cpus)
             if mem_size:
                 con['resources']['mem'] = int(mem_size)
+        if con['id'] == 'master':
+            whitelist = []
+            for owner in res.raccess.owners.all():
+                uname = owner.username
+                if '@' in uname:
+                    uname = uname.replace('@', '%at%', 1)
+                whitelist.append(uname)
+            con['env']['OAUTH_WHITELIST'] = whitelist
 
     if 'endpoints' in p_data['containers'][0]:
         if p_data['containers'][0]['endpoints']:
@@ -805,7 +813,7 @@ def create_scidas_virtual_app(request, res_id, cluster):
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             return HttpResponseRedirect(request.META['HTTP_REFERER'])
-    
+
     response = requests.post(url, data=dumps(p_data))
     if response.status_code != status.HTTP_200_OK and \
             response.status_code != status.HTTP_201_CREATED:
