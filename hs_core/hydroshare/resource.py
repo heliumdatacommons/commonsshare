@@ -980,6 +980,7 @@ def publish_resource(user, pk, publish_type):
     sha_checksum = mca.compute_checksum(tmpfile)
     size = istorage.size(srcfile)
     download_bag_url = '{0}/django_irods/download/bags/{1}.zip'.format(utils.current_site_url(), resource.short_id)
+    dos_url = '{0}/dosapi/dataobjects/{1}/'.format(utils.current_site_url(), resource.short_id)
 
     if publish_type.lower() == "minid":
         # create minid for the bag, using the checksum of the zip
@@ -1028,7 +1029,7 @@ def publish_resource(user, pk, publish_type):
 
         request_data['fileFormat'] = 'application/zip'
         request_data['contentSize'] = repr(size)
-        request_data['contentUrl'] = [download_bag_url]
+        request_data['contentUrl'] = [download_bag_url, dos_url]
 
         logger.info(json.dumps(request_data))
         response = requests.put(doi_put_url,
