@@ -986,6 +986,7 @@ def publish_resource(user, pk, publish_type):
     sha_checksum = mca.compute_checksum(tmpfile)
     size = istorage.size(srcfile)
     download_bag_url = '{0}/django_irods/download/bags/{1}.zip'.format(utils.current_site_url(), resource.short_id)
+    dos_url = '{0}/dosapi/dataobjects/{1}/'.format(utils.current_site_url(), resource.short_id)
 
     if publish_type.lower() == "minid":
         # create minid for the bag, using the checksum of the zip
@@ -1002,14 +1003,14 @@ def publish_resource(user, pk, publish_type):
                    'url': 'http://minid.bd2k.org/minid/landingpage/' + resource.minid + ', http://n2t.net/' + resource.minid}
     elif publish_type.lower() == "doi":
         # create DOI using DataCite API
-        doi_put_url = settings.DOI_PUT_URL + settings.DOI_OAUTH_TOKEN
+        doi_put_url = settings.DOI_PUT_URL
         request_data = {}
         request_data['@context'] = 'https://schema.org'
         request_data['@type'] = 'Dataset'
 
         property_value_data = {}
         property_value_data['@type'] = 'PropertyValue'
-        property_value_data['name'] = 'sha256'
+        property_value_data['propertyID'] = 'sha256'
         property_value_data['value'] = sha_checksum
         request_data['identifier'] = [property_value_data]
 
@@ -1034,8 +1035,9 @@ def publish_resource(user, pk, publish_type):
 
         request_data['fileFormat'] = 'application/zip'
         request_data['contentSize'] = repr(size)
-        request_data['contentUrl'] = [download_bag_url]
+        request_data['contentUrl'] = [download_bag_url, dos_url]
 
+        logger.info(json.dumps(request_data))
         response = requests.put(doi_put_url,
                                 data=json.dumps(request_data),
                                 headers={"Content-Type": "application/json"})
