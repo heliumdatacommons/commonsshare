@@ -464,7 +464,8 @@ $(document).ready(function () {
             data: {
                 'num_instances': $('#txtInstance').val(),
                 'num_cpus': $('#txtCPU').val(),
-                'mem_size': $('#txtMEM').val()
+                'mem_size': $('#txtMEM').val(),
+                'token': $('#txtToken').val()
             },
             success: function(result) {
                 window.location.href = result.url
