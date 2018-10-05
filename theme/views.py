@@ -708,6 +708,7 @@ def create_scidas_virtual_app(request, res_id, cluster):
     num_insts = request.POST.get('num_instances', None)
     num_cpus = request.POST.get('num_cpus', None)
     mem_size = request.POST.get('mem_size', None)
+    token = request.POST.get('token', None)
     for rf in ResourceFile.objects.filter(object_id=res.id):
         if pub_key and p_data:
             break
@@ -779,6 +780,8 @@ def create_scidas_virtual_app(request, res_id, cluster):
                     uname = uname.replace('@', '%at%', 1)
                 whitelist.append(uname)
             con['env']['OAUTH_WHITELIST'] = whitelist
+            if token:
+                con['env']['JUPYTER_TOKEN'] = token
 
     if 'endpoints' in p_data['containers'][0]:
         if p_data['containers'][0]['endpoints']:
