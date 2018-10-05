@@ -91,6 +91,17 @@ def get_resource_by_minid(minid, or_404=True):
     assert content, (res, res.content_model)
     return content
 
+def get_resource_by_doi(doi, or_404=True):
+    try:
+        res = BaseResource.objects.get(doi=doi)
+    except BaseResource.DoesNotExist:
+        if or_404:
+            raise Http404(doi)
+        else:
+            raise
+    content = res.get_content_model()
+    assert content, (res, res.content_model)
+    return content
 
 def user_from_id(user, raise404=True):
     if isinstance(user, User):

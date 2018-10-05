@@ -1,7 +1,7 @@
 import os
-import hashlib
 import json
 import shutil
+import base64
 import logging
 
 from uuid import uuid4
@@ -9,14 +9,9 @@ from mezzanine.conf import settings
 
 from hs_core.models import Bags, ResourceFile
 from bdbag import bdbag_api as bdb
-from minid_client import minid_client_api as mca
 from django_irods.icommands import SessionException
 
 logger = logging.getLogger(__name__)
-
-class HsBagitException(Exception):
-    pass
-
 
 def delete_files_and_bag(resource):
     """
@@ -54,7 +49,7 @@ def create_bag(resource):
     os.makedirs(tmpdir)
 
     # generate remote-file-mainfest for fetch.txt
-    remote_file_manifest_json = get_remote_file_manifest(tmpdir, resource)
+    remote_file_manifest_json = get_remote_file_manifest(resource)
 
     # generate metatdata json for bag-info.txt
     metadata_json = get_metadata_json(resource)
@@ -101,7 +96,7 @@ def create_bag(resource):
 
     return b
 
-def get_remote_file_manifest(tmpdir, resource):
+def get_remote_file_manifest(resource):
     data_list = []
 
     from hs_core.hydroshare import utils
@@ -123,14 +118,12 @@ def get_remote_file_manifest(tmpdir, resource):
             srcfile = os.path.join(irods_dest_prefix, irods_file_name)
             fetch_url = '{0}/django_irods/download/{1}'.format(utils.current_site_url(), irods_file_name)
 
+        checksum = None
 
         try:
-            checksum = istorage.get_checksum(srcfile)
-            if checksum is None:
-                checksum = istorage.checksum(srcfile)
+            checksum = istorage.checksum(srcfile)
         except SessionException as ex:
-            logger.error("IRODS Checksum failed for " + srcfile + " when creating bdbag for resource "
-                         + resource.short_id + " " + ex.message())
+            logger.error(ex.stderr)
         finally:
             data['url'] = fetch_url
 
@@ -143,13 +136,13 @@ def get_remote_file_manifest(tmpdir, resource):
 
             if checksum is not None:
                 if checksum.startswith('sha'):
-                    data['sha256'] = checksum[4:]
+                    data['sha256'] = base64.b64decode(checksum[4:]).encode('hex')
                 elif checksum.startswith('md5'):
-                    data['md5'] = checksum[4:]
+                    data['md5'] = base64.b64decode(checksum[4:]).encode('hex')
 
             data_list.append(data)
 
-            return data_list
+    return data_list
 
 def get_metadata_json(resource):
     data = {}
