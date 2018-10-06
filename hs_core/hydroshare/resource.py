@@ -1047,7 +1047,7 @@ def publish_resource(user, pk, publish_type):
             resource.doi = doi
             resource.minid = ''
             ident_md_args = {'name': 'doi',
-                       'url': 'https://doi.org/' + doi[5:]}
+                       'url': 'https://ors.datacite.org/' + doi}
     resource.save()
 
     resource.set_public(True)  # also sets discoverable to True
