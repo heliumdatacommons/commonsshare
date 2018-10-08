@@ -1,6 +1,7 @@
 """Page processors for hs_core app."""
 
 import os
+import requests
 from dateutil import parser
 from functools import partial, wraps
 
@@ -9,6 +10,8 @@ from django.forms.models import formset_factory
 from django.conf import settings
 
 from mezzanine.pages.page_processors import processor_for
+
+from rest_framework import status
 
 from hs_core.models import GenericResource, Relation
 from hs_core import languages_iso
@@ -120,7 +123,14 @@ def get_page_context(page, user, resource_edit=False, extended_metadata_layout=N
 
     if 'appliance_id' in content_model.extra_data:
         if content_model.extra_data['appliance_id'].lower().startswith('hail'):
-            show_pivot_popup = True
+            # check whether this appliance already exists, and only show popup when the
+            # appliance does not exist
+            app_url = settings.PIVOT_URL + '/' + content_model.extra_data['appliance_id']
+            get_response = requests.get(app_url)
+            if get_response.status_code == status.HTTP_404_NOT_FOUND:
+                show_pivot_popup = True
+            else:
+                show_pivot_popup = False
 
     # user requested the resource in READONLY mode
     if not resource_edit:

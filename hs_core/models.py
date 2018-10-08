@@ -2077,6 +2077,7 @@ class AbstractResource(ResourcePermissionsMixin, ResourceIRODSMixin):
             hs_identifier = self.metadata.identifiers.all().filter(name="minid")[0]
         elif self.metadata.identifiers.all().filter(name="doi"):
                 hs_identifier = self.metadata.identifiers.all().filter(name="doi")[0]
+                hs_identifier.url='https://ors.datacite.org/'+self.doi
         elif self.metadata.identifiers.all().filter(name="hydroShareIdentifier"):
             hs_identifier = self.metadata.identifiers.all().filter(name="hydroShareIdentifier")[0]
         else:

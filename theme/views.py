@@ -763,8 +763,11 @@ def create_scidas_virtual_app(request, res_id, cluster):
             con['rack'] = cluster_name
         if 'env' in con:
             con['env']['SSH_PUBKEY'] = pub_key
+            con['env']['RESOURCE_ID'] = res_id
         else:
-            con['env'] = {'SSH_PUBKEY': pub_key}
+            con['env'] = {'SSH_PUBKEY': pub_key,
+                          'RESOURCE_ID': res_id}
+
         if con['id'] == 'workers':
             if num_insts:
                 con['instances'] = int(num_insts)
@@ -789,41 +792,45 @@ def create_scidas_virtual_app(request, res_id, cluster):
             preset_url = 'http://' + preset_ep_data['host'] + ':' + str(preset_ep_data['host_port'])
 
 
-    # delete the appliance before posting to create a new one in case it already exists
-    app_url = url+'/'+app_id
-    requests.delete(app_url)
-    is_deleted = False
-    # check the appliance is indeed deleted successfully
-    timeout_threshold = 60
-    elapsed_time = 0
-    while elapsed_time < timeout_threshold:
-        get_response = requests.get(app_url)
-        if get_response.status_code == status.HTTP_404_NOT_FOUND:
-            is_deleted = True
-            break
-        else:
-            # appliance is not deleted successfully yet, wait and poll
-            # again one more time
-            time.sleep(2)
-            elapsed_time += 2
+    # # delete the appliance before posting to create a new one in case it already exists
+    # app_url = url+'/'+app_id
+    # requests.delete(app_url)
+    # is_deleted = False
+    # # check the appliance is indeed deleted successfully
+    # timeout_threshold = 60
+    # elapsed_time = 0
+    # while elapsed_time < timeout_threshold:
+    #     get_response = requests.get(app_url)
+    #     if get_response.status_code == status.HTTP_404_NOT_FOUND:
+    #         is_deleted = True
+    #         break
+    #     else:
+    #         # appliance is not deleted successfully yet, wait and poll
+    #         # again one more time
+    #         time.sleep(2)
+    #         elapsed_time += 2
+    #
+    # if not is_deleted:
+    #     errmsg = 'The old appliance '+app_id+' cannot be deleted successfully within ' + \
+    #              str(timeout_threshold) + ' seconds'
+    #     messages.error(request, errmsg)
+    #     if request.is_ajax():
+    #         return JsonResponse(data={'error': errmsg},
+    #                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #     else:
+    #         return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
-    if not is_deleted:
-        errmsg = 'The old appliance '+app_id+' cannot be deleted successfully within ' + \
-                 str(timeout_threshold) + ' seconds'
-        messages.error(request, errmsg)
-        if request.is_ajax():
-            return JsonResponse(data={'error': errmsg},
-                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        else:
-            return HttpResponseRedirect(request.META['HTTP_REFERER'])
-
-    response = requests.post(url, data=dumps(p_data))
-    if response.status_code != status.HTTP_200_OK and \
-            response.status_code != status.HTTP_201_CREATED:
-        if request.is_ajax():
-            return JsonResponse(data={'error': response.text}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return HttpResponseBadRequest(content=response.text)
+    # check if appliance already exists, if yes, do redirect directly, if not, create a new one
+    app_url = url + '/' + app_id
+    get_response = requests.get(app_url)
+    if get_response.status_code == status.HTTP_404_NOT_FOUND:
+        response = requests.post(url, data=dumps(p_data))
+        if response.status_code != status.HTTP_200_OK and \
+                response.status_code != status.HTTP_201_CREATED:
+            if request.is_ajax():
+                return JsonResponse(data={'error': response.text}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return HttpResponseBadRequest(content=response.text)
 
     redirect_url = app_url + '/ui'
 
