@@ -406,6 +406,17 @@ function update_download_status(task_id, download_path) {
 }
 
 $(document).ready(function () {
+    require([
+      'https://fairshake.cloud/v2/static/scripts/insignia.js'
+    ], function(insignia) {
+      insignia.build_svg_from_score(
+        document.getElementById('insignia'), {
+          //url: 'https://wormbase.org'
+          //url: $('#resource-url').val()
+          url: 'https://helium.commonsshare.org/resource/bf4e8824d1de43928b10ef0e15384394/'
+        }
+      )
+    });
     var task_id = $('#task_id').val();
     var download_path = $('#download_path').val();
     if (task_id) {
