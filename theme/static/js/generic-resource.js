@@ -412,8 +412,8 @@ $(document).ready(function () {
       insignia.build_svg_from_score(
         document.getElementById('insignia'), {
           //url: 'https://wormbase.org'
-          //url: $('#resource-url').val()
-          url: 'https://helium.commonsshare.org/resource/bf4e8824d1de43928b10ef0e15384394/'
+          url: $('#resource-url').val()
+          //url: 'http://localhost:8000/resource/31de0ef7f767491ebe01380feeb7ec50/'
         }
       )
     });
