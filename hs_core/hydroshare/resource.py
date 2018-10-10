@@ -1031,7 +1031,6 @@ def publish_resource(user, pk, publish_type):
         request_data['contentSize'] = repr(size)
         request_data['contentUrl'] = [download_bag_url, dos_url]
 
-        logger.info(json.dumps(request_data))
         response = requests.put(doi_put_url,
                                 data=json.dumps(request_data),
                                 headers={"Content-Type": "application/json"})
@@ -1075,8 +1074,6 @@ def publish_resource(user, pk, publish_type):
         request_data["url"] =  resource_url
         request_data["projects"] = [14]
         request_data["rubrics"] = [11]
-
-        logger.info(json.dumps(request_data))
 
         response = requests.post(settings.FAIRSHAKE_URL + '/digital_object/',
                                  data=json.dumps(request_data),
