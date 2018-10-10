@@ -1072,6 +1072,7 @@ def publish_resource(user, pk, publish_type):
 
     utils.resource_modified(resource, user, overwrite_bag=False)
 
+    request.session
 
     # register published resource in farishake
     #retrieve an API Key to access FairShake registration API
@@ -1098,6 +1099,8 @@ def publish_resource(user, pk, publish_type):
         request_data["url"] =  resource_url
         request_data["projects"] = [14]
         request_data["rubrics"] = [19]
+
+        logger.info(json.dumps(request_data))
 
         response = requests.post(settings.FAIRSHAKE_URL + '/digital_object/',
                                  data=json.dumps(request_data),

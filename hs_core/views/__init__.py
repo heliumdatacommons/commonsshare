@@ -668,6 +668,7 @@ def publish(request, shortkey, publish_type, *args, **kwargs):
         request.session['validation_error'] = exp.message
     else:
         request.session['just_published'] = True
+        request.session['resource_url'] = utils.current_site_url() + '/resource/' + res.short_id + '/'
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
 def set_resource_flag(request, shortkey, *args, **kwargs):

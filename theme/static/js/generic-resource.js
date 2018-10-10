@@ -411,9 +411,7 @@ $(document).ready(function () {
     ], function(insignia) {
       insignia.build_svg_from_score(
         document.getElementById('insignia'), {
-          //url: 'https://wormbase.org'
           url: $('#resource-url').val()
-          //url: 'http://localhost:8000/resource/31de0ef7f767491ebe01380feeb7ec50/'
         }
       )
     });
