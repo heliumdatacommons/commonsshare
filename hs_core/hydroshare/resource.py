@@ -1072,8 +1072,6 @@ def publish_resource(user, pk, publish_type):
 
     utils.resource_modified(resource, user, overwrite_bag=False)
 
-    request.session
-
     # register published resource in farishake
     #retrieve an API Key to access FairShake registration API
 
