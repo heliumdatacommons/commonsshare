@@ -1049,6 +1049,50 @@ def publish_resource(user, pk, publish_type):
             doi_url = 'https://ors.datacite.org/' + doi
             ident_md_args = {'name': 'doi',
                        'url': doi_url}
+
+    # register published resource in farishake
+    #retrieve an API Key to access FairShake registration API
+
+    request_data = {}
+    request_data['username'] = settings.FAIRSHAKE_USERID
+    request_data['password'] = settings.FAIRSHAKE_PASSWORD
+    response = requests.post(settings.FAIRSHAKE_URL +'/auth/login/',
+                            data=json.dumps(request_data),
+                            headers={"Content-Type": "application/json"})
+
+    if response.status_code != status.HTTP_200_OK:
+        logger.error("Error retrieving APIKey from FairShake API")
+        logger.error(response.status_code)
+        logger.error(response.text)
+        raise PublishException("This resource cannot be published because it has failed the FairShake registration process." + response.text)
+    else:
+        return_data = json.loads(response.content)
+        fairshake_apikey = return_data['key']
+
+        request_data = {}
+        request_data["title"] = resource.title
+        request_data["tags"] = "dcppc"
+        request_data["url"] =  resource_url
+        request_data["projects"] = [14]
+        request_data["rubrics"] = [11]
+
+        logger.info(json.dumps(request_data))
+
+        response = requests.post(settings.FAIRSHAKE_URL + '/digital_object/',
+                                 data=json.dumps(request_data),
+                                 headers={"accept": "application/json", "Content-Type": "application/json", "Authorization": "Token " + fairshake_apikey})
+        if response.status_code != status.HTTP_201_CREATED:
+            logger.error("Error registering resource with FairShake")
+            logger.error(response.status_code)
+            logger.error(response.text)
+            raise PublishException(
+                "This resource cannot be published because it has failed the FairShake registration process." + response.text)
+        else:
+            return_data = json.loads(response.content)
+            assessment_id = return_data['id']
+            logger.info("Created FairShake object with ID: " + repr(assessment_id))
+            resource.assessment_id = assessment_id
+
     resource.save()
 
     resource.set_public(True)  # also sets discoverable to True
@@ -1071,47 +1115,6 @@ def publish_resource(user, pk, publish_type):
     resource.metadata.create_element('Identifier', **ident_md_args)
 
     utils.resource_modified(resource, user, overwrite_bag=False)
-
-    # register published resource in farishake
-    #retrieve an API Key to access FairShake registration API
-
-    request_data = {}
-    request_data['username'] = settings.FAIRSHAKE_USERID
-    request_data['password'] = settings.FAIRSHAKE_PASSWORD
-    response = requests.post(settings.FAIRSHAKE_URL +'/auth/login/',
-                            data=json.dumps(request_data),
-                            headers={"Content-Type": "application/json"})
-
-    if response.status_code != status.HTTP_200_OK:
-        logger.error("Error retrieving APIKey from FairShake API")
-        logger.error(response.status_code)
-        logger.error(response.text)
-        raise PublishException("Unable to retrieve APIKey from FairShake API.")
-    else:
-        return_data = json.loads(response.content)
-        fairshake_apikey = return_data['key']
-
-        request_data = {}
-        request_data["title"] = resource.title
-        request_data["tags"] = "dcppc"
-        request_data["url"] =  resource_url
-        request_data["projects"] = [14]
-        request_data["rubrics"] = [19]
-
-        logger.info(json.dumps(request_data))
-
-        response = requests.post(settings.FAIRSHAKE_URL + '/digital_object/',
-                                 data=json.dumps(request_data),
-                                 headers={"accept": "application/json", "Content-Type": "application/json", "Authorization": "Token " + fairshake_apikey})
-        if response.status_code != status.HTTP_201_CREATED:
-            logger.error("Error registering resource with FairShake")
-            logger.error(response.status_code)
-            logger.error(response.text)
-            raise PublishException("Unable to register resource with FairShake API.")
-        else:
-            return_data = json.loads(response.content)
-            fairshake_id = return_data["id"]
-            logger.info("FairShake Registration ID: " + repr(fairshake_id))
 
 
 def resolve_minid(minid):

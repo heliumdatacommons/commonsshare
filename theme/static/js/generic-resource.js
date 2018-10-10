@@ -409,10 +409,12 @@ $(document).ready(function () {
     require([
       'https://fairshake.cloud/v2/static/scripts/insignia.js'
     ], function(insignia) {
-      insignia.build_svg_from_score(
-        document.getElementById('insignia'), {
-          url: $('#resource-url').val()
-        }
+        element = document.getElementById('insignia')
+        insignia.build_svg_from_score(
+            element,
+            {
+             digital_object: element.getAttribute('object_id')
+            }
       )
     });
     var task_id = $('#task_id').val();
