@@ -1617,6 +1617,8 @@ class AbstractResource(ResourcePermissionsMixin, ResourceIRODSMixin):
     doi = models.CharField(max_length=1024, null=True, blank=True, db_index=True,
                              help_text='DOI created for this resource.')
 
+    assessment_id = models.PositiveIntegerField(null=True, blank=True)
+
     comments = CommentsField()
     rating = RatingField()
 
