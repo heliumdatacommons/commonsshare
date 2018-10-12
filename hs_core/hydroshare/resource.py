@@ -1031,9 +1031,15 @@ def publish_resource(user, pk, publish_type):
         request_data['contentSize'] = repr(size)
         request_data['contentUrl'] = [download_bag_url, dos_url]
 
+        auth_header_str = "Bearer {}".format(settings.DOI_OAUTH_TOKEN)
         response = requests.put(doi_put_url,
                                 data=json.dumps(request_data),
-                                headers={"Content-Type": "application/json"})
+                                headers={"Content-Type": "application/json", "Authorization": auth_header_str })
+
+        logger.info("request_data: " + json.dumps(request_data))
+        logger.info("status code from doi: " + repr(response.status_code))
+        logger.info("response content: " + response.content)
+        logger.info("response text: " + response.text)
 
         if response.status_code != status.HTTP_200_OK:
             logger.error("Error retrieving DOI from datacite service")
@@ -1041,6 +1047,7 @@ def publish_resource(user, pk, publish_type):
             logger.error(response.text)
             raise PublishException("Unable to retrieve a DOI from DataCite. Resource cannot be published.")
         else:
+            logger.info("response content: " + response.content)
             return_data = json.loads(response.content)
             doi = return_data['@id']
             resource.doi = doi
