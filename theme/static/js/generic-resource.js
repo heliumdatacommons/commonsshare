@@ -406,6 +406,17 @@ function update_download_status(task_id, download_path) {
 }
 
 $(document).ready(function () {
+    require([
+      'https://fairshake.cloud/v2/static/scripts/insignia.js'
+    ], function(insignia) {
+        element = document.getElementById('insignia')
+        insignia.build_svg_from_score(
+            element,
+            {
+             digital_object: element.getAttribute('object_id')
+            }
+      )
+    });
     var task_id = $('#task_id').val();
     var download_path = $('#download_path').val();
     if (task_id) {

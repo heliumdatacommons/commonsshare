@@ -1165,12 +1165,27 @@
 
 {% block extra_js %}
     {{ block.super }}
+    <script type="text/javascript" src="https://requirejs.org/docs/release/2.3.6/comments/require.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?libraries=drawing"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/dropzone.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/hs-file-icons.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/hs_file_browser.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/resourceLandingAjax.js"></script>
+    {# === hacky workaround to remove require from window scope, then reinstate it afterwords to work around the issue === #}
+    {# === of mismatched anonymous define() module caused by conflict between require.js and jquery.dataTables.js ======= #}
+    <script>
+        window.__define = window.define;
+        window.__require = window.require;
+        window.define = undefined;
+        window.require = undefined;
+    </script>
     <script type="text/javascript" src='//cdn.datatables.net/1.10.10/js/jquery.dataTables.js'></script>
+    <script>
+        window.define = window.__define;
+        window.require = window.__require;
+        window.__define = undefined;
+        window.__require = undefined;
+    </script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/copyToClipboard.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/generic-resource.js"></script>
 
