@@ -67,7 +67,7 @@ var updateListFaceting = function (request_url) {
 
 var reorderDivs = function() {
     var faceted_fields = ['creators', 'subjects', 'resource_type', 'owners_names',
-        'variable_names', 'sample_mediums', 'units_names', 'availability'];
+        'availability'];
     var div_ordering = [];
     faceted_fields.forEach(function(field) {
         var faceting_div = "faceting-"+field;

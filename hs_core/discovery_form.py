@@ -61,9 +61,6 @@ class DiscoveryForm(FacetedSearchForm):
         owners_names_sq = None
         discoverable_sq = None
         published_sq = None
-        variable_names_sq = None
-        sample_mediums_sq = None
-        units_names_sq = None
 
         # We need to process each facet to ensure that the field name and the
         # value are quoted correctly and separately:
@@ -118,24 +115,6 @@ class DiscoveryForm(FacetedSearchForm):
                     else:
                         published_sq.add(SQ(published=value), SQ.OR)
 
-                elif 'variable_names' in field:
-                    if variable_names_sq is None:
-                        variable_names_sq = SQ(variable_names=value)
-                    else:
-                        variable_names_sq.add(SQ(variable_names=value), SQ.OR)
-
-                elif 'sample_mediums' in field:
-                    if sample_mediums_sq is None:
-                        sample_mediums_sq = SQ(sample_mediums=value)
-                    else:
-                        sample_mediums_sq.add(SQ(sample_mediums=value), SQ.OR)
-
-                elif 'units_names' in field:
-                    if units_names_sq is None:
-                        units_names_sq = SQ(units_names=value)
-                    else:
-                        units_names_sq.add(SQ(units_names=value), SQ.OR)
-
                 else:
                     continue
 
@@ -153,11 +132,5 @@ class DiscoveryForm(FacetedSearchForm):
             sqs = sqs.filter(discoverable_sq)
         if published_sq is not None:
             sqs = sqs.filter(published_sq)
-        if variable_names_sq is not None:
-            sqs = sqs.filter(variable_names_sq)
-        if sample_mediums_sq is not None:
-            sqs = sqs.filter(sample_mediums_sq)
-        if units_names_sq is not None:
-            sqs = sqs.filter(units_names_sq)
 
         return sqs
