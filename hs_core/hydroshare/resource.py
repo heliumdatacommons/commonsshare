@@ -663,7 +663,7 @@ def add_resource_files(pk, *files, **kwargs):
 
     for f in files:
         file_ext = os.path.splitext(f.name)[1]
-        if file_ext.lower() == 'jsonld':
+        if file_ext.lower() == '.jsonld':
             # treat the file as semantic metadata
             utils.harvest_ontology_ids_from_metadata(resource, f)
             ret.append(utils.add_file_to_resource(resource, f, folder='metadata'))

@@ -955,18 +955,25 @@ def item_generator(json_input, lookup_id_key, id_prefix):
     :param id_prefix: the id value prefix requirement
     :return: a list of id values
     """
-    if isinstance(json_input, dict):
-        for k, v in json_input.iteritems():
-            if k == lookup_id_key and isinstance(v, string):
-                if v.startswith(id_prefix):
-                    yield v
-            else:
-                for child_val in item_generator(v, lookup_id_key, id_prefix):
-                    yield child_val
-    elif isinstance(json_input, list):
-        for item in json_input:
-            for item_val in item_generator(item, lookup_id_key, id_prefix):
-                yield item_val
+    try:
+        if isinstance(json_input, dict):
+            for k, v in json_input.iteritems():
+                if not k or not v:
+                    return
+                if k == lookup_id_key and isinstance(v, string):
+                    if v.startswith(id_prefix):
+                        yield v
+                else:
+                    for child_val in item_generator(v, lookup_id_key, id_prefix):
+                        yield child_val
+        elif isinstance(json_input, list):
+            for item in json_input:
+                for item_val in item_generator(item, lookup_id_key, id_prefix):
+                    yield item_val
+        return
+    except Exception as ex:
+        err_msg = ex.message
+        return
 
 
 def harvest_ontology_ids_from_metadata(resource, f, id_prefix = 'UBERON:'):

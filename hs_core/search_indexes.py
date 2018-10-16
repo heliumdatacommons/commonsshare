@@ -411,8 +411,9 @@ class BaseResourceIndex(indexes.SearchIndex, indexes.Indexable):
         return obj.get_absolute_url()
 
     def prepare_ontology_id(self, obj):
-        ids = []
         if 'ontology_ids' in obj.extra_data:
             ids_str = obj.extra_data['ontology_ids']
-            
-        return ids
+            ids_list = ids_str.split(',')
+            return ids_list
+        else:
+            return []
