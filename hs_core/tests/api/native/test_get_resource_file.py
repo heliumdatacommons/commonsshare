@@ -32,7 +32,7 @@ class TestGetResourceFile(MockIRODSTestCaseMixin, TestCase):
         open('myfile.txt', "w").close()
         self.file = open('myfile.txt', 'r')
 
-        hydroshare.add_resource_files(self.res.short_id, self.file)
+        hydroshare.add_resource_files(self.res, self.file)
 
     def tearDown(self):
         super(TestGetResourceFile, self).tearDown()

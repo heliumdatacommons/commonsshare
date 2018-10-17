@@ -56,7 +56,7 @@ class TestResourceFileAPI(MockIRODSTestCaseMixin,
         self.res.check_irods_files(stop_on_error=True)
 
         # add one file to the resource
-        hydroshare.add_resource_files(self.res.short_id, self.test_file_1)
+        hydroshare.add_resource_files(self.res, self.test_file_1)
 
         # should succeed without errors
         self.res.check_irods_files(stop_on_error=True)
@@ -130,7 +130,7 @@ class TestResourceFileAPI(MockIRODSTestCaseMixin,
         self.res.check_irods_files(stop_on_error=True)
 
         # add one file to the resource
-        hydroshare.add_resource_files(self.res.short_id, self.test_file_1, folder='foo')
+        hydroshare.add_resource_files(self.res, self.test_file_1, folder='foo')
 
         # should succeed without errors
         self.res.check_irods_files(stop_on_error=True)

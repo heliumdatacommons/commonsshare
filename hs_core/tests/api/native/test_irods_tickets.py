@@ -40,7 +40,7 @@ class TestTickets(TestCase):
         self.test_file_1 = open(self.test_file_name1, 'r')
 
         # add one file to the resource: necessary so data directory is created.
-        hydroshare.add_resource_files(self.res.short_id, self.test_file_1)
+        hydroshare.add_resource_files(self.res, self.test_file_1)
 
     def tearDown(self):
         super(TestTickets, self).tearDown()

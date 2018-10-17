@@ -53,7 +53,7 @@ class TestUpdateResourceFileAPI(MockIRODSTestCaseMixin, unittest.TestCase):
 
         original_file = open(original_file_name, 'r')
         # add the file to the resource
-        added_files = hydroshare.add_resource_files(new_res.short_id, original_file)
+        added_files = hydroshare.add_resource_files(new_res, original_file)
 
         # resource should have only one file at this point
         self.assertEqual(len(added_files), 1)

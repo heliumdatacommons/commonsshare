@@ -847,7 +847,7 @@ def resource_file_add_process(resource, files, user, extract_metadata=False,
     if __debug__:
         assert(isinstance(source_names, list))
     folder = kwargs.pop('folder', None)
-    resource_file_objects = add_resource_files(resource.short_id, *files, folder=folder,
+    resource_file_objects = add_resource_files(resource, *files, folder=folder,
                                                source_names=source_names,
                                                source_sizes=source_sizes,
                                                is_file_reference=is_file_reference)
@@ -960,7 +960,7 @@ def item_generator(json_input, lookup_id_key, id_prefix):
             for k, v in json_input.iteritems():
                 if not k or not v:
                     return
-                if k == lookup_id_key and isinstance(v, string):
+                if k == lookup_id_key and isinstance(v, basestring):
                     if v.startswith(id_prefix):
                         yield v
                 else:
@@ -972,7 +972,7 @@ def item_generator(json_input, lookup_id_key, id_prefix):
                     yield item_val
         return
     except Exception as ex:
-        err_msg = ex.message
+        logger.debug(ex.message)
         return
 
 
@@ -988,8 +988,9 @@ def harvest_ontology_ids_from_metadata(resource, f, id_prefix = 'UBERON:'):
     for id in item_generator(md, 'identifier', id_prefix):
         ids_str += id +','
     if ids_str:
-        ids_str = ids_str[-1]
+        ids_str = ids_str[0:-1]
         resource.extra_data = {'ontology_ids': ids_str}
+        resource.save()
 
 
 def add_metadata_element_to_xml(root, md_element, md_fields):

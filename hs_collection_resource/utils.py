@@ -109,7 +109,7 @@ def update_collection_list_csv(collection_obj):
 
             # push the new csv file to irods bag
             files = (UploadedFile(file=open(csv_full_path, 'r'), name=csv_full_name))
-            add_resource_files(collection_obj.short_id, files)
+            add_resource_files(collection_obj, files)
 
     except Exception as ex:
         logger.error("Failed to update_collection_list_csv in {}"
