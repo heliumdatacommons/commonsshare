@@ -14,10 +14,6 @@ class DiscoveryForm(FacetedSearchForm):
     SORT_DIRECTION_CHOICES = (('', 'Ascending'),
                               ('-', 'Descending'))
 
-    NElat = forms.CharField(widget=forms.HiddenInput(), required=False)
-    NElng = forms.CharField(widget=forms.HiddenInput(), required=False)
-    SWlat = forms.CharField(widget=forms.HiddenInput(), required=False)
-    SWlng = forms.CharField(widget=forms.HiddenInput(), required=False)
     start_date = forms.DateField(label='From Date', required=False)
     end_date = forms.DateField(label='To Date', required=False)
     coverage_type = forms.CharField(widget=forms.HiddenInput(), required=False)
