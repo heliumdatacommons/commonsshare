@@ -97,6 +97,7 @@ solr_schema_hs() {
     sleep 1s
     echo "  - docker exec solr cp /hydroshare/schema.xml /opt/solr/example/solr/collection1/conf/schema.xml"
     docker exec solr cp /hydroshare/schema.xml /opt/solr/example/solr/collection1/conf/schema.xml
+    docker exec solr cp -r /hydroshare/ontology-core /opt/solr/example/solr/ontology-core
 }
 
 delete_celerybeat_scheduler() {
@@ -263,6 +264,8 @@ solr_reload_hs() {
     echo "SOLR RELOAD"
     echo "  - docker exec hydroshare curl \"solr:8983/solr/admin/cores?action=RELOAD&core=collection1\""
     docker exec hydroshare curl "solr:8983/solr/admin/cores?action=RELOAD&core=collection1"
+    docker exec hydroshare curl "solr:8983/solr/admin/cores?action=CREATE&name=ontology-core&instanceDir=/opt/solr/example/solr/ontology-core/&config=solrconfig.xml&dataDir=data"
+    docker exec hydroshare curl "solr:8983/solr/admin/cores?action=RELOAD&core=ontology-core"
 }
 
 update_solr_index() {
