@@ -1,6 +1,10 @@
 from haystack.forms import FacetedSearchForm
 from haystack.query import SQ
 from django import forms
+from django.conf import settings
+
+from haystack_queryparser import ParseSQ, NoMatchingBracketsFound, UnhandledException
+import pysolr
 
 
 class DiscoveryForm(FacetedSearchForm):
@@ -14,13 +18,6 @@ class DiscoveryForm(FacetedSearchForm):
     SORT_DIRECTION_CHOICES = (('', 'Ascending'),
                               ('-', 'Descending'))
 
-    NElat = forms.CharField(widget=forms.HiddenInput(), required=False)
-    NElng = forms.CharField(widget=forms.HiddenInput(), required=False)
-    SWlat = forms.CharField(widget=forms.HiddenInput(), required=False)
-    SWlng = forms.CharField(widget=forms.HiddenInput(), required=False)
-    start_date = forms.DateField(label='From Date', required=False)
-    end_date = forms.DateField(label='To Date', required=False)
-    coverage_type = forms.CharField(widget=forms.HiddenInput(), required=False)
     sort_order = forms.CharField(label='Sort By:',
                                  widget=forms.Select(choices=SORT_ORDER_CHOICES),
                                  required=False)
@@ -29,52 +26,55 @@ class DiscoveryForm(FacetedSearchForm):
                                      required=False)
 
     def search(self):
-        if not self.cleaned_data.get('q'):
-            sqs = self.searchqueryset.all().filter(is_replaced_by=False)
-        else:
-            # This corrects for an failed match of complete words, as documented in issue #2308.
-            # The text__startswith=cdata matches stemmed words in documents with an unstemmed cdata.
-            # The text=cdata matches stemmed words after stemming cdata as well.
-            # The stem of "Industrial", according to the aggressive default stemmer, is "industri".
-            # Thus "Industrial" does not match "Industrial" in the document according to
-            # startswith, but does match according to text=cdata.
+        self.parse_error = None
+        sqs = self.searchqueryset.all().filter(is_replaced_by=False)
+        if self.cleaned_data.get('q'):
+            # The prior code corrected for an failed match of complete words, as documented
+            # in issue #2308. This version instead uses an advanced query syntax in which
+            # "word" indicates an exact match and the bare word indicates a stemmed match.
             cdata = self.cleaned_data.get('q')
-            sqs = self.searchqueryset.all()\
-                .filter(SQ(text__startswith=cdata) | SQ(text=cdata))\
-                .filter(is_replaced_by=False)
+            try:
+                # query in CommonsShare core first
+                parser = ParseSQ()
+                parsed = parser.parse(cdata)
+                sqs = sqs.filter(parsed)
 
-        geo_sq = None
-        if self.cleaned_data['NElng'] and self.cleaned_data['SWlng']:
-            if float(self.cleaned_data['NElng']) > float(self.cleaned_data['SWlng']):
-                geo_sq = SQ(coverage_east__lte=float(self.cleaned_data['NElng']))
-                geo_sq.add(SQ(coverage_east__gte=float(self.cleaned_data['SWlng'])), SQ.AND)
-            else:
-                geo_sq = SQ(coverage_east__gte=float(self.cleaned_data['SWlng']))
-                geo_sq.add(SQ(coverage_east__lte=float(180)), SQ.OR)
-                geo_sq.add(SQ(coverage_east__lte=float(self.cleaned_data['NElng'])), SQ.AND)
-                geo_sq.add(SQ(coverage_east__gte=float(-180)), SQ.AND)
+                # then query against ontology-core using pysolr
+                ontology_solr = pysolr.Solr(settings.ONTOLOGY_SOLR_URL)
+                oresults = ontology_solr.search(q='isa_partof_closure_label:*' + cdata + '*',
+                                                rows=settings.MAX_ROWS_IN_ONTOLOGY_CORE)
+                if len(oresults) > 0:
+                    cs_sqs = sqs
+                    ids = [result['id'] for result in oresults]
+                    # cannot query with over 1000 ids OR'ed together due to URL length constraint,
+                    # so need to break the OR query into multiples
+                    rows_in_single_query = 1000
+                    if len(ids) < rows_in_single_query:
+                        id_chunks = [ids]
+                    else:
+                        id_chunks = [ids[x:x+rows_in_single_query] for x in
+                                     range(0, len(ids), rows_in_single_query)]
 
-        if self.cleaned_data['NElat'] and self.cleaned_data['SWlat']:
-            # latitude might be specified without longitude
-            if geo_sq is None:
-                geo_sq = SQ(coverage_north__lte=float(self.cleaned_data['NElat']))
-            else:
-                geo_sq.add(SQ(coverage_north__lte=float(self.cleaned_data['NElat'])), SQ.AND)
-            geo_sq.add(SQ(coverage_north__gte=float(self.cleaned_data['SWlat'])), SQ.AND)
-
-        if geo_sq is not None:
-            sqs = sqs.filter(geo_sq)
-
-        # Check to see if a start_date was chosen.
-        if self.cleaned_data['start_date']:
-            sqs = sqs.filter(coverage_start_date__gte=self.cleaned_data['start_date'])
-
-        # Check to see if an end_date was chosen.
-        if self.cleaned_data['end_date']:
-            sqs = sqs.filter(coverage_end_date__lte=self.cleaned_data['end_date'])
-
-        if self.cleaned_data['coverage_type']:
-            sqs = sqs.filter(coverage_types__in=[self.cleaned_data['coverage_type']])
+                    sub_sqs_list = []
+                    for id_chunk in id_chunks:
+                        id_chunk[0] = 'ontology_id:{}'.format(id_chunk[0])
+                        squery = ' OR ontology_id:'.join(id_chunk)
+                        parsed = parser.parse(squery)
+                        sqs = self.searchqueryset.all().filter(is_replaced_by=False)
+                        sub_sqs_list.append(sqs.filter(parsed))
+                    # merge all sub-queries
+                    if len(sub_sqs_list) > 0:
+                        sqs = cs_sqs | sub_sqs_list[0]
+                    for sub_sqs in sub_sqs_list[1:]:
+                        sqs = sqs | sub_sqs
+            except NoMatchingBracketsFound as e:
+                sqs = self.searchqueryset.none()
+                self.parse_error = "{} No matches. Please try again.".format(e.value)
+                return sqs
+            except UnhandledException as e:
+                sqs = self.searchqueryset.none()
+                self.parse_error = "{} No matches. Please try again.".format(e.value)
+                return sqs
 
         authors_sq = None
         subjects_sq = None
@@ -83,9 +83,6 @@ class DiscoveryForm(FacetedSearchForm):
         owners_names_sq = None
         discoverable_sq = None
         published_sq = None
-        variable_names_sq = None
-        sample_mediums_sq = None
-        units_names_sq = None
 
         # We need to process each facet to ensure that the field name and the
         # value are quoted correctly and separately:
@@ -140,24 +137,6 @@ class DiscoveryForm(FacetedSearchForm):
                     else:
                         published_sq.add(SQ(published=value), SQ.OR)
 
-                elif 'variable_names' in field:
-                    if variable_names_sq is None:
-                        variable_names_sq = SQ(variable_names=value)
-                    else:
-                        variable_names_sq.add(SQ(variable_names=value), SQ.OR)
-
-                elif 'sample_mediums' in field:
-                    if sample_mediums_sq is None:
-                        sample_mediums_sq = SQ(sample_mediums=value)
-                    else:
-                        sample_mediums_sq.add(SQ(sample_mediums=value), SQ.OR)
-
-                elif 'units_names' in field:
-                    if units_names_sq is None:
-                        units_names_sq = SQ(units_names=value)
-                    else:
-                        units_names_sq.add(SQ(units_names=value), SQ.OR)
-
                 else:
                     continue
 
@@ -175,11 +154,5 @@ class DiscoveryForm(FacetedSearchForm):
             sqs = sqs.filter(discoverable_sq)
         if published_sq is not None:
             sqs = sqs.filter(published_sq)
-        if variable_names_sq is not None:
-            sqs = sqs.filter(variable_names_sq)
-        if sample_mediums_sq is not None:
-            sqs = sqs.filter(sample_mediums_sq)
-        if units_names_sq is not None:
-            sqs = sqs.filter(units_names_sq)
 
         return sqs

@@ -425,8 +425,10 @@ def create_resource(
             # more than ~15 seconds to complete.
             utils.save_pivot_appliance_info(resource, files)
 
-
-            add_resource_files(resource.short_id, *files, source_names=source_names, source_sizes=source_sizes,
+            # made add_resource_files take resource as the first parameter rather than resource id
+            # since the extra_data stored on the resource when adding files, e.g., harvested
+            # ontology ids, would get lost otherwise
+            add_resource_files(resource, *files, source_names=source_names, source_sizes=source_sizes,
                                move=move, is_file_reference=is_file_reference)
 
         # by default resource is private
@@ -620,7 +622,7 @@ def create_new_version_resource(ori_res, new_res, user):
     return new_res
 
 
-def add_resource_files(pk, *files, **kwargs):
+def add_resource_files(resource, *files, **kwargs):
     """
     Called by clients to update a resource in CommonsShare by adding one or more files.
 
@@ -644,7 +646,6 @@ def add_resource_files(pk, *files, **kwargs):
     This does **not** handle mutability; changes to immutable resources should be denied elsewhere.
 
     """
-    resource = utils.get_resource_by_shortkey(pk)
     ret = []
     source_names = kwargs.pop('source_names', [])
     source_sizes = kwargs.pop('source_sizes', [])
@@ -662,7 +663,13 @@ def add_resource_files(pk, *files, **kwargs):
         assert len(kwargs) == 0
 
     for f in files:
-        ret.append(utils.add_file_to_resource(resource, f, folder=folder))
+        file_ext = os.path.splitext(f.name)[1]
+        if file_ext.lower() == '.jsonld':
+            # treat the file as semantic metadata
+            utils.harvest_ontology_ids_from_metadata(resource, f)
+            ret.append(utils.add_file_to_resource(resource, f, folder='metadata'))
+        else:
+            ret.append(utils.add_file_to_resource(resource, f, folder=folder))
 
     if len(source_names) > 0:
         if len(source_names) != len(source_sizes):
@@ -684,7 +691,7 @@ def add_resource_files(pk, *files, **kwargs):
     # make sure data directory exists if not exist already
     utils.create_empty_contents_directory(resource)
 
-    notify_fts_indexer(pk)
+    notify_fts_indexer(resource.short_id)
 
     return ret
 

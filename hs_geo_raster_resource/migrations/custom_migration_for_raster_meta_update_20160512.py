@@ -66,7 +66,7 @@ def migrate_tif_file(apps, schema_editor):
 
                     # add new vrt file to resource
                     new_file = UploadedFile(file=open(vrt_file_path, 'r'), name=os.path.basename(vrt_file_path))
-                    hydroshare.add_resource_files(res.short_id, new_file)
+                    hydroshare.add_resource_files(res, new_file)
 
                     # update the bag
                     bag_name = 'bags/{res_id}.zip'.format(res_id=res.short_id)

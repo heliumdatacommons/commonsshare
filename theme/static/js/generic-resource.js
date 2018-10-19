@@ -409,7 +409,7 @@ $(document).ready(function () {
     require([
       'https://fairshake.cloud/v2/static/scripts/insignia.js'
     ], function(insignia) {
-        element = document.getElementById('insignia')
+        element = document.getElementById('insignia');
         insignia.build_svg_from_score(
             element,
             {

@@ -48,12 +48,6 @@
                                                 &nbsp; Filter by Resource Type
                                             {% elif key ==  'owners_names'%}
                                                 &nbsp; Filter by Owner
-                                            {% elif key ==  'variable_names'%}
-                                                &nbsp; Filter by Variable
-                                            {% elif key ==  'sample_mediums'%}
-                                                &nbsp; Filter by Sample Medium
-                                            {% elif key ==  'units_names'%}
-                                                &nbsp; Filter by Units Name
                                             {% endif %}
                                             <span class="glyphicon glyphicon-minus pull-left" >
 
@@ -127,29 +121,7 @@
         <div class="col-sm-9 col-xs-12" id="items">
             <div>
                 <table cellpadding='20'><tr><td>
-                <form id="date-search-fields" method="get" action=".">
-                    <h4 class="text-muted">Temporal Coverage</h4>
-
-                    <table>
-                        <tr>
-                            {% for field in form %}
-                                {% if field.auto_id == "id_start_date" or field.auto_id == "id_end_date" %}
-                                    <td>
-                                        <div class="fieldWrapper">
-                                            <span class="glyphicon glyphicon-calendar text-muted"></span> {{ field.label_tag }} {{ field }}
-                                        </div>
-                                    </td>
-                                {% endif %}
-                            {% endfor %}
-                            <td>
-                                <a id="clear-dates-options" data-toggle="tooltip" title="Clear Dates"
-                                   class="glyphicon glyphicon-remove-circle icon-remove"></a>
-                            </td>
-                        </tr>
-                    </table>
-                </form>
-                </td><td> 
-                <form id="search-order-fields" method="get" action="."> 
+                <form id="search-order-fields" method="get" action=".">
                     <h4 class="text-muted">Sort Order</h4>
 
                     <table>
@@ -172,134 +144,78 @@
                             {% endfor %}
                         </tr>
                     </table>
-                </form> 
+                </form>
                 </td></tr></table> 
                 <br>
-                <div id="resource-search" class="hidden">
-                    <div id="coverages-master-list"></div>
-                    <br />
-                    <table id="lat-lng-labels" class="hidden">
-                        <tr>
-                            <td>
-                                North Latitude: <label for="ne-lat-value"></label>
-                            </td>
-                            <td>
-                                East Longitude: <label for="ne-lng-value"></label>
-                            </td>
-                            <td>
-                                South Latitude: <label for="sw-lat-value"></label>
-                            </td>
-                            <td>
-                                West Longitude: <label for="sw-lng-value"></label>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
             </div>
 
-            <ul id="switch-view" class="nav nav-tabs">
-                <li class="active"><a href="#list-view"><i class="glyphicon glyphicon-list-alt"></i> List</a></li>
-                <li><a href="#map-view"><i class="glyphicon glyphicon-map-marker"></i> Map</a></li>
-            </ul>
+            <div id="list-view" class="tab-pane fade in active">
+                <span id="discover-list-loading-spinner" class="discover-loading-icon icon-blue">
+                      <i class="fa fa-spinner fa-spin fa-2x fa-fw"></i>
+                </span>
+                <br />
+                <table class="table-hover table-striped resource-custom-table" id="items-discovered">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Title</th>
+                            <th>First Author</th>
+                            <th>Date Created</th>
+                            <th>Date Created</th>{# Used in table sorting #}
+                            <th>Last Modified</th>
+                            <th>Last modified</th>{# Used in table sorting #}
+                        </tr>
+                    </thead>
 
-            <div class="tab-content">
-                <div id="list-view" class="tab-pane fade in active">
-                    <span id="discover-list-loading-spinner" class="discover-loading-icon icon-blue">
-                          <i class="fa fa-spinner fa-spin fa-2x fa-fw"></i>
-                    </span>
-                    <br />
-                    <table class="table-hover table-striped resource-custom-table" id="items-discovered">
-                        <thead>
+                    <tbody>
+                        {% for result in page_obj.object_list %}
                             <tr>
-                                <th>Type</th>
-                                <th>Title</th>
-                                <th>First Author</th>
-                                <th>Date Created</th>
-                                <th>Date Created</th>{# Used in table sorting #}
-                                <th>Last Modified</th>
-                                <th>Last modified</th>{# Used in table sorting #}
+                                <td>
+                                    {% include "includes/res_type_col.html" with resource=result.object %}
+                                </td>
+                                <td><strong><a href="{{ result.object.get_absolute_url }}">{{ result.object.metadata.title.value }}</a></strong></td>
+                                {% if result.object.first_creator.description %}
+                                    <td><a href="{{ result.object.first_creator.description }}">{{ result.object.first_creator.name  }}</a></td>
+                                {% else %}
+                                    <td>{{ result.object.first_creator.name }}</td>
+                                {% endif %}
+                                <td>{{ result.object.created|date:"M d, Y" }} at {{ result.object.created|time }}</td>
+                                <td>{{ result.object.created|date:"U" }}</td> {# Used in table sorting #}
+                                <td>{{ result.object.updated|date:"M d, Y" }} at {{ result.object.updated|time }}</td>
+                                <td>{{ result.object.updated|date:"U" }}</td> {# Used in table sorting #}
                             </tr>
-                        </thead>
+                        {% endfor %}
+                    </tbody>
+                </table>
 
-                        <tbody>
-                            {% for result in page_obj.object_list %}
-                                <tr>
-                                    <td>
-                                        {% include "includes/res_type_col.html" with resource=result.object %}
-                                    </td>
-                                    <td><strong><a href="{{ result.object.get_absolute_url }}">{{ result.object.metadata.title.value }}</a></strong></td>
-                                    {% if result.object.first_creator.description %}
-                                        <td><a href="{{ result.object.first_creator.description }}">{{ result.object.first_creator.name  }}</a></td>
-                                    {% else %}
-                                        <td>{{ result.object.first_creator.name }}</td>
-                                    {% endif %}
-                                    <td>{{ result.object.created|date:"M d, Y" }} at {{ result.object.created|time }}</td>
-                                    <td>{{ result.object.created|date:"U" }}</td> {# Used in table sorting #}
-                                    <td>{{ result.object.updated|date:"M d, Y" }} at {{ result.object.updated|time }}</td>
-                                    <td>{{ result.object.updated|date:"U" }}</td> {# Used in table sorting #}
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                
-                    {% if not page_obj.object_list %}
-                    <h4 class="text-muted">Sorry, no results match those criteria. Please try broadening your search.</h4>
-                    {% endif %}
-                    <div id="discover-page-options">
-                    {% if page_obj.has_previous or page_obj.has_next %}
-                            {% if page_obj.has_previous %}
-                                <a href="{{ request.get_full_path|clean_pagination_url }}&amp;page={{ page_obj.previous_page_number }}">
-                            {% endif %}&laquo; Previous
-                            {% if page_obj.has_previous %}</a>{% endif %}
-                            |
-                            {% if page_obj.has_next %}
-                                <a href="{{ request.get_full_path|clean_pagination_url }}&amp;page={{ page_obj.next_page_number }}">
-                            {% endif %}Next &raquo;{% if page_obj.has_next %}</a>{% endif %}
-                    {% endif %}
-                    {% if page_obj.has_other_pages %}
-                        {{ page_obj }} ( results {{ page_obj.start_index }} to {{ page_obj.end_index }} )  
-                    {% endif %}
-                    </div>
-                    
-                    <br>
-                    <div class="alert alert-info">
-                        <strong>
-                            <i class="glyphicon glyphicon-question-sign"></i> Not finding what you are looking for?
-                        </strong>
-                        <p>Private resources owned by you or shared with you by colleagues are searchable from
-                            <strong><a href="/my-resources">My Resources</a></strong></p>
-                    </div>
-                    {% include "includes/legend.html" %}
+                {% if not page_obj.object_list %}
+                <h4 class="text-muted">Sorry, no results match those criteria. Please try broadening your search.</h4>
+                {% endif %}
+                <div id="discover-page-options">
+                {% if page_obj.has_previous or page_obj.has_next %}
+                        {% if page_obj.has_previous %}
+                            <a href="{{ request.get_full_path|clean_pagination_url }}&amp;page={{ page_obj.previous_page_number }}">
+                        {% endif %}&laquo; Previous
+                        {% if page_obj.has_previous %}</a>{% endif %}
+                        |
+                        {% if page_obj.has_next %}
+                            <a href="{{ request.get_full_path|clean_pagination_url }}&amp;page={{ page_obj.next_page_number }}">
+                        {% endif %}Next &raquo;{% if page_obj.has_next %}</a>{% endif %}
+                {% endif %}
+                {% if page_obj.has_other_pages %}
+                    {{ page_obj }} ( results {{ page_obj.start_index }} to {{ page_obj.end_index }} )
+                {% endif %}
                 </div>
 
-                <div id="map-view" class="tab-pane fade">
-                    <div class="row">
-                        <div class="col-xs-12">
-                            <span id="discover-map-loading-spinner" class="discover-loading-icon icon-blue">
-                                  <i class="fa fa-spinner fa-spin fa-2x fa-fw"></i>
-                            </span>
-                            <br />
-                            <form id="covereage-search-fields" method="get" action="." class="hidden">
-                                {% for field in form %}
-                                    {% if field.auto_id  == "id_NElat" or field.auto_id  == "id_NElng" or field.auto_id  == "id_SWlat" or field.auto_id  == "id_SWlng" %}
-                                        {{ field }}
-                                    {% endif %}
-                                {% endfor %}
-                            </form>
-
-                            <div id="geocoder-panel"></div>
-
-                            <div id="discover-map"></div>
-
-                            <div id="discover-map-legend"></div>
-
-                            <div id="resetZoom"></div>
-                            <br />
-                            <table class="table-hover table-striped" id="map-items" style="width:100%; max-height:200px">
-                            </table>
-                        </div>
-                    </div>
+                <br>
+                <div class="alert alert-info">
+                    <strong>
+                        <i class="glyphicon glyphicon-question-sign"></i> Not finding what you are looking for?
+                    </strong>
+                    <p>Private resources owned by you or shared with you by colleagues are searchable from
+                        <strong><a href="/my-resources">My Resources</a></strong></p>
                 </div>
+                {% include "includes/legend.html" %}
             </div>
         </div>
     </div>
@@ -314,8 +230,5 @@
 {% block extra_js %}
     {{ block.super }}
     <script type="text/javascript" src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?v=3&libraries=geometry,places" type="text/javascript"></script>
-    <script src="https://cdn.rawgit.com/googlemaps/v3-utility-library/master/keydragzoom/src/keydragzoom.js" type="text/javascript"></script>
-    <script src="https://cdn.rawgit.com/googlemaps/js-marker-clusterer/gh-pages/src/markerclusterer.js" type="text/javascript"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/discover.js"></script>
 {% endblock %}

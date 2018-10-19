@@ -858,7 +858,7 @@ class TestCoreMetadata(MockIRODSTestCaseMixin, TestCase):
         # open the file for read
         file_obj_2 = open(res_file_2, "r")
         file_obj_1 = open(res_file_1, "r")
-        hydroshare.add_resource_files(res.short_id, file_obj_1, file_obj_2)
+        hydroshare.add_resource_files(res, file_obj_1, file_obj_2)
 
         # the two files have the same format
         self.assertEquals(res.files.all().count(), 2) 
@@ -1031,7 +1031,7 @@ class TestCoreMetadata(MockIRODSTestCaseMixin, TestCase):
 
         original_file = open(original_file_name, 'r')
         # add the file to the resource
-        hydroshare.add_resource_files(res_with_files.short_id, original_file)
+        hydroshare.add_resource_files(res_with_files, original_file)
 
         # trying to set publisher someone other than CUAHSI for a resource that has content files
         # should raise exception
@@ -1471,7 +1471,7 @@ class TestCoreMetadata(MockIRODSTestCaseMixin, TestCase):
 
         original_file = open(original_file_name, 'r')
         # add the file to the resource
-        hydroshare.add_resource_files(self.res.short_id, original_file)
+        hydroshare.add_resource_files(self.res, original_file)
 
         publisher_CS = "CommonsShare"
         url_CS = 'https://www.commonsshare.org'

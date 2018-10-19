@@ -64,7 +64,7 @@ class TestResourceFileFolderOprsAPI(MockIRODSTestCaseMixin,
                          msg="resource file count didn't match")
 
         # add the three files to the resource
-        hydroshare.add_resource_files(self.res.short_id, self.test_file_1, self.test_file_2,
+        hydroshare.add_resource_files(self.res, self.test_file_1, self.test_file_2,
                                       self.test_file_3)
 
         # resource should has only three files at this point

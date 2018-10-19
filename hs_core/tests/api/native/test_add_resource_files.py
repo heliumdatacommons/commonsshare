@@ -68,7 +68,7 @@ class TestAddResourceFiles(MockIRODSTestCaseMixin, unittest.TestCase):
         res.files.all().delete()
 
         # add files - this is the api we are testing
-        add_resource_files(res.short_id, self.myfile1, self.myfile2, self.myfile3)
+        add_resource_files(res, self.myfile1, self.myfile2, self.myfile3)
 
         # resource should have 3 files
         self.assertEquals(res.files.all().count(), 3)
@@ -96,7 +96,7 @@ class TestAddResourceFiles(MockIRODSTestCaseMixin, unittest.TestCase):
         uquota.used_value = uquota.allocated_value * 1.3
 
         # add files should raise quota exception now that the quota holder is over hard limit
-        add_resource_files(res.short_id, self.myfile1, self.myfile2, self.myfile3)
+        add_resource_files(res, self.myfile1, self.myfile2, self.myfile3)
         self.assertRaises(QuotaException)
 
         res.delete()

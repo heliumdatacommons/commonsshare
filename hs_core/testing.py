@@ -141,12 +141,12 @@ class TestCaseCommonUtilities(object):
                 zone=settings.HS_USER_IRODS_ZONE, uname=user.username, fname=file_name_list[0])
             # TODO: why isn't this a method of resource?
             # TODO: Why do we repeat the resource_federation_path?
-            add_resource_files(res.short_id, source_names=[fed_test_file1_full_path],
+            add_resource_files(res, source_names=[fed_test_file1_full_path],
                                move=False)
 
         else:
             # TODO: Why isn't this a method of resource?
-            add_resource_files(res.short_id, self.test_file_1)
+            add_resource_files(res, self.test_file_1)
 
         # TODO: use ResourceFile.create_folder, which doesn't require data prefix
         create_folder(res.short_id, 'data/sub_test_dir')

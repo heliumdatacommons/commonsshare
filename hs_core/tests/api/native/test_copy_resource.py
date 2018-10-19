@@ -57,7 +57,7 @@ class TestCopyResource(TestCase):
         self.test_file1 = open('test1.txt', 'r')
         self.test_file2 = open('test2.txt', 'r')
 
-        hydroshare.add_resource_files(self.res_generic.short_id, self.test_file1, self.test_file2)
+        hydroshare.add_resource_files(self.res_generic, self.test_file1, self.test_file2)
 
         # create a generic empty resource with one license that prohibits derivation
         statement = 'This resource is shared under the Creative Commons Attribution-NoDerivs CC ' \

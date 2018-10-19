@@ -56,7 +56,7 @@ class TestNewVersionResource(TestCase):
         self.test_file1 = open('test1.txt', 'r')
         self.test_file2 = open('test2.txt', 'r')
 
-        hydroshare.add_resource_files(self.res_generic.short_id, self.test_file1, self.test_file2)
+        hydroshare.add_resource_files(self.res_generic, self.test_file1, self.test_file2)
 
         # create a raster resource that represents a specific resource type
         raster_file = 'hs_core/tests/data/cea.tif'

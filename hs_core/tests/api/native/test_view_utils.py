@@ -30,7 +30,7 @@ class TestViewUtils(MockIRODSTestCaseMixin, TestCase):
         open('myfile.txt', "w").close()
         file = open('myfile.txt', 'r')
 
-        hydroshare.add_resource_files(resource.short_id, file)
+        hydroshare.add_resource_files(resource, file)
         create_folder(resource.short_id, "data/test_folder")
 
         move_to_folder(user, resource.short_id,
@@ -66,7 +66,7 @@ class TestViewUtils(MockIRODSTestCaseMixin, TestCase):
         open('myfile.txt', "w").close()
         file = open('myfile.txt', 'r')
 
-        hydroshare.add_resource_files(resource.short_id, file)
+        hydroshare.add_resource_files(resource, file)
         create_folder(resource.short_id, "data/test_folder")
 
         rename_file_or_folder(user, resource.short_id,

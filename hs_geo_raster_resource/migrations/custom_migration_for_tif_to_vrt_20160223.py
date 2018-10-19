@@ -26,7 +26,7 @@ def migrate_tif_file(apps, schema_editor):
                 if os.path.isfile(vrt_file_path):
                     files = (UploadedFile(file=open(vrt_file_path, 'r'),
                                           name=os.path.basename(vrt_file_path)))
-                    hydroshare.add_resource_files(res.short_id, files)
+                    hydroshare.add_resource_files(res, files)
 
                     bag_name = 'bags/{res_id}.zip'.format(res_id=res.short_id)
                     if istorage.exists(bag_name):
