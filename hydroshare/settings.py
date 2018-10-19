@@ -498,7 +498,7 @@ SOLR_PORT = '8983'
 HAYSTACK_CONNECTIONS = {
     'default': {
         'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
-        'URL': 'http://{SOLR_HOST}:{SOLR_PORT}/solr'.format(**globals()),
+        'URL': 'http://{SOLR_HOST}:{SOLR_PORT}/solr/collection1'.format(**globals()),
         # ...or for multicore...
         # 'URL': 'http://127.0.0.1:8983/solr/mysite',
     },
@@ -707,3 +707,6 @@ CSRF_COOKIE_SECURE = USE_SECURITY
 SWAGGER_SETTINGS = {
     "VALIDATOR_URL": False
 }
+
+ONTOLOGY_SOLR_URL = 'http://{SOLR_HOST}:{SOLR_PORT}/solr/ontology-core'.format(**globals())
+MAX_ROWS_IN_ONTOLOGY_CORE = 15277
