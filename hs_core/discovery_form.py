@@ -1,7 +1,10 @@
 from haystack.forms import FacetedSearchForm
 from haystack.query import SQ
 from django import forms
+from django.conf import settings
+
 from haystack_queryparser import ParseSQ, NoMatchingBracketsFound, UnhandledException
+import pysolr
 
 
 class DiscoveryForm(FacetedSearchForm):
@@ -31,9 +34,39 @@ class DiscoveryForm(FacetedSearchForm):
             # "word" indicates an exact match and the bare word indicates a stemmed match.
             cdata = self.cleaned_data.get('q')
             try:
+                # query in CommonsShare core first
                 parser = ParseSQ()
                 parsed = parser.parse(cdata)
                 sqs = sqs.filter(parsed)
+
+                # then query against ontology-core using pysolr
+                ontology_solr = pysolr.Solr(settings.ONTOLOGY_SOLR_URL)
+                oresults = ontology_solr.search(q='isa_partof_closure_label:*' + cdata + '*',
+                                                rows=settings.MAX_ROWS_IN_ONTOLOGY_CORE)
+                if len(oresults) > 0:
+                    cs_sqs = sqs
+                    ids = [result['id'] for result in oresults]
+                    # cannot query with over 1000 ids OR'ed together due to URL length constraint,
+                    # so need to break the OR query into multiples
+                    rows_in_single_query = 1000
+                    if len(ids) < rows_in_single_query:
+                        id_chunks = [ids]
+                    else:
+                        id_chunks = [ids[x:x+rows_in_single_query] for x in
+                                     range(0, len(ids), rows_in_single_query)]
+
+                    sub_sqs_list = []
+                    for id_chunk in id_chunks:
+                        id_chunk[0] = 'ontology_id:{}'.format(id_chunk[0])
+                        squery = ' OR ontology_id:'.join(id_chunk)
+                        parsed = parser.parse(squery)
+                        sqs = self.searchqueryset.all().filter(is_replaced_by=False)
+                        sub_sqs_list.append(sqs.filter(parsed))
+                    # merge all sub-queries
+                    if len(sub_sqs_list) > 0:
+                        sqs = cs_sqs | sub_sqs_list[0]
+                    for sub_sqs in sub_sqs_list[1:]:
+                        sqs = sqs | sub_sqs
             except NoMatchingBracketsFound as e:
                 sqs = self.searchqueryset.none()
                 self.parse_error = "{} No matches. Please try again.".format(e.value)
