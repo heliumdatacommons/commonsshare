@@ -40,10 +40,6 @@ class BaseResourceIndex(indexes.SearchIndex, indexes.Indexable):
     author_emails = indexes.MultiValueField()
     publisher = indexes.CharField(faceted=True)
     rating = indexes.IntegerField(model_attr='rating_sum')
-    coverages = indexes.MultiValueField()
-    coverage_types = indexes.MultiValueField()
-    coverage_start_date = indexes.DateField()
-    coverage_end_date = indexes.DateField()
     formats = indexes.MultiValueField()
     identifiers = indexes.MultiValueField()
     language = indexes.CharField(faceted=True)
@@ -239,56 +235,6 @@ class BaseResourceIndex(indexes.SearchIndex, indexes.Indexable):
             return obj.metadata.relations.all().filter(type='isReplacedBy').exists()
         else:
             return False
-
-    def prepare_coverages(self, obj):
-        """Return resource coverage if exists, otherwise return empty array."""
-        # TODO: reject empty coverages
-        if hasattr(obj, 'metadata'):
-            return [coverage._value for coverage in obj.metadata.coverages.all()]
-        else:
-            return []
-
-    def prepare_coverage_types(self, obj):
-        """Return resource coverage types if exists, otherwise return empty array."""
-        if hasattr(obj, 'metadata'):
-            return [coverage.type for coverage in obj.metadata.coverages.all()]
-        else:
-            return []
-
-    # TODO: time coverages do not specify timezone, and timezone support is active.
-    def prepare_coverage_start_date(self, obj):
-        """Return resource coverage start date if exists, otherwise return none."""
-        if hasattr(obj, 'metadata'):
-            for coverage in obj.metadata.coverages.all():
-                if coverage.type == 'period':
-                    clean_date = coverage.value["start"][:10]
-                    if "/" in clean_date:
-                        parsed_date = clean_date.split("/")
-                        start_date = parsed_date[2] + '-' + parsed_date[0] + '-' + parsed_date[1]
-                    else:
-                        parsed_date = clean_date.split("-")
-                        start_date = parsed_date[0] + '-' + parsed_date[1] + '-' + parsed_date[2]
-                    start_date_object = datetime.strptime(start_date, '%Y-%m-%d')
-                    return start_date_object
-        else:
-            return 'none'
-
-    def prepare_coverage_end_date(self, obj):
-        """Return resource coverage end date if exists, otherwise return none."""
-        if hasattr(obj, 'metadata'):
-            for coverage in obj.metadata.coverages.all():
-                if coverage.type == 'period' and 'end' in coverage.value:
-                    clean_date = coverage.value["end"][:10]
-                    if "/" in clean_date:
-                        parsed_date = clean_date.split("/")
-                        end_date = parsed_date[2] + '-' + parsed_date[0] + '-' + parsed_date[1]
-                    else:
-                        parsed_date = clean_date.split("-")
-                        end_date = parsed_date[0] + '-' + parsed_date[1] + '-' + parsed_date[2]
-                    end_date_object = datetime.strptime(end_date, '%Y-%m-%d')
-                    return end_date_object
-        else:
-            return 'none'
 
     def prepare_formats(self, obj):
         """Return metadata formats if metadata exists, otherwise return empty array."""

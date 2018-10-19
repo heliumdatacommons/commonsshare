@@ -13,7 +13,8 @@ RUN pip install \
   nameparser \
   minid \
   bdbag \
-  elasticsearch
+  elasticsearch \
+  haystack_queryparser
 
 RUN pip uninstall -y python-irodsclient
 RUN pip install git+https://github.com/theferrit32/python-irodsclient.git@openid

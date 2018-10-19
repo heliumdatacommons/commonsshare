@@ -1,6 +1,7 @@
 from haystack.forms import FacetedSearchForm
 from haystack.query import SQ
 from django import forms
+from haystack_queryparser import ParseSQ, NoMatchingBracketsFound, UnhandledException
 
 
 class DiscoveryForm(FacetedSearchForm):
@@ -14,9 +15,6 @@ class DiscoveryForm(FacetedSearchForm):
     SORT_DIRECTION_CHOICES = (('', 'Ascending'),
                               ('-', 'Descending'))
 
-    start_date = forms.DateField(label='From Date', required=False)
-    end_date = forms.DateField(label='To Date', required=False)
-    coverage_type = forms.CharField(widget=forms.HiddenInput(), required=False)
     sort_order = forms.CharField(label='Sort By:',
                                  widget=forms.Select(choices=SORT_ORDER_CHOICES),
                                  required=False)
@@ -25,30 +23,25 @@ class DiscoveryForm(FacetedSearchForm):
                                      required=False)
 
     def search(self):
-        if not self.cleaned_data.get('q'):
-            sqs = self.searchqueryset.all().filter(is_replaced_by=False)
-        else:
-            # This corrects for an failed match of complete words, as documented in issue #2308.
-            # The text__startswith=cdata matches stemmed words in documents with an unstemmed cdata.
-            # The text=cdata matches stemmed words after stemming cdata as well.
-            # The stem of "Industrial", according to the aggressive default stemmer, is "industri".
-            # Thus "Industrial" does not match "Industrial" in the document according to
-            # startswith, but does match according to text=cdata.
+        self.parse_error = None
+        sqs = self.searchqueryset.all().filter(is_replaced_by=False)
+        if self.cleaned_data.get('q'):
+            # The prior code corrected for an failed match of complete words, as documented
+            # in issue #2308. This version instead uses an advanced query syntax in which
+            # "word" indicates an exact match and the bare word indicates a stemmed match.
             cdata = self.cleaned_data.get('q')
-            sqs = self.searchqueryset.all()\
-                .filter(SQ(text__startswith=cdata) | SQ(text=cdata))\
-                .filter(is_replaced_by=False)
-
-        # Check to see if a start_date was chosen.
-        if self.cleaned_data['start_date']:
-            sqs = sqs.filter(coverage_start_date__gte=self.cleaned_data['start_date'])
-
-        # Check to see if an end_date was chosen.
-        if self.cleaned_data['end_date']:
-            sqs = sqs.filter(coverage_end_date__lte=self.cleaned_data['end_date'])
-
-        if self.cleaned_data['coverage_type']:
-            sqs = sqs.filter(coverage_types__in=[self.cleaned_data['coverage_type']])
+            try:
+                parser = ParseSQ()
+                parsed = parser.parse(cdata)
+                sqs = sqs.filter(parsed)
+            except NoMatchingBracketsFound as e:
+                sqs = self.searchqueryset.none()
+                self.parse_error = "{} No matches. Please try again.".format(e.value)
+                return sqs
+            except UnhandledException as e:
+                sqs = self.searchqueryset.none()
+                self.parse_error = "{} No matches. Please try again.".format(e.value)
+                return sqs
 
         authors_sq = None
         subjects_sq = None
