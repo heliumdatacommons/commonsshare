@@ -41,7 +41,9 @@ class DiscoveryForm(FacetedSearchForm):
 
                 # then query against ontology-core using pysolr
                 ontology_solr = pysolr.Solr(settings.ONTOLOGY_SOLR_URL)
-                oresults = ontology_solr.search(q='isa_partof_closure_label:*' + cdata + '*',
+
+                oresults = ontology_solr.search(q='isa_partof_closure_label:*' +
+                                                  cdata.replace(' ', '\ ') + '*',
                                                 rows=settings.MAX_ROWS_IN_ONTOLOGY_CORE)
                 if len(oresults) > 0:
                     cs_sqs = sqs
