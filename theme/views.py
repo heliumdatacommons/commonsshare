@@ -1,8 +1,8 @@
 from json import dumps, loads, load
 import requests
-import time
 import os
 import re
+import hashlib
 import logging
 
 from django.contrib.auth.decorators import login_required
@@ -742,7 +742,8 @@ def create_scidas_virtual_app(request, res_id, cluster):
 
     # append username to appliance id from JSON request file to make each user to have a
     # unique appliance to work with without stamping over each other
-    app_id = p_data['id'] + '-' + user.username.replace('@', '-at-', 1).replace('.', '-', 1)
+    hashed_user_id = hashlib.sha256(b'' + user.username).hexdigest()[0:10]
+    app_id = p_data['id'] + hashed_user_id
     p_data['id'] = app_id
 
     # validate app_id
