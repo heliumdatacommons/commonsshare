@@ -134,9 +134,6 @@ DEBUG = True
 # Whether a user's session cookie expires when the Web browser is closed.
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
-# allow session cookies created to be shared between hosts in the domain
-SESSION_COOKIE_DOMAIN = ".commonsshare.org" 
-
 SITE_ID = 1
 
 MY_SITE_PROTOCOL = 'http'
