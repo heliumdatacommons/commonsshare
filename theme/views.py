@@ -740,7 +740,9 @@ def create_scidas_virtual_app(request, res_id, cluster):
         else:
             return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
-    app_id = p_data['id']
+    # append username to appliance id from JSON request file to make each user to have a
+    # unique appliance to work with without stamping over each other
+    app_id = p_data['id'] + '-' + user.username
 
     # validate app_id
     id_validation_failure_msg = 'appliance or container id {} failed validation - id can only ' \
