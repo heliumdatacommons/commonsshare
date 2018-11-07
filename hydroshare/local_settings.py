@@ -82,6 +82,7 @@ USE_SOUTH = False
 SITE_TITLE = "CommonsShare"
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+WHITE_LIST_LOGIN = True
 
 
 #############

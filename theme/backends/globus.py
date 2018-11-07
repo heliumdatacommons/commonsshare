@@ -9,7 +9,7 @@ import hashlib
 from json import loads
 from rest_framework import status
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.core.exceptions import PermissionDenied
 from django.conf import settings
 
@@ -63,7 +63,25 @@ class GlobusOAuth2:
             response = requests.get(url, headers={'Authorization': auth_header_str}, verify=False)
             if response.status_code !=status.HTTP_200_OK:
                 raise PermissionDenied(response.content)
-            return user
+
+            if settings.WHITE_LIST_LOGIN:
+                # needs to make sure the user is in a whitelist group before logging them in
+                in_whitelist = False
+                excl_group = Group.objects.get(name='CommonsShare Author')
+                if excl_group:
+                    groups = Group.objects.all().exclude(pk=excl_group.pk)
+                else:
+                    groups = Group.objects.all()
+                for g in groups:
+                    if user in g.gaccess.members:
+                        in_whitelist = True
+                        break
+                if in_whitelist:
+                    return user
+                else:
+                    raise PermissionDenied("You are not in the white list to be authorized to log in CommonsShare")
+            else:
+                return user
         else:
             return None
 
