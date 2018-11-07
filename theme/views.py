@@ -482,7 +482,8 @@ def oauth_return(request):
         request.session['subject_id'] = uid
         return login_redirect(request)
     else:
-        return HttpResponseBadRequest('Bad request - invalid access_token or failed to create linked user')
+        info(request, _('You are not authorized to log in CommonsShare'))
+        return login_redirect(request)
 
 
 @login_required
