@@ -781,13 +781,13 @@ def create_scidas_virtual_app(request, res_id, cluster):
             if mem_size:
                 con['resources']['mem'] = int(mem_size)
         if con['id'] == 'master':
-            whitelist = []
-            for owner in res.raccess.owners.all():
-                uname = owner.username
-                if '@' in uname:
-                    uname = uname.replace('@', '%at%', 1)
-                whitelist.append(uname)
-            con['env']['OAUTH_WHITELIST'] = whitelist
+            # whitelist = []
+            # for owner in res.raccess.owners.all():
+            #     uname = owner.username
+            #     if '@' in uname:
+            #         uname = uname.replace('@', '%at%', 1)
+            #     whitelist.append(uname)
+            # con['env']['OAUTH_WHITELIST'] = whitelist
             if token:
                 con['env']['JUPYTER_TOKEN'] = token
 
