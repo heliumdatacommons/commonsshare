@@ -123,6 +123,9 @@ urlpatterns = patterns(
     url(r'^userInfo/$',
         core_views.user_rest_api.UserInfo.as_view(), name='get_logged_in_user_info'),
 
+    url(r'^user/groups/$',
+        core_views.group_rest_api.GroupInfo.as_view(), name='get_logged_in_user_group_info'),
+
     url(r'^dictionary/universities/$',
         dict_views.ListUniversities.as_view(), name="get_dictionary"),
 
