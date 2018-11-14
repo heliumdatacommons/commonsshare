@@ -83,10 +83,10 @@ class SeleniumTestsParentClass(object):
             self.driver = None
             self.user_password = 'Users_Cats_FirstName'
             if not User.objects.filter(email='user30@example.com'):
-                group, _ = Group.objects.get_or_create(name='Hydroshare Author')
+                group, _ = Group.objects.get_or_create(name='CommonsShare Author')
 
                 # Model level permissions are required for some actions bc of legacy Mezzanine
-                # Also relies on the magic "Hydroshare Author" group
+                # Also relies on the magic "CommonsShare Author" group
                 hs_perms = Permission.objects.all()
                 group.permissions.add(*list(hs_perms))
                 self.user = hydroshare.create_account(

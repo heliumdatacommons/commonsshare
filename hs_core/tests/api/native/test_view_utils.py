@@ -8,7 +8,7 @@ from hs_core.views.utils import create_folder, move_to_folder, list_folder, rena
 
 class TestViewUtils(MockIRODSTestCaseMixin, TestCase):
     def test_move_to_folder_basic(self):
-        group, _ = Group.objects.get_or_create(name='Hydroshare Author')
+        group, _ = Group.objects.get_or_create(name='CommonsShare Author')
 
         user = hydroshare.create_account(
             'user1@nowhere.com',
@@ -44,7 +44,7 @@ class TestViewUtils(MockIRODSTestCaseMixin, TestCase):
         resource.delete()
 
     def test_rename_file_or_folder(self):
-        group, _ = Group.objects.get_or_create(name='Hydroshare Author')
+        group, _ = Group.objects.get_or_create(name='CommonsShare Author')
 
         user = hydroshare.create_account(
             'user1@nowhere.com',

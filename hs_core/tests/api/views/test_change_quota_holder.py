@@ -12,7 +12,7 @@ from hs_access_control.models import PrivilegeCodes
 class TestChangeQuotaHolder(MockIRODSTestCaseMixin, ViewTestCase):
     def setUp(self):
         super(TestChangeQuotaHolder, self).setUp()
-        self.hs_group, _ = Group.objects.get_or_create(name='Hydroshare Author')
+        self.hs_group, _ = Group.objects.get_or_create(name='CommonsShare Author')
         # create two users
         self.user1 = hydroshare.create_account(
             'test_user1@email.com',

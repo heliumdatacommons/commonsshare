@@ -13,7 +13,7 @@ class TestSetDownloadAgreement(MockIRODSTestCaseMixin, TestCase):
     def setUp(self):
         super(TestSetDownloadAgreement, self).setUp()
 
-        self.hs_group, _ = Group.objects.get_or_create(name='Hydroshare Author')
+        self.hs_group, _ = Group.objects.get_or_create(name='CommonsShare Author')
         # create a user
         self.user_owner = hydroshare.create_account(
             'test_user_owner@email.com',

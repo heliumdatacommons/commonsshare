@@ -15,7 +15,7 @@ class TestGetUserData(TestCase):
 
     def setUp(self):
         super(TestGetUserData, self).setUp()
-        self.group, _ = Group.objects.get_or_create(name='Hydroshare Author')
+        self.group, _ = Group.objects.get_or_create(name='CommonsShare Author')
         self.username = 'john'
         self.password = 'jhmypassword'
         self.john = hydroshare.create_account(

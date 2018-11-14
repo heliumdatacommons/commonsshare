@@ -24,7 +24,7 @@ from hs_file_types.models import GeoRasterLogicalFile, NetCDFLogicalFile, \
 class TestFileTypeViewFunctions(MockIRODSTestCaseMixin, TestCase):
     def setUp(self):
         super(TestFileTypeViewFunctions, self).setUp()
-        self.group, _ = Group.objects.get_or_create(name='Hydroshare Author')
+        self.group, _ = Group.objects.get_or_create(name='CommonsShare Author')
         self.username = 'john'
         self.password = 'jhmypassword'
         self.user = hydroshare.create_account(
