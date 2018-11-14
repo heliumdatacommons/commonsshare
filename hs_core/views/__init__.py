@@ -44,7 +44,7 @@ from hs_core.hydroshare.resource import METADATA_STATUS_SUFFICIENT, METADATA_STA
 
 from . import resource_rest_api
 from . import resource_metadata_rest_api
-from . import user_rest_api
+from . import user_rest_api, group_rest_api
 from . import resource_folder_hierarchy
 
 from . import resource_access_api

@@ -20,7 +20,7 @@ class HSRESTTestCase(APITestCase):
         self.maxDiff = None
         self.client = APIClient()
 
-        self.group, _ = Group.objects.get_or_create(name='Hydroshare Author')
+        self.group, _ = Group.objects.get_or_create(name='CommonsShare Author')
         # create a user
         self.user = users.create_account(
             'test_user@email.com',

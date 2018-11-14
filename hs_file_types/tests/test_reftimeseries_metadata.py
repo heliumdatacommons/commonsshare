@@ -18,7 +18,7 @@ from hs_file_types.models import RefTimeseriesLogicalFile, GenericLogicalFile
 class RefTimeseriesFileTypeMetaDataTest(MockIRODSTestCaseMixin, TransactionTestCase):
     def setUp(self):
         super(RefTimeseriesFileTypeMetaDataTest, self).setUp()
-        self.group, _ = Group.objects.get_or_create(name='Hydroshare Author')
+        self.group, _ = Group.objects.get_or_create(name='CommonsShare Author')
         self.user = hydroshare.create_account(
             'user1@nowhere.com',
             username='user1',
