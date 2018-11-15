@@ -468,12 +468,12 @@ $(document).ready(function () {
     });
 
     $('#btn-launch-pivot').on('click', function(e) {
-        var num_insts = $('#txtInstance').val();
-        var num_cpus = $('#txtCPU').val();
-        var num_mems = $('#txtMEM').val();
-        var def_num_insts = $('#default_num_insts').val();
-        var def_num_cpus = $('#default_num_cpus').val();
-        var def_num_mems = $('#default_num_mems').val();
+        var num_insts = parseInt($('#txtInstance').val());
+        var num_cpus = parseInt($('#txtCPU').val());
+        var num_mems = parseInt($('#txtMEM').val());
+        var def_num_insts = parseInt($('#default_num_insts').val());
+        var def_num_cpus = parseInt($('#default_num_cpus').val());
+        var def_num_mems = parseInt($('#default_num_mems').val());
 
         var error_field_msg = '';
 
