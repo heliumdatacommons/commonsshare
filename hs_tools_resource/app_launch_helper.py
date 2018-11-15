@@ -27,6 +27,11 @@ def resource_level_tool_urls(resource_obj, request_obj):
                 hs_term_dict_user["HS_USR_NAME"] = request_obj.user.username if \
                     request_obj.user.is_authenticated() \
                     else "anonymous"
+
+                token = request_obj.session['access_token'] \
+                    if request_obj and 'access_token' in request_obj.session else ''
+                hs_term_dict_user["HS_USR_TOKEN"] = token
+
                 tool_url_new = parse_app_url_template(
                         tool_url, [resource_obj.get_hs_term_dict(), hs_term_dict_user])
                 is_open_with_app = _check_open_with_app(tool_res_obj, request_obj)

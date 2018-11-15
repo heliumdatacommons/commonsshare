@@ -33,6 +33,12 @@
 
 #apps-dropdown {
     position: absolute;
+    right: 124px;
+    bottom: 0px;
+}
+
+#pivot-dropdown {
+    position: absolute;
     right: 14px;
     bottom: 20px;
 }

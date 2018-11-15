@@ -480,6 +480,7 @@ def oauth_return(request):
         auth_login(request, tgt_user)
         info(request, _(login_msg))
         request.session['subject_id'] = uid
+        request.session['access_token'] = token
         return login_redirect(request)
     else:
         info(request, _('You are not authorized to log in CommonsShare'))
