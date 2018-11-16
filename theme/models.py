@@ -1,13 +1,19 @@
 import datetime
+import requests
+from json import dumps
+
 from django.utils import timezone
 
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_delete
 from django.template import RequestContext, Template, TemplateSyntaxError
 from django.utils.translation import ugettext_lazy as _
 from django.utils.html import strip_tags
 from django.core.exceptions import ValidationError
+from django.conf import settings
+
+from rest_framework import status
 
 from mezzanine.core.fields import FileField, RichTextField
 from mezzanine.core.models import Orderable, SiteRelated
@@ -286,6 +292,22 @@ class UserProfile(models.Model):
     country = models.CharField(max_length=1024, null=True, blank=True)
 
 
+def delete_corresponding_irods_user(sender, instance, **kwargs):
+    if instance:
+        username = instance.username
+        # create corresponding iRODS account with same username via OAuth if not exist already
+        url = '{}registration/delete_user'.format(settings.DATA_REG_SERVICE_SERVER_URL)
+        auth_header_str = 'Basic {}'.format(settings.DATA_REG_API_KEY)
+        p_data = {"username": username}
+        response = requests.post(url,
+                                 headers={'Authorization': auth_header_str},
+                                 data=dumps(p_data))
+
+        if response.status_code != status.HTTP_200_OK:
+            # iRODS user account cannot be deleted
+            raise Exception("Corresponding iRODS user fails to be deleted: " + response.content)
+
+
 def force_unique_emails(sender, instance, **kwargs):
     if instance:
         email = instance.email
@@ -300,3 +322,4 @@ def force_unique_emails(sender, instance, **kwargs):
             raise ValidationError("Email already in use.")
 
 pre_save.connect(force_unique_emails, sender=User)
+post_delete.connect(delete_corresponding_irods_user, sender=User)
