@@ -80,6 +80,10 @@ def get_page_context(page, user, resource_edit=False, extended_metadata_layout=N
         if landing_page_res_type_str.lower() == "toolresource":
             if landing_page_res_obj.metadata.app_home_page_url:
                 tool_homepage_url = content_model.metadata.app_home_page_url.value
+                token = request.session['access_token'] \
+                    if request and 'access_token' in request.session else ''
+                if token:
+                    tool_homepage_url = '{}?access_token={}'.format(tool_homepage_url, token)
         else:
             relevant_tools = resource_level_tool_urls(landing_page_res_obj, request)
 
