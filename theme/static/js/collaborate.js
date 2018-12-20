@@ -99,6 +99,18 @@ $(document).ready(function () {
         }
     });
 
+    // auto approve and require dua signoff cannot be both checked - when one is checked, the
+    // other has to be unchecked
+    $('#auto-approve').click(function() {
+       if($(this).attr('checked') && $('#require-dua-signoff').attr('checked')) {
+           $('#require-dua-signoff').prop('checked', false);
+       }
+    });
+    $('#require-dua-signoff').click(function() {
+       if($(this).attr('checked') && $('#auto-approve').attr('checked')) {
+           $('#auto-approve').prop('checked', false);
+       }
+    });
     // File name preview for picture field, file select method
     $('.btn-file :file').on('fileselect', function (event, numFiles, label) {
         var input = $(this).parents('.input-group').find(':text');

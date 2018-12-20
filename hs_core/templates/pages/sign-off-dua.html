@@ -1,0 +1,27 @@
+{% extends "pages/page.html" %}
+
+{% load hydroshare_tags %}
+
+{% block main %}
+<div class="container">
+    <div class="row">
+        <div class="col-xs-12">
+            <h2 class="page-title">Accept Data Use Agreement</h2>
+        </div>
+    </div>
+</div>
+<div class="modal-body">
+    <span>You are required to accept the terms of this data use agreement before joining this group</span>
+    <span class="rights-url"><a href="{{ dua_url }}">&nbsp{{ dua_url }}</a></span>
+    <p style="margin-top: 5px">
+    In accepting this Data Use Agreement you are ethically bound to respect the terms of this agreement.
+    Please confirm that you accept the terms of this agreement before you are allowed to join this group.
+    </p>
+    <input type="checkbox" id="agree-chk-dua"><label for="agree-chk-dua" class="checkbox-label">I accept the terms of this agreement.</label>
+</div>
+
+<div class="modal-footer">
+    <a type="button" class="btn btn-success" id="join-group-btn"
+       href="{{ return_url }}" disabled>Join this group</a>
+</div>
+{% endblock %}

@@ -1006,6 +1006,7 @@ class GroupForm(forms.Form):
     picture = forms.ImageField(required=False)
     privacy_level = forms.CharField(required=True)
     auto_approve = forms.BooleanField(required=False)
+    require_dua_signoff = forms.BooleanField(required=False)
 
     def clean_privacy_level(self):
         data = self.cleaned_data['privacy_level']
@@ -1034,7 +1035,8 @@ class GroupCreateForm(GroupForm):
         new_group = request.user.uaccess.create_group(title=frm_data['name'],
                                                       description=frm_data['description'],
                                                       purpose=frm_data['purpose'],
-                                                      auto_approve=frm_data['auto_approve'])
+                                                      auto_approve=frm_data['auto_approve'],
+                                                      require_dua_signoff=frm_data['require_dua_signoff'])
         if 'picture' in request.FILES:
             new_group.gaccess.picture = request.FILES['picture']
 
@@ -1052,6 +1054,8 @@ class GroupUpdateForm(GroupForm):
         group_to_update.gaccess.description = frm_data['description']
         group_to_update.gaccess.purpose = frm_data['purpose']
         group_to_update.gaccess.auto_approve = frm_data['auto_approve']
+        group_to_update.gaccess.require_dua_signoff = frm_data['require_dua_signoff']
+
         if 'picture' in request.FILES:
             group_to_update.gaccess.picture = request.FILES['picture']
 
@@ -1378,6 +1382,16 @@ def group_membership(request, uidb36, token, membership_request_id, **kwargs):
     membership_request = GroupMembershipRequest.objects.filter(id=membership_request_id).first()
     if membership_request is not None:
         if membership_request.group_to_join.gaccess.active:
+            if membership_request.group_to_join.gaccess.require_dua_signoff:
+                context = {
+                    'return_url': '/hsapi/_internal/group_membership/{token}/{uid}/{req_id}/',
+                    'dua_url': 'https://github.com/heliumplusdatastage/Data-Use-Agreements'
+                               '/blob/master/Helium_Carbon_COPDGene_Internal_Data_Access_'
+                               'Agreement.pdf'
+                }
+                return render_to_response('pages/sign-off-dua.html', context,
+                                          context_instance=RequestContext(request))
+
             user = authenticate(uidb36=uidb36, token=token, is_active=True)
             if user is not None:
                 user.uaccess.act_on_group_membership_request(membership_request, accept_request=True)

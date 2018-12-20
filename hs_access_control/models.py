@@ -1411,7 +1411,8 @@ class UserAccess(models.Model):
                                                      Q(invitation_to=self.user))\
                                      .filter(group_to_join__gaccess__active=True)
 
-    def create_group(self, title, description, auto_approve=False, purpose=None):
+    def create_group(self, title, description, auto_approve=False, require_dua_signoff=False,
+                     purpose=None):
         """
         Create a group.
 
@@ -1437,7 +1438,9 @@ class UserAccess(models.Model):
 
         raw_group = Group.objects.create(name=title)
         GroupAccess.objects.create(group=raw_group, description=description,
-                                   auto_approve=auto_approve, purpose=purpose)
+                                   auto_approve=auto_approve,
+                                   require_dua_signoff=require_dua_signoff,
+                                   purpose=purpose)
         raw_user = self.user
 
         # Must bootstrap access control system initially
@@ -3523,6 +3526,10 @@ class GroupAccess(models.Model):
     shareable = models.BooleanField(default=False,
                                     editable=False,
                                     help_text='whether group can be shared by non-owners')
+
+    require_dua_signoff = models.BooleanField(default=False,
+                                              help_text='whether to require sign-off of data usage '
+                                                        'agreement before a member joins the group')
 
     auto_approve = models.BooleanField(default=False,
                                        editable=False,
