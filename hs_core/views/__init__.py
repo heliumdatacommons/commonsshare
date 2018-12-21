@@ -1006,6 +1006,9 @@ class GroupForm(forms.Form):
     picture = forms.ImageField(required=False)
     privacy_level = forms.CharField(required=True)
     auto_approve = forms.BooleanField(required=False)
+    # dua_url has to be defined before require_dua_signoff since order matters due to
+    # clean_require_dua_signoff validation
+    dua_url = forms.URLField(required=False, validators=[utils.validate_url])
     require_dua_signoff = forms.BooleanField(required=False)
 
     def clean_privacy_level(self):
@@ -1027,6 +1030,13 @@ class GroupForm(forms.Form):
 
         group.gaccess.save()
 
+    def clean_require_dua_signoff(self):
+        require_dua_data = self.cleaned_data['require_dua_signoff']
+        dua_url_data = self.cleaned_data['dua_url']
+        if require_dua_data and not dua_url_data:
+            raise forms.ValidationError("Data Use Agreement URL cannot be empty")
+        return require_dua_data
+
 
 class GroupCreateForm(GroupForm):
     def save(self, request):
@@ -1036,7 +1046,8 @@ class GroupCreateForm(GroupForm):
                                                       description=frm_data['description'],
                                                       purpose=frm_data['purpose'],
                                                       auto_approve=frm_data['auto_approve'],
-                                                      require_dua_signoff=frm_data['require_dua_signoff'])
+                                                      require_dua_signoff=frm_data['require_dua_signoff'],
+                                                      dua_url=frm_data['dua_url'])
         if 'picture' in request.FILES:
             new_group.gaccess.picture = request.FILES['picture']
 
@@ -1055,6 +1066,7 @@ class GroupUpdateForm(GroupForm):
         group_to_update.gaccess.purpose = frm_data['purpose']
         group_to_update.gaccess.auto_approve = frm_data['auto_approve']
         group_to_update.gaccess.require_dua_signoff = frm_data['require_dua_signoff']
+        group_to_update.gaccess.dua_url = frm_data['dua_url']
 
         if 'picture' in request.FILES:
             group_to_update.gaccess.picture = request.FILES['picture']
@@ -1065,6 +1077,7 @@ class GroupUpdateForm(GroupForm):
 @processor_for('my-resources')
 @login_required
 def my_resources(request, page):
+    
     resource_collection = get_my_resources_list(request)
     context = {'collection': resource_collection}
 
@@ -1368,6 +1381,40 @@ def make_group_membership_request(request, group_id, user_id=None, *args, **kwar
 
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
+def group_dua_signoff(request, uidb36, token, membership_request_id, **kwargs):
+    """
+    View to handle DUA signoff when user joins a group from verification email that requires DUA signoff.
+
+    :param uidb36: ID of the user to whom the email was sent (part of the link in the email)
+    :param token: token that was part of the link in the email
+    :param membership_request_id: ID of the GroupMembershipRequest object (part of the link in the email)
+    """
+    user = authenticate(uidb36=uidb36, token=token, is_active=True)
+    if user is not None:
+        membership_request = GroupMembershipRequest.objects.filter(id=membership_request_id).first()
+        if membership_request is not None:
+            request_gaccess = membership_request.group_to_join.gaccess
+            if request_gaccess.active:
+                if request_gaccess.require_dua_signoff and not membership_request.dua_signed:
+                    membership_request.dua_signed = True
+                    membership_request.save()
+                    return_url = '/hsapi/_internal/group_membership/{token}/{uid}/{req_id}/'.format(
+                        token=token, uid=uidb36, req_id=membership_request_id)
+                    return HttpResponseRedirect(return_url)
+                else:
+                    messages.error(request, "No requirement for signing Date Use Agreement.")
+                    return redirect("/")
+            else:
+                messages.error(request, "The group is no longer active.")
+                return redirect("/")
+        else:
+            messages.error(request, "The link you clicked is no longer valid.")
+            return redirect("/")
+
+    else:
+        messages.error(request, "The link you clicked is no longer valid.")
+        return redirect("/")
+
 def group_membership(request, uidb36, token, membership_request_id, **kwargs):
     """
     View for the link in the verification email that was sent to a user
@@ -1379,21 +1426,22 @@ def group_membership(request, uidb36, token, membership_request_id, **kwargs):
     :param token: token that was part of the link in the email
     :param membership_request_id: ID of the GroupMembershipRequest object (part of the link in the email)
     """
-    membership_request = GroupMembershipRequest.objects.filter(id=membership_request_id).first()
-    if membership_request is not None:
-        if membership_request.group_to_join.gaccess.active:
-            if membership_request.group_to_join.gaccess.require_dua_signoff:
-                context = {
-                    'return_url': '/hsapi/_internal/group_membership/{token}/{uid}/{req_id}/',
-                    'dua_url': 'https://github.com/heliumplusdatastage/Data-Use-Agreements'
-                               '/blob/master/Helium_Carbon_COPDGene_Internal_Data_Access_'
-                               'Agreement.pdf'
-                }
-                return render_to_response('pages/sign-off-dua.html', context,
-                                          context_instance=RequestContext(request))
+    user = authenticate(uidb36=uidb36, token=token, is_active=True)
+    if user is not None:
+        membership_request = GroupMembershipRequest.objects.filter(id=membership_request_id).first()
+        if membership_request is not None:
+            request_gaccess = membership_request.group_to_join.gaccess
+            if request_gaccess.active:
+                if request_gaccess.require_dua_signoff and not membership_request.dua_signed:
+                    return_url = '/hsapi/_internal/group_dua_signoff/{token}/{uid}/{req_id}/'.format(
+                        token=token, uid=uidb36, req_id=membership_request_id)
+                    context = {
+                        'return_url': return_url,
+                        'dua_url': membership_request.group_to_join.gaccess.dua_url
+                    }
+                    return render_to_response('pages/sign-off-dua.html', context,
+                                              context_instance=RequestContext(request))
 
-            user = authenticate(uidb36=uidb36, token=token, is_active=True)
-            if user is not None:
                 user.uaccess.act_on_group_membership_request(membership_request, accept_request=True)
                 auth_login(request, user)
                 # send email to notify membership acceptance
@@ -1408,10 +1456,10 @@ def group_membership(request, uidb36, token, membership_request_id, **kwargs):
                 # redirect to group profile page
                 return HttpResponseRedirect('/group/{}/'.format(membership_request.group_to_join.id))
             else:
-                messages.error(request, "The link you clicked is no longer valid.")
+                messages.error(request, "The group is no longer active.")
                 return redirect("/")
         else:
-            messages.error(request, "The group is no longer active.")
+            messages.error(request, "The link you clicked is no longer valid.")
             return redirect("/")
     else:
         messages.error(request, "The link you clicked is no longer valid.")

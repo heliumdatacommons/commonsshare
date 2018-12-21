@@ -25,3 +25,18 @@
        href="{{ return_url }}" disabled>Join this group</a>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+    {{ block.super }}
+    <script>
+    $(document).ready(function () {
+       $("#agree-chk-dua").on('click', function(e) {
+            e.stopImmediatePropagation();
+            if (e.currentTarget.checked)
+                $('#join-group-btn').removeAttr('disabled');
+            else
+                $('#join-group-btn').attr('disabled', 'disabled');
+        });
+    });
+    </script>
+{% endblock %}
