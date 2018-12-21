@@ -1411,7 +1411,8 @@ class UserAccess(models.Model):
                                                      Q(invitation_to=self.user))\
                                      .filter(group_to_join__gaccess__active=True)
 
-    def create_group(self, title, description, auto_approve=False, purpose=None):
+    def create_group(self, title, description, auto_approve=False, require_dua_signoff=False,
+                     purpose=None, dua_url=None):
         """
         Create a group.
 
@@ -1437,7 +1438,10 @@ class UserAccess(models.Model):
 
         raw_group = Group.objects.create(name=title)
         GroupAccess.objects.create(group=raw_group, description=description,
-                                   auto_approve=auto_approve, purpose=purpose)
+                                   auto_approve=auto_approve,
+                                   require_dua_signoff=require_dua_signoff,
+                                   dua_url=dua_url,
+                                   purpose=purpose)
         raw_user = self.user
 
         # Must bootstrap access control system initially
@@ -3487,6 +3491,7 @@ class GroupMembershipRequest(models.Model):
     invitation_to = models.ForeignKey(User, null=True, blank=True, related_name='iu2gmrequest')
     group_to_join = models.ForeignKey(Group, related_name='g2gmrequest')
     date_requested = models.DateTimeField(editable=False, auto_now_add=True)
+    dua_signed = models.BooleanField(default=False)
 
 
 class GroupAccess(models.Model):
@@ -3523,6 +3528,11 @@ class GroupAccess(models.Model):
     shareable = models.BooleanField(default=False,
                                     editable=False,
                                     help_text='whether group can be shared by non-owners')
+
+    require_dua_signoff = models.BooleanField(default=False,
+                                              help_text='whether to require sign-off of data usage '
+                                                        'agreement before a member joins the group')
+    dua_url = models.URLField(null=True, blank=True, verbose_name='Data Use Agreement URL')
 
     auto_approve = models.BooleanField(default=False,
                                        editable=False,

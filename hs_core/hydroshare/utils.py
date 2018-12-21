@@ -20,7 +20,7 @@ from django.contrib.auth.models import User, Group
 from django.core.files import File
 from django.core.files.uploadedfile import UploadedFile
 from django.core.files.storage import DefaultStorage
-from django.core.validators import validate_email
+from django.core.validators import validate_email, URLValidator
 
 from mezzanine.conf import settings
 
@@ -1106,6 +1106,21 @@ def is_pivot_config_file(filename):
         return True
     else:
         return False
+
+
+def validate_url(url):
+     """
+     Validate URL
+     :param url: input url to be validated
+     :return: [True, ''] if url is valid,[False, 'error message'] if url is not valid
+     """
+     # validate url's syntax is valid
+     error_message = "The URL that you entered is not valid. Please enter a valid http(s) URL."
+     try:
+         validator = URLValidator(schemes=('http', 'https'))
+         validator(url)
+     except ValidationError:
+         return False, error_message
 
 
 def get_pivot_applicance_info(file_obj):

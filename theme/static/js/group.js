@@ -293,6 +293,19 @@ $(document).ready(function () {
         }
     });
 
+    // auto approve and require dua signoff cannot be both checked - when one is checked, the
+    // other has to be unchecked
+    $('#auto-approve').click(function() {
+       if($(this).attr('checked') && $('#require-dua-signoff').attr('checked')) {
+           $('#require-dua-signoff').prop('checked', false);
+       }
+    });
+    $('#require-dua-signoff').click(function() {
+       if($(this).attr('checked') && $('#auto-approve').attr('checked')) {
+           $('#auto-approve').prop('checked', false);
+       }
+    });
+
     $("#list-roles a").click(onRoleSelect);
 
     $("#id_user-autocomplete").attr("placeholder", "Search by name or username");
