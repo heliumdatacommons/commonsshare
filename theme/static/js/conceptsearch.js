@@ -8,11 +8,15 @@ function hd_search() {
           $('#hd_no_result').hide();
           response.results.forEach(function (result) {
               var defi_res = '';
+              var curie_res = '';
+              var curie_url_prefix = 'https://putmantime.github.io/HeliumPhenotypeSearch/';
               if (result.definitions)
                   defi_res = result.definitions;
+              if (result.curie)
+                  curie_res = '<a href="' + curie_url_prefix + result.curie + '">' + result.curie + '</a>';
               $("#hd_result").append(
                   "<tr><td>" + result.iri + "</td><td>" + result.labels + "</td><td>" +
-                  result.curie + "</td><td>" + result.categories + "</td><td>" +
+                  curie_res + "</td><td>" + result.categories + "</td><td>" +
                   result.synonyms + "</td><td>" + defi_res + "</td></tr>");
           });
       }
