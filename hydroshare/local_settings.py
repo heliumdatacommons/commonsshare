@@ -199,3 +199,7 @@ FTS_URL = ""
 
 # full text index URL
 FTS_INDEX_URL = ""
+
+# trusted servers that need user's access token for user authentication
+TRUSTED_SERVERS = (
+)
