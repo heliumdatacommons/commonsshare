@@ -1,6 +1,7 @@
 """
 Globus Auth backend that authenticates user created using info returned from oauth service, docs at:
-    https://docs.globus.org/api/auth and https://github.com/heliumdatacommons/auth_microservice/wiki/API-and-Use
+    https://docs.globus.org/api/auth and
+    https://github.com/heliumdatacommons/auth_microservice/wiki/API-and-Use
 """
 
 import requests
@@ -17,7 +18,8 @@ from hs_core.hydroshare.users import create_account
 
 
 class GlobusOAuth2:
-    def authenticate(self, request, username=None, access_token=None, first_name=None, last_name=None, uid=None):
+    def authenticate(self, request, username=None, access_token=None, first_name=None,
+                     last_name=None, email='', uid=None):
 
         if not access_token or not username:
             return None
@@ -37,22 +39,32 @@ class GlobusOAuth2:
             else:
                 preferred_username = return_data['username']
 
+        # set email field to username if not returned from auth service
+        if not email:
+            email = username
+
         if username == preferred_username:
             auth_header_str = 'Basic {}'.format(settings.DATA_REG_API_KEY)
             try:
                 user = User.objects.get(username=username)
+                # update user email field if needed
+                if user.email != email:
+                    user.email = email
+                    user.save()
+
             except User.DoesNotExist:
-                user = create_account(email=username, username=username, first_name=first_name, last_name=last_name,
-                                      superuser=False, active=True)
-                # create corresponding iRODS account with same username via OAuth if not exist already
+                user = create_account(email=email, username=username, first_name=first_name,
+                                      last_name=last_name, superuser=False, active=True)
+                # create corresponding iRODS account with same username via OAuth if not exist
+                # already
                 url = '{}registration/create_account?username={}&zone={}&auth_name={}'.format(
                     settings.DATA_REG_SERVICE_SERVER_URL, username, settings.IRODS_ZONE, uid)
                 response = requests.get(url,
                                         headers={'Authorization': auth_header_str},
                                         verify=False)
                 if response.status_code != status.HTTP_200_OK:
-                    # iRODS user account does not exist and fails to be created, needs to delete the created
-                    # linked account for next level of default user authentication
+                    # iRODS user account does not exist and fails to be created, needs to delete
+                    # the created linked account for next level of default user authentication
                     user.delete()
                     return None
 
@@ -79,7 +91,8 @@ class GlobusOAuth2:
                 if in_whitelist:
                     return user
                 else:
-                    raise PermissionDenied("You are not in the white list to be authorized to log in CommonsShare")
+                    raise PermissionDenied("You are not in the white list to be authorized to log "
+                                           "in CommonsShare")
             else:
                 return user
         else:
