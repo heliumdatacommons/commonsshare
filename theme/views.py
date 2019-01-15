@@ -450,7 +450,7 @@ def oauth_return(request):
     token = request.GET.get('access_token', None)
     uid = request.GET.get('uid', None)
     uname = request.GET.get('user_name', None)
-
+    uemail = request.GET.get('email', '')
     if not token or not uid or not uname:
         return HttpResponseBadRequest('Bad request - no valid access_token or uid or user_name is provided')
 
@@ -469,6 +469,7 @@ def oauth_return(request):
     kwargs['access_token'] = token
     kwargs['first_name'] = fname
     kwargs['last_name'] = lname
+    kwargs['email'] = uemail
     kwargs['uid'] = uid
 
     # authticate against globus oauth with username and access_token and create linked user in CommonsShare if
