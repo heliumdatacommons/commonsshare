@@ -1400,9 +1400,10 @@ def group_dua_signoff(request, uidb36, token, membership_request_id, **kwargs):
                     membership_request.save()
                     return_url = '/hsapi/_internal/group_membership/{token}/{uid}/{req_id}/'.format(
                         token=token, uid=uidb36, req_id=membership_request_id)
+
                     return HttpResponseRedirect(return_url)
                 else:
-                    messages.error(request, "No requirement for signing Date Use Agreement.")
+                    messages.error(request, "No requirement for signing DUA or already signed DUA.")
                     return redirect("/")
             else:
                 messages.error(request, "The group is no longer active.")
@@ -1572,6 +1573,11 @@ def _send_email_on_group_membership_acceptance(membership_request):
     :return:
     """
 
+    if settings.WHITE_LIST_EMAIL:
+        recipient_list = [settings.WHITE_LIST_EMAIL, membership_request.request_from.email]
+    else:
+        recipient_list = [membership_request.request_from.email]
+
     if membership_request.invitation_to is not None:
         # user accepted invitation from the group owner
         # here we are sending email to group owner who invited
@@ -1594,7 +1600,7 @@ def _send_email_on_group_membership_acceptance(membership_request):
               message=email_msg,
               html_message=email_msg,
               from_email=settings.DEFAULT_FROM_EMAIL,
-              recipient_list=[membership_request.request_from.email])
+              recipient_list=recipient_list)
 
 
 def _set_resource_sharing_status(request, user, resource, flag_to_set, flag_value):
