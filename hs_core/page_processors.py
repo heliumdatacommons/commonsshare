@@ -89,8 +89,8 @@ def get_page_context(page, user, resource_edit=False, extended_metadata_layout=N
                             token = request.session['access_token'] \
                                 if request and 'access_token' in request.session else ''
                             if token:
-                                tool_homepage_url = '{}?access_token={}'.format(tool_homepage_url,
-                                                                                token)
+                                tool_homepage_url = '{}?username={}&access_token={}'.format(
+                                    tool_homepage_url, request.user.username, token)
                             break
         else:
             relevant_tools = resource_level_tool_urls(landing_page_res_obj, request)
