@@ -484,7 +484,29 @@ def oauth_return(request):
         request.session['access_token'] = token
         return login_redirect(request)
     else:
-        info(request, _('You are not authorized to log in CommonsShare'))
+        # info(request, _('You are not authorized to log in CommonsShare'))
+        info(request, _('Dear user, you are trying to login but have yet to be added to the Data '
+                        'Use Agreement whitelist. If you are an authorized user, you will receive '
+                        'an email with a link inviting you to be added to the whitelist indicating '
+                        'your acceptance of the Data Use Agreement.'))
+        # send notification email to the list for user login monitoring
+        if settings.WHITE_LIST_LOGIN and settings.WHITE_LIST_EMAIL:
+            message = """Dear Administrator, 
+                                <p>CommonsShare received a login attempt from a non-whitelisted 
+                                user {} {} with username {} and email address {} </p>
+                                <p>Please determine whether this user can be authorized to access 
+                                CommonsShare and follow the onboarding process to invite the user 
+                                to join a proper whitelist group in CommonsShare if needed. 
+                                <p>Thank you</p>
+                                <p>The CommonsShare Team</p>
+                                """.format(fname, lname, uname, uemail)
+            send_mail(subject="Notification of non-whitelisted user login attempt",
+                      message=message,
+                      html_message=message,
+                      from_email=settings.DEFAULT_FROM_EMAIL,
+                      recipient_list=[settings.WHITE_LIST_EMAIL],
+                      fail_silently=True)
+
         return login_redirect(request)
 
 
