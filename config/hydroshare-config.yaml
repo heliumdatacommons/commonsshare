@@ -1,24 +1,24 @@
 ### Local Configuration Variables ###
-HS_PATH: /Users/ismagilani/commonsshare
-HOST_SSL_DIR: /Users/ismagilani/hs-certs
-HS_DATABASE: pg.development.sql
-HS_LOG_FILES: /Users/ismagilani/commonsshare/log
-HS_SERVICE_UID: 1000
-HS_SERVICE_GID: 1000
+HS_PATH: /home/hydro/commonsshare
+HOST_SSL_DIR: /opt/cs-certs
+HS_DATABASE: pg.deploy.sql
+HS_LOG_FILES: /var/commonsshare/log
+HS_SERVICE_UID: 20042
+HS_SERVICE_GID: 10000
 
 ### Deployment Options ###
-USE_NGINX: false
-USE_SSL: false
+USE_NGINX: true
+USE_SSL: true
 USE_SECURITY: false
 USE_HTTP_AUTH: false
 
 ### nginx Configuration Variables ###
-FQDN_OR_IP: 152.54.6.164
-NGINX_DIR: /Users/ismagilani/commonsshare/nginx
+FQDN_OR_IP: helium.commonsshare.org
+NGINX_DIR: /home/hydro/commonsshare/nginx
 
 ### SSL Configuration Variables ###
-SSL_CERT_DIR: /Users/ismagilani/commonsshare/nginx/cert-files
-SSL_CERT_FILE: hydrodev-vb.example.org.cert
-SSL_KEY_FILE: hydrodev-vb.example.org.key
+SSL_CERT_DIR: /home/hydro/commonsshare/nginx/cert-files
+SSL_CERT_FILE: server.pem
+SSL_KEY_FILE: server.key
 
 ### REQUIRES BLANK LINE AFTER LAST VARIABLE DEFINITION ###
