@@ -59,6 +59,7 @@ function formatBytes(bytes) {
 function updateSelectionMenuContext() {
     var selected = $("#fb-files-container li.ui-selected");
     var resourceType = $("#resource-type").val();
+    var sensitive =  $("#hs-file-browser").attr("sensitive");
 
     var flagDisableOpen = false;
     var flagDisableDownload = false;
@@ -146,6 +147,14 @@ function updateSelectionMenuContext() {
 
     if (!sourcePaths.length) {
         flagDisablePaste = true;
+    }
+
+    if (sensitive == "true") {
+        flagDisableCut = true;
+        flagDisablePaste = true;
+        flagDisableDownload = true;
+        flagDisableUnzip = true;
+        flagDisableGetLink = true;
     }
 
     for (var i = 0; i < selected.length; i++) {

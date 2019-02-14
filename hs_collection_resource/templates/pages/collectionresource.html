@@ -121,6 +121,7 @@
                 </div>
             {% endif %}
             <hr>
+            {% if not cm.contains_sensitive_payload %}
             {% block download_bag %}
                 <div>
                     {% for b in cm.bags.all %}
@@ -141,6 +142,7 @@
 
                 </div>
             {% endblock %}
+            {% endif %}
         </div>
     </div>
 

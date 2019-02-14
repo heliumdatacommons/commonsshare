@@ -992,6 +992,7 @@ function get_irods_folder_struct_ajax_submit(res_id, store_path) {
             var files = result.files;
             var folders = result.folders;
             var can_be_public = result.can_be_public;
+            var sensitive = result.sensitive;
             $('#fb-files-container').empty();
             if (files.length > 0) {
                 $.each(files, function(i, v) {
@@ -1016,6 +1017,7 @@ function get_irods_folder_struct_ajax_submit(res_id, store_path) {
             $("#hs-file-browser").attr("data-current-path", store_path);
             $("#upload-folder-path").text(store_path);
             $("#hs-file-browser").attr("data-res-id", res_id);
+            $("#hs-file-browser").attr("sensitive", sensitive);
 
             // strip the 'data' folder from the path
             setBreadCrumbs(store_path.replace("data/", ""));

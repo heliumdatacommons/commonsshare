@@ -423,6 +423,8 @@ $(document).ready(function () {
         update_download_status(task_id, download_path);
     }
 
+    var sharing_status = $('#sharing-status').val();
+
     $('.contact-table .sortable').sortable({
         axis: "y",
         stop: function( event, ui ) {

@@ -117,7 +117,8 @@ def data_store_structure(request):
 
     return_object = {'files': files,
                      'folders': store[0],
-                     'can_be_public': resource.can_be_public_or_discoverable}
+                     'can_be_public': resource.can_be_public_or_discoverable,
+                     'sensitive': resource.contains_sensitive_payload}
 
     if resource.resource_type == "CompositeResource":
         spatial_coverage_dict = get_coverage_data_dict(resource)
