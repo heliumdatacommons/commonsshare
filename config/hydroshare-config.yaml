@@ -1,8 +1,8 @@
 ### Local Configuration Variables ###
-HS_PATH: /home/hydro/hydroshare
-HOST_SSL_DIR: /home/hydro/hs-certs
+HS_PATH: /Users/ismagilani/commonsshare
+HOST_SSL_DIR: /Users/ismagilani/hs-certs
 HS_DATABASE: pg.development.sql
-HS_LOG_FILES: /home/hydro/hydroshare/log
+HS_LOG_FILES: /Users/ismagilani/commonsshare/log
 HS_SERVICE_UID: 1000
 HS_SERVICE_GID: 1000
 
@@ -13,11 +13,11 @@ USE_SECURITY: false
 USE_HTTP_AUTH: false
 
 ### nginx Configuration Variables ###
-FQDN_OR_IP: localhost
-NGINX_DIR: /home/hydro/hydroshare/nginx
+FQDN_OR_IP: 152.54.6.164
+NGINX_DIR: /Users/ismagilani/commonsshare/nginx
 
 ### SSL Configuration Variables ###
-SSL_CERT_DIR: /home/hydro/hydroshare/nginx/cert-files
+SSL_CERT_DIR: /Users/ismagilani/commonsshare/nginx/cert-files
 SSL_CERT_FILE: hydrodev-vb.example.org.cert
 SSL_KEY_FILE: hydrodev-vb.example.org.key
 

@@ -196,6 +196,24 @@
                                     >Private
                             </button>
                     </form>
+                    {# -------- SENSITIVE -------- #}
+                    <form class="pull-left"
+                              action="/hsapi/_internal/{{ cm.short_id }}/set-resource-flag/"
+                              method="POST">
+                            <input name="flag" type="hidden" value="make_sensitive"/>
+                            <input name="resource-mode" type="hidden" value="{{ resource_mode }}">
+                            {% csrf_token %}
+                            <button {% if cm.contains_sensitive_payload %} disabled {% endif %}
+                                    id="btn-sensitive" data-toggle="tooltip" data-placement="auto"
+                                    title='Mark the resource as containing sensitive data. Cannot be made public or discoverable.' type="submit"
+                                    {% if cm.contains_sensitive_payload %}
+                                        class="btn btn-default active"
+                                    {% else %}
+                                        class="btn btn-default"
+                                    {% endif %}
+                                    >Sensitive
+                            </button>
+                    </form>
                 </div>
 
                 {% if is_owner_user and cm.resource_type == "NetcdfResource" and not cm.raccess.public %}

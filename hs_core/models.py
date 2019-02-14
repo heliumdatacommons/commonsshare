@@ -1635,6 +1635,9 @@ class AbstractResource(ResourcePermissionsMixin, ResourceIRODSMixin):
     # this field WILL NOT get recorded in bag and SHOULD NEVER be used for storing metadata
     extra_data = HStoreField(default={})
 
+    # this field is for marking the resource as containing sensitive payload
+    contains_sensitive_payload = models.BooleanField(default=False)
+
     # definition of resource logic
     @property
     def supports_folders(self):
@@ -1659,12 +1662,14 @@ class AbstractResource(ResourcePermissionsMixin, ResourceIRODSMixin):
 
         1. The resource has all metadata elements marked as required.
         2. The resource has all files that are considered required.
+        3. The resource is not sensitive.
 
         and False otherwise
         """
         has_files = self.has_required_content_files()
         has_metadata = self.has_required_metadata
-        return has_files and has_metadata
+        is_sensitive = self.contains_sensitive_payload
+        return has_files and has_metadata and not is_sensitive
 
     def set_irods_access_control(self, user_or_group_name=None, perm='read'):
         # give read permission to corresponding iRODS user
@@ -1678,6 +1683,30 @@ class AbstractResource(ResourcePermissionsMixin, ResourceIRODSMixin):
             istorage.set_access_control(perm, user_or_group_name, rpath, recursive=False)
             istorage.set_access_control(perm, user_or_group_name, self.root_path)
 
+
+    def set_sensitive(self, value, user=None):
+        """Set the contains_sensitive_payload flag for a resource.
+
+                :param value: True or False
+                :param user: user requesting the change, or None for changes that are not user requests.
+                :raises ValidationError: if the current configuration cannot be set to desired state
+
+                This sets the contains_sensitive_payload flag (self.contains_sensitive_payload) for a resource based
+                upon application logic. It is part of AbstractResource because its result depends
+                upon resource state, and not just access control.
+
+                * This flag can only be set to True for private resources
+
+                Thus, the setting public=True, discoverable=True, Sensitive=True is disallowed.
+
+                If `user` is None, access control is not checked.  This happens when a resource has been
+                invalidated outside of the control of a specific user. In this case, user can be None
+                """
+        # access control is separate from validation logic
+        if user is not None and not user.uaccess.can_change_resource_flags(self):
+            raise ValidationError("You don't have permission to change resource sharing status")
+        self.contains_sensitive_payload = True
+        self.save()
 
     def set_discoverable(self, value, user=None):
         """Set the discoverable flag for a resource.
@@ -1707,8 +1736,12 @@ class AbstractResource(ResourcePermissionsMixin, ResourceIRODSMixin):
         # check that there is sufficient resource content
         has_metadata = self.has_required_metadata
         has_files = self.has_required_content_files()
-        if value and not (has_metadata and has_files):
+        is_sensitive = self.contains_sensitive_payload
 
+        if value and is_sensitive and not (has_metadata and has_files):
+            if is_sensitive:
+                msg="Resource contains sensitive payload and cannot be set as discoverable"
+                raise ValidationError(msg)
             if not has_metadata and not has_files:
                 msg = "Resource does not have sufficient metadata and content files to be " + \
                     "discoverable"
@@ -1759,8 +1792,12 @@ class AbstractResource(ResourcePermissionsMixin, ResourceIRODSMixin):
         # check that there is sufficient resource content
         has_metadata = self.has_required_metadata
         has_files = self.has_required_content_files()
-        if value and not (has_metadata and has_files):
+        is_sensitive = self.contains_sensitive_payload
 
+        if value and is_sensitive and not (has_metadata and has_files):
+
+            if is_sensitive:
+                msg="Resource contains sensitive payload and cannot be set as public"
             if not has_metadata and not has_files:
                 msg = "Resource does not have sufficient metadata and content files to be public"
                 raise ValidationError(msg)

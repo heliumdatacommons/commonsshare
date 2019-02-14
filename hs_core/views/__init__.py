@@ -346,6 +346,7 @@ def add_metadata_element(request, shortkey, element_name, *args, **kwargs):
             res_public_status = 'public' if res.raccess.public else 'not public'
             res_discoverable_status = 'discoverable' if res.raccess.discoverable \
                 else 'not discoverable'
+            res_sensitive_status = 'sensitive' if res.contains_sensitive_payload else 'not sensitive'
             if res.can_be_public_or_discoverable:
                 metadata_status = METADATA_STATUS_SUFFICIENT
             else:
@@ -355,7 +356,9 @@ def add_metadata_element(request, shortkey, element_name, *args, **kwargs):
                 ajax_response_data = {'status': 'success', 'element_name': element_name,
                                       'metadata_status': metadata_status,
                                       'res_public_status': res_public_status,
-                                      'res_discoverable_status': res_discoverable_status}
+                                      'res_discoverable_status': res_discoverable_status,
+                                      'res_sensitive_status': res_sensitive_status
+                                      }
             elif element_name.lower() == 'site' and res.resource_type == 'TimeSeriesResource':
                 # get the spatial coverage element
                 spatial_coverage_dict = get_coverage_data_dict(res)
@@ -364,7 +367,8 @@ def add_metadata_element(request, shortkey, element_name, *args, **kwargs):
                                       'spatial_coverage': spatial_coverage_dict,
                                       'metadata_status': metadata_status,
                                       'res_public_status': res_public_status,
-                                      'res_discoverable_status': res_discoverable_status
+                                      'res_discoverable_status': res_discoverable_status,
+                                      'res_sensitive_status': res_sensitive_status
                                       }
                 if element is not None:
                     ajax_response_data['element_id'] = element.id
@@ -373,7 +377,8 @@ def add_metadata_element(request, shortkey, element_name, *args, **kwargs):
                                       'element_name': element_name,
                                       'metadata_status': metadata_status,
                                       'res_public_status': res_public_status,
-                                      'res_discoverable_status': res_discoverable_status
+                                      'res_discoverable_status': res_discoverable_status,
+                                      'res_sensitive_status': res_sensitive_status
                                       }
                 if element is not None:
                     ajax_response_data['element_id'] = element.id
@@ -439,6 +444,7 @@ def update_metadata_element(request, shortkey, element_name, element_id, *args, 
             res_public_status = 'public' if res.raccess.public else 'not public'
             res_discoverable_status = 'discoverable' if res.raccess.discoverable \
                 else 'not discoverable'
+            res_sensitive_status = 'sensitive' if res.contains_sensitive_payload else 'not sensitive'
             if res.can_be_public_or_discoverable:
                 metadata_status = METADATA_STATUS_SUFFICIENT
             else:
@@ -453,6 +459,7 @@ def update_metadata_element(request, shortkey, element_name, element_id, *args, 
                                       'metadata_status': metadata_status,
                                       'res_public_status': res_public_status,
                                       'res_discoverable_status': res_discoverable_status,
+                                      'res_sensitive_status': res_sensitive_status,
                                       'element_exists': element_exists}
             else:
                 ajax_response_data = {'status': 'success',
@@ -460,6 +467,7 @@ def update_metadata_element(request, shortkey, element_name, element_id, *args, 
                                       'metadata_status': metadata_status,
                                       'res_public_status': res_public_status,
                                       'res_discoverable_status': res_discoverable_status,
+                                      'res_sensitive_status': res_sensitive_status,
                                       'element_exists': element_exists}
 
             ajax_response_data['is_dirty'] = res.metadata.is_dirty if \
@@ -688,6 +696,8 @@ def set_resource_flag(request, shortkey, *args, **kwargs):
         res.set_require_download_agreement(user, value=True)
     elif flag == 'make_not_require_lic_agreement':
         res.set_require_download_agreement(user, value=False)
+    elif flag == 'make_sensitive':
+        _set_resource_sharing_status(request, user, res, flag_to_set='sensitive', flag_value=True)
 
     if request.META.get('HTTP_REFERER', None):
         request.session['resource-mode'] = request.POST.get('resource-mode', 'view')
@@ -1077,7 +1087,6 @@ class GroupUpdateForm(GroupForm):
 @processor_for('my-resources')
 @login_required
 def my_resources(request, page):
-    
     resource_collection = get_my_resources_list(request)
     context = {'collection': resource_collection}
 
@@ -1630,6 +1639,12 @@ def _set_resource_sharing_status(request, user, resource, flag_to_set, flag_valu
     elif flag_to_set == 'public':
         try:
             resource.set_public(flag_value, user)  # checks access control
+        except ValidationError as v:
+            messages.error(request, v.message)
+
+    elif flag_to_set == 'sensitive':
+        try:
+            resource.set_sensitive(flag_value, user) # checks access control
         except ValidationError as v:
             messages.error(request, v.message)
 
