@@ -149,7 +149,7 @@
                 <div class="btn-group" role="group">
                     {# -------- PUBLIC -------- #}
                     <span class="pull-left">
-                        <a id="btn-public" {% if not cm.can_be_public_or_discoverable or cm.raccess.public %} disabled {% endif %}
+                        <a id="btn-public" {% if not cm.can_be_public_or_discoverable or cm.raccess.public or cm.contains_sensitive_payload %} disabled {% endif %}
                             data-toggle="modal"
                             {% if cm.raccess.public %}
                                 class="btn btn-default active"
@@ -167,7 +167,7 @@
                             <input name="flag" type="hidden" value="make_discoverable"/>
                             <input name="resource-mode" type="hidden" value="{{ resource_mode }}">
                             {% csrf_token %}
-                            <button {% if not cm.can_be_public_or_discoverable %} disabled {% endif %}
+                            <button {% if not cm.can_be_public_or_discoverable or cm.contains_sensitive_payload %} disabled {% endif %}
                                     id="btn-discoverable" data-toggle="tooltip" data-placement="auto"
                                     title='Metadata is public but data is protected.' type="submit"
                                     {% if cm.raccess.discoverable and not cm.raccess.public %}

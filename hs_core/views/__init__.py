@@ -1645,6 +1645,8 @@ def _set_resource_sharing_status(request, user, resource, flag_to_set, flag_valu
     elif flag_to_set == 'sensitive':
         try:
             resource.set_sensitive(flag_value, user) # checks access control
+            resource.set_public(False, user)
+            resource.set_discoverable(False, user)
         except ValidationError as v:
             messages.error(request, v.message)
 
