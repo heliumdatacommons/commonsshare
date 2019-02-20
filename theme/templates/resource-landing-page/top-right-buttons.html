@@ -72,7 +72,6 @@
                                       class="glyphicon glyphicon-trash icon-button btn-remove"></span>
                             </a>
                         {% endif %}
-
                         {% if page.perms.change %}
                             <input name="resource-mode" type="hidden" value="edit"/>
                             <button id="edit-metadata" type="submit" data-toggle="tooltip" data-placement="bottom"
@@ -86,11 +85,19 @@
                             </a>
                         {% endif %}
                         {% if page.perms.delete or cm.raccess.published %}
-                            <a id="new-version" data-toggle="modal" data-target="#new-version-resource-dialog">
-                                <span data-toggle="tooltip" data-placement="bottom"
-                                      title="Create a new version of this resource"
-                                      class="fa fa-clone icon-button icon-blue"></span>
-                            </a>
+                            {% if cm.contains_sensitive_payload %}
+                                <a disabled>
+                                    <span data-toggle="tooltip" data-placement="bottom"
+                                      title="You cannot create a new veersion of this resource because it contains sensitive payload"
+                                      class="fa fa-clone icon-button text-muted"></span>
+                                </a>
+                            {% else %}
+                                <a id="new-version" data-toggle="modal" data-target="#new-version-resource-dialog">
+                                    <span data-toggle="tooltip" data-placement="bottom"
+                                          title="Create a new version of this resource"
+                                          class="fa fa-clone icon-button icon-blue"></span>
+                                </a>
+                            {% endif %}
                         {% endif %}
                     </form>
                 {% endif %}
@@ -100,6 +107,12 @@
                             <a disabled>
                                 <span data-toggle="tooltip" data-placement="bottom"
                                       title="You cannot copy because the license for this resource does not permit copying"
+                                      class="fa fa-copy icon-button text-muted"></span>
+                            </a>
+                        {% elif cm.contains_sensitive_payload %}
+                            <a disabled>
+                                <span data-toggle="tooltip" data-placement="bottom"
+                                      title="You cannot copy this resource because it contains sensitive payload"
                                       class="fa fa-copy icon-button text-muted"></span>
                             </a>
                         {% else %}
