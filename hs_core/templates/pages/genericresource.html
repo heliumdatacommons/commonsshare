@@ -511,31 +511,24 @@
                         {% endif %}
 
                         <div class="files" id="previews"></div>
-                            {% block download_bag %}
-                        <div>
-                        {% if not cm.contains_sensitive_payload %}
-                            {% for b in cm.bags.all %}
+                        {% if not cm.contains_sensitive_payload and cm.files.all.count > 1 %}
+                            {% block download_zip %}
                                 <div>
-                                {% if cm.raccess.require_download_agreement %}
-                                    <a id="btn-download-all" type="button" class="btn btn-default row-selector"
-                                    data-target="#license-agree-dialog-bag" data-toggle="modal" data-placement="auto">
-                                {% else %}
-                                    <a id="btn-download-all" type="button" class="btn btn-default row-selector"
-                                       href="{{ cm.bag_url }}">
-                                {% endif %}
+                                    {% if cm.raccess.require_download_agreement %}
+                                        <a id="btn-download-all" type="button" class="btn btn-default row-selector"
+                                        data-target="#license-agree-dialog-bag" data-toggle="modal" data-placement="auto">
+                                    {% else %}
+                                        <a id="btn-download-all" type="button" class="btn btn-default row-selector"
+                                           href="{{ cm.bag_url }}">
+                                    {% endif %}
                                     <span class="glyphicon glyphicon-download-alt">
                                         <span title='Download All Content as Zipped BagIt Archive'
-                                              class="button-label"> Download All Content as Zipped BagIt Archive</span>
+                                              class="button-label"> Download All Content as Zipped Archive</span>
                                     </span>
                                     </a>
                                 </div>
-                                <div>
-                                    <a target="_blank" href="https://en.wikipedia.org/wiki/BagIt">Learn more about the Bagit archive format</a>
-                                </div>
-                            {% endfor %}
+                            {% endblock %} {#  download_zip #}
                         {% endif %}
-                        </div>
-                        {% endblock %} {#  download_bag #}
                     {% else %}
                         <i class="glyphicon glyphicon-eye-close text-danger no-access-icon"></i>&nbsp;
                         <span>You do not have permission to see these content files. Please contact the Authors if you wish to obtain access.</span>
