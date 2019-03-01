@@ -968,3 +968,27 @@ def get_coverage_data_dict(resource, coverage_type='spatial'):
             temporal_coverage_dict['start'] = start_date.strftime('%m-%d-%Y')
             temporal_coverage_dict['end'] = end_date.strftime('%m-%d-%Y')
         return temporal_coverage_dict
+
+
+def get_url_with_token(request, url):
+    """
+    Retrieve username and access token from request and append them to URL if applicable
+    :param request: the request to retrieve username and access token from request session
+    :param url: the url to be appended with username and access token
+    :return: url with username and access token appended if applicable
+    """
+    anchor_str = '://'
+    start_idx = url.find(anchor_str)
+    return_url = url
+    if start_idx > 0:
+        start_idx += len(anchor_str)
+        for host in settings.TRUSTED_SERVERS:
+            if url[start_idx:].startswith(host):
+                token = request.session['access_token'] \
+                    if request and 'access_token' in request.session else ''
+                if token:
+                    return_url = '{}?username={}&access_token={}'.format(url,
+                                                                         request.user.username,
+                                                                         token)
+                break
+    return return_url
