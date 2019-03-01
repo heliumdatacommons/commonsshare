@@ -19,7 +19,7 @@ from forms import CreatorForm, ContributorForm, SubjectsForm, AbstractForm, Rela
     SourceForm, FundingAgencyForm, BaseCreatorFormSet, BaseContributorFormSet, BaseFormSet, \
     MetaDataElementDeleteForm, CoverageTemporalForm, CoverageSpatialForm, ExtendedMetadataForm
 from hs_core.views.utils import show_relations_section, \
-    can_user_copy_resource
+    can_user_copy_resource, get_url_with_token
 from hs_core.hydroshare.resource import METADATA_STATUS_SUFFICIENT, METADATA_STATUS_INSUFFICIENT
 from hs_tools_resource.app_launch_helper import resource_level_tool_urls
 
@@ -80,18 +80,7 @@ def get_page_context(page, user, resource_edit=False, extended_metadata_layout=N
         if landing_page_res_type_str.lower() == "toolresource":
             if landing_page_res_obj.metadata.app_home_page_url:
                 tool_homepage_url = content_model.metadata.app_home_page_url.value
-                anchor_str = '://'
-                start_idx = tool_homepage_url.find(anchor_str)
-                if start_idx > 0:
-                    start_idx += len(anchor_str)
-                    for host in settings.TRUSTED_SERVERS:
-                        if tool_homepage_url[start_idx:].startswith(host):
-                            token = request.session['access_token'] \
-                                if request and 'access_token' in request.session else ''
-                            if token:
-                                tool_homepage_url = '{}?username={}&access_token={}'.format(
-                                    tool_homepage_url, request.user.username, token)
-                            break
+                tool_homepage_url = get_url_with_token(request, tool_homepage_url)
         else:
             relevant_tools = resource_level_tool_urls(landing_page_res_obj, request)
 
