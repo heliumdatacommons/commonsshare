@@ -5,6 +5,7 @@ import logging
 import requests
 import json
 import datetime
+import base64
 from uuid import uuid4
 
 
@@ -16,13 +17,14 @@ from django.core.exceptions import ValidationError, PermissionDenied
 from django.db import transaction
 from rest_framework import status
 
-from hs_core.hydroshare import hs_bagit
 from hs_core.models import ResourceFile
 from hs_core import signals
 from hs_core.hydroshare import utils
 from hs_access_control.models import ResourceAccess, UserResourcePrivilege, PrivilegeCodes
 from hs_labels.models import ResourceLabels
 from hs_core.tasks import notify_fts_indexer
+from hs_core.hydroshare import hs_bagit
+from django_irods.icommands import SessionException
 
 from minid_client import minid_client_api as mca
 
@@ -480,8 +482,7 @@ def create_resource(
 
             resource.title = resource.metadata.title.value
             resource.save()
-        if create_bag:
-            hs_bagit.create_bag(resource)
+
 
     # set the resource to private
     resource.setAVU('isPublic', resource.raccess.public)
@@ -564,9 +565,6 @@ def copy_resource(ori_res, new_res):
         # note that new collection will not contain "deleted resources"
         new_res.resources = ori_res.resources.all()
 
-    # create bag for the new resource
-    hs_bagit.create_bag(new_res)
-
     return new_res
 
 
@@ -608,9 +606,6 @@ def create_new_version_resource(ori_res, new_res, user):
         # clone contained_res list of original collection and add to new collection
         # note that new version collection will not contain "deleted resources"
         new_res.resources = ori_res.resources.all()
-
-    # create bag for the new resource
-    hs_bagit.create_bag(new_res)
 
     # since an isReplaceBy relation element is added to original resource, needs to call
     # resource_modified() for original resource
@@ -962,6 +957,7 @@ def publish_resource(user, pk, publish_type):
     istorage = resource.get_irods_storage()
     resource_url = '{0}/resource/{1}'.format(utils.current_site_url(), resource.short_id)
 
+
     # TODO: whether a resource can be published is not considered in can_be_published
     # TODO: can_be_published is currently an alias for can_be_public_or_discoverable
     if not resource.can_be_published:
@@ -969,39 +965,59 @@ def publish_resource(user, pk, publish_type):
                               "metadata or content files or this resource type is not allowed "
                               "for publication.")
 
-    if istorage.exists(res_coll):
-        bag_modified = istorage.getAVU(res_coll, 'bag_modified')
-        if bag_modified is None or bag_modified.lower() == "true":
-            hs_bagit.create_bag(resource)
-    else:
-        raise ValidationError("Resource {} does not exist in iRODS".format(resource.short_id))
 
+
+    dos_url = '{0}/dosapi/dataobjects/{1}/'.format(utils.current_site_url(), resource.short_id)
     tmpdir = os.path.join(settings.TEMP_FILE_DIR, uuid4().hex)
-    tmpfile = os.path.join(tmpdir, 'bag.zip')
+    resource_file_manifest_json = get_resource_files_manifest(resource)
+
     os.makedirs(tmpdir)
 
-    bag_full_name = 'bags/{res_id}.zip'.format(res_id=resource_id)
-    irods_dest_prefix = "/" + settings.IRODS_ZONE + "/home/" + settings.IRODS_USERNAME
-    srcfile = os.path.join(irods_dest_prefix, bag_full_name)
-    istorage.getFile(srcfile, tmpfile)
-    sha_checksum = mca.compute_checksum(tmpfile)
-    size = istorage.size(srcfile)
-    download_bag_url = '{0}/django_irods/download/bags/{1}.zip'.format(utils.current_site_url(), resource.short_id)
-    dos_url = '{0}/dosapi/dataobjects/{1}/'.format(utils.current_site_url(), resource.short_id)
+    # create the remote manifest and metadata files
+    resource_manifest_file = os.path.join(tmpdir, 'resource-file-manifest.json')
+    with open(resource_manifest_file, 'w') as outfile:
+        json.dump(resource_file_manifest_json, outfile)
+
+    if resource.files.all().count() > 1:
+        if istorage.exists(res_coll):
+            bag_modified = istorage.getAVU(res_coll, 'bag_modified')
+        else:
+            raise ValidationError("Resource {} does not exist in iRODS".format(resource.short_id))
+
+        if bag_modified is None or bag_modified.lower() == "true":
+                hs_bagit.create_bag(resource)
+
+        tmpfile = os.path.join(tmpdir, 'bag.zip')
+
+        bag_full_name = 'bags/{res_id}.zip'.format(res_id=resource_id)
+        irods_dest_prefix = "/" + settings.IRODS_ZONE + "/home/" + settings.IRODS_USERNAME
+        srcfile = os.path.join(irods_dest_prefix, bag_full_name)
+        istorage.getFile(srcfile, tmpfile)
+        sha_checksum = mca.compute_checksum(tmpfile)
+        size = istorage.size(srcfile)
+        download_file_url = '{0}/django_irods/download/bags/{1}.zip'.format(utils.current_site_url(),
+                                                                            resource.short_id)
+        file_format = 'application/zip'
+    else:
+        sha_checksum = resource_file_manifest_json[0]['sha256']
+        size = resource_file_manifest_json[0]['length']
+        file_format = 'text/plain'
+        download_file_url = resource_file_manifest_json[0]['url']
+
+    locations = [resource_url, download_file_url]
 
     if publish_type.lower() == "minid":
-        # create minid for the bag, using the checksum of the zip
-        locations = [resource_url, download_bag_url]
         config= mca.parse_config('hydroshare/minid-config.cfg')
-        minid = mca.register_entity(config['minid_server'],
+        identifier = mca.register_entity(config['minid_server'],
                                     sha_checksum,
                                     config['email'],
                                     config['code'],
                                     locations, 'MINID for ' + resource.title, True)
-        resource.minid = minid
+
+        resource.minid = identifier
         resource.doi = ''
         ident_md_args = {'name': 'minid',
-                   'url': 'http://minid.bd2k.org/minid/landingpage/' + resource.minid + ', http://n2t.net/' + resource.minid}
+               'url': 'http://minid.bd2k.org/minid/landingpage/' + resource.minid + ', http://n2t.net/' + resource.minid}
     elif publish_type.lower() == "doi":
         # create DOI using DataCite API
         doi_put_url = settings.DOI_PUT_URL
@@ -1009,21 +1025,11 @@ def publish_resource(user, pk, publish_type):
         request_data['@context'] = 'https://schema.org'
         request_data['@type'] = 'Dataset'
 
-        property_value_data = {}
-        property_value_data['@type'] = 'PropertyValue'
-        property_value_data['propertyID'] = 'sha256'
-        property_value_data['value'] = sha_checksum
-        request_data['identifier'] = [property_value_data]
-
-        request_data['url'] = resource_url
-        request_data['name'] = 'DOI for ' + resource.title
-
-        #request_data['additionalType'] = 'crai'
-
         author_data = {}
         author_data['@type'] = 'Organization'
         author_data['@id'] = 'doi:/10.25491/5e92-ht74'
-        author_data['name'] = 'Renaissance Computing Institute (RENCI) at the University of North Carolina at Chapel Hill'
+        author_data[
+            'name'] = 'Renaissance Computing Institute (RENCI) at the University of North Carolina at Chapel Hill'
         request_data['author'] = [author_data]
 
         publisher_data = {}
@@ -1033,20 +1039,22 @@ def publish_resource(user, pk, publish_type):
         request_data['publisher'] = [publisher_data]
 
         request_data['datePublished'] = repr(datetime.date.today().year)
+        request_data['url'] = resource_url
+        request_data['name'] = 'DOI for ' + resource.title
 
-        request_data['fileFormat'] = 'application/zip'
+        property_value_data = {}
+        property_value_data['@type'] = 'PropertyValue'
+        property_value_data['propertyID'] = 'sha256'
+
+        request_data['identifier'] = [property_value_data]
+        request_data['fileFormat'] = file_format
         request_data['contentSize'] = repr(size)
-        request_data['contentUrl'] = [download_bag_url, dos_url]
+        request_data['contentUrl'] = [download_file_url, dos_url]
 
         auth_header_str = "Bearer {}".format(settings.DOI_OAUTH_TOKEN)
         response = requests.put(doi_put_url,
                                 data=json.dumps(request_data),
                                 headers={"Content-Type": "application/json", "Authorization": auth_header_str })
-
-        logger.info("request_data: " + json.dumps(request_data))
-        logger.info("status code from doi: " + repr(response.status_code))
-        logger.info("response content: " + response.content)
-        logger.info("response text: " + response.text)
 
         if response.status_code != status.HTTP_200_OK:
             logger.error("Error retrieving DOI from datacite service")
@@ -1056,12 +1064,15 @@ def publish_resource(user, pk, publish_type):
         else:
             logger.info("response content: " + response.content)
             return_data = json.loads(response.content)
-            doi = return_data['@id']
-            resource.doi = doi
+            identifier = return_data['@id']
+            resource.doi = identifier
             resource.minid = ''
-            doi_url = 'https://ors.datacite.org/' + doi
+            doi_url = 'https://ors.datacite.org/' + identifier
             ident_md_args = {'name': 'doi',
-                       'url': doi_url}
+                   'url': doi_url}
+
+    # remove the temp directory
+    shutil.rmtree(tmpdir)
 
     # register published resource in farishake
     #retrieve an API Key to access FairShake registration API
@@ -1082,27 +1093,27 @@ def publish_resource(user, pk, publish_type):
         return_data = json.loads(response.content)
         fairshake_apikey = return_data['key']
 
-        request_data = {}
-        request_data["title"] = resource.title
-        request_data["tags"] = "dcppc"
-        request_data["url"] =  resource_url
-        request_data["projects"] = [14]
-        request_data["rubrics"] = [11]
+    request_data = {}
+    request_data["title"] = resource.title
+    request_data["tags"] = "dcppc"
+    request_data["url"] =  resource_url
+    request_data["projects"] = [14]
+    request_data["rubrics"] = [11]
 
-        response = requests.post(settings.FAIRSHAKE_URL + '/digital_object/',
-                                 data=json.dumps(request_data),
-                                 headers={"accept": "application/json", "Content-Type": "application/json", "Authorization": "Token " + fairshake_apikey})
-        if response.status_code != status.HTTP_201_CREATED:
-            logger.error("Error registering resource with FairShake")
-            logger.error(response.status_code)
-            logger.error(response.text)
-            raise PublishException(
-                "This resource cannot be published because it has failed the FairShake registration process." + response.text)
-        else:
-            return_data = json.loads(response.content)
-            assessment_id = return_data['id']
-            logger.info("Created FairShake object with ID: " + repr(assessment_id))
-            resource.assessment_id = assessment_id
+    response = requests.post(settings.FAIRSHAKE_URL + '/digital_object/',
+                             data=json.dumps(request_data),
+                             headers={"accept": "application/json", "Content-Type": "application/json", "Authorization": "Token " + fairshake_apikey})
+    if response.status_code != status.HTTP_201_CREATED:
+        logger.error("Error registering resource with FairShake")
+        logger.error(response.status_code)
+        logger.error(response.text)
+        raise PublishException(
+            "This resource cannot be published because it has failed the FairShake registration process." + response.text)
+    else:
+        return_data = json.loads(response.content)
+        assessment_id = return_data['id']
+        logger.info("Created FairShake object with ID: " + repr(assessment_id))
+        resource.assessment_id = assessment_id
 
     resource.save()
 
@@ -1111,9 +1122,6 @@ def publish_resource(user, pk, publish_type):
     resource.raccess.shareable = False
     resource.raccess.published = True
     resource.raccess.save()
-
-    # remove the temp directory
-    shutil.rmtree(tmpdir)
 
     # change "Publisher" element of science metadata to CommonsShare
     md_args = {'name': 'CommonsShare',
@@ -1217,3 +1225,52 @@ def delete_metadata_element(resource_short_id, element_model_name, element_id):
     """
     res = utils.get_resource_by_shortkey(resource_short_id)
     res.metadata.delete_element(element_model_name, element_id)
+
+def get_resource_files_manifest(resource):
+    data_list = []
+
+    from hs_core.hydroshare import utils
+
+    istorage = resource.get_irods_storage()
+
+    for f in ResourceFile.objects.filter(object_id=resource.id):
+        data = {}
+
+        if f.reference_file_path:
+            irods_file_name = f.reference_file_path
+            srcfile = irods_file_name
+            last_sep_pos = irods_file_name.rfind('/')
+            ref_file_name = irods_file_name[last_sep_pos + 1:]
+            fetch_url = '{0}/django_irods/download/{1}'.format(utils.current_site_url(),
+                                                               resource.short_id + irods_file_name)
+        else:
+            irods_file_name = f.storage_path
+            irods_dest_prefix = "/" + settings.IRODS_ZONE + "/home/" + settings.IRODS_USERNAME
+            srcfile = os.path.join(irods_dest_prefix, irods_file_name)
+            fetch_url = '{0}/django_irods/download/{1}'.format(utils.current_site_url(), irods_file_name)
+
+        checksum = None
+
+        try:
+            checksum = istorage.checksum(srcfile)
+        except SessionException as ex:
+            logger.error(ex.stderr)
+        finally:
+            data['url'] = fetch_url
+
+            if (f.reference_file_path):
+                data['length'] = istorage.size(srcfile)
+                data['filename'] = ref_file_name
+            else:
+                data['length'] = f.size
+                data['filename'] = f.file_name
+
+            if checksum is not None:
+                if checksum.startswith('sha'):
+                    data['sha256'] = base64.b64decode(checksum[4:]).encode('hex')
+                elif checksum.startswith('md5'):
+                    data['md5'] = base64.b64decode(checksum[4:]).encode('hex')
+
+            data_list.append(data)
+
+    return data_list

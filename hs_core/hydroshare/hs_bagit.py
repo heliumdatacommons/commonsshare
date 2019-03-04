@@ -1,15 +1,8 @@
 import os
-import json
 import shutil
-import base64
 import logging
 
-from uuid import uuid4
-from mezzanine.conf import settings
-
-from hs_core.models import Bags, ResourceFile
-from bdbag import bdbag_api as bdb
-from django_irods.icommands import SessionException
+from hs_core.models import Bags
 
 logger = logging.getLogger(__name__)
 
@@ -37,46 +30,18 @@ def delete_files_and_bag(resource):
 
 def create_bag(resource):
     """
-        create a bdbag for the resource
+        create a zip archive for the resource, only a zip no bdbag
 
         Parameters:
         :param resource: the resource, consisting of files to create the bdbag.
         :return: a Bag object which points to the newly created bag.
         """
-    checksums = ['md5', 'sha256']
 
-    tmpdir = os.path.join(settings.TEMP_FILE_DIR, uuid4().hex, resource.short_id)
-    os.makedirs(tmpdir)
+    output_zipname = os.path.join('bags', resource.short_id + '.zip')
 
-    # generate remote-file-mainfest for fetch.txt
-    remote_file_manifest_json = get_remote_file_manifest(resource)
-
-    # generate metatdata json for bag-info.txt
-    metadata_json = get_metadata_json(resource)
-
-    # create the remote manifest and metadata files
-    remote_manifest_file = os.path.join(tmpdir, 'remote-file-manifest.json')
-    with open(remote_manifest_file, 'w') as outfile:
-        json.dump(remote_file_manifest_json, outfile)
-
-    metadata_file = os.path.join(tmpdir, 'metadata.json')
-    with open(metadata_file, 'w') as outfile:
-        json.dump(metadata_json, outfile)
-
-    bagdir = os.path.join(tmpdir, "bag")
-    os.makedirs(bagdir)
-
-    # make the bdbag and create a zip archive
-    bdb.make_bag(bagdir, checksums, False, False, False, None, metadata_file, remote_manifest_file, 'hydroshare/bdbag.json')
-    zipfile = bdb.archive_bag(bagdir, "zip")
-
-    # save the zipped bag to iRODS for retrieval upon download request
     istorage = resource.get_irods_storage()
-    bag_full_name = 'bags/{res_id}.zip'.format(res_id=resource.short_id)
-    irods_dest_prefix = "/" + settings.IRODS_ZONE + "/home/" + settings.IRODS_USERNAME
-    destbagfile = os.path.join(irods_dest_prefix, bag_full_name)
 
-    istorage.saveFile(zipfile, destbagfile, True)
+    istorage.zipup(resource.root_path + "/data", output_zipname)
 
     # set bag_modified to false for a newly created bag
     path = resource.root_path
@@ -85,9 +50,6 @@ def create_bag(resource):
     # delete if there exists any bags for the resource
     resource.bags.all().delete()
 
-    # clean up temp directory
-    shutil.rmtree(tmpdir)
-
     # link the zipped bag file in IRODS via bag_url for bag downloading
     b = Bags.objects.create(
         content_object=resource.baseresource,
@@ -95,59 +57,3 @@ def create_bag(resource):
     )
 
     return b
-
-def get_remote_file_manifest(resource):
-    data_list = []
-
-    from hs_core.hydroshare import utils
-
-    istorage = resource.get_irods_storage()
-
-    for f in ResourceFile.objects.filter(object_id=resource.id):
-        data = {}
-
-        if f.reference_file_path:
-            irods_file_name = f.reference_file_path
-            srcfile = irods_file_name
-            last_sep_pos = irods_file_name.rfind('/')
-            ref_file_name = irods_file_name[last_sep_pos+1:]
-            fetch_url = '{0}/django_irods/download/{1}'.format(utils.current_site_url(), resource.short_id + irods_file_name)
-        else:
-            irods_file_name = f.storage_path
-            irods_dest_prefix = "/" + settings.IRODS_ZONE + "/home/" + settings.IRODS_USERNAME
-            srcfile = os.path.join(irods_dest_prefix, irods_file_name)
-            fetch_url = '{0}/django_irods/download/{1}'.format(utils.current_site_url(), irods_file_name)
-
-        checksum = None
-
-        try:
-            checksum = istorage.checksum(srcfile)
-        except SessionException as ex:
-            logger.error(ex.stderr)
-        finally:
-            data['url'] = fetch_url
-
-            if (f.reference_file_path):
-                data['length'] = istorage.size(srcfile)
-                data['filename'] = ref_file_name
-            else:
-                data['length'] = f.size
-                data['filename'] = f.file_name
-
-            if checksum is not None:
-                if checksum.startswith('sha'):
-                    data['sha256'] = base64.b64decode(checksum[4:]).encode('hex')
-                elif checksum.startswith('md5'):
-                    data['md5'] = base64.b64decode(checksum[4:]).encode('hex')
-
-            data_list.append(data)
-
-    return data_list
-
-def get_metadata_json(resource):
-    data = {}
-    data['BagIt-Profile-Identifier'] = "https://raw.githubusercontent.com/fair-research/bdbag/master/profiles/bdbag-profile.json"
-    data['External-Description'] = "CommonsShare BDBag for resource " + resource.short_id
-    data['Arbitrary-Metadata-Field'] = "TBD Arbitrary metadata field"
-
-    return data
