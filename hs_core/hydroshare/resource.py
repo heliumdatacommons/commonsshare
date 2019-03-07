@@ -425,7 +425,6 @@ def create_resource(
             # few seconds.  We may want to add the option to do this
             # asynchronously if the file size is large and would take
             # more than ~15 seconds to complete.
-            utils.save_pivot_appliance_info(resource, files)
 
             # made add_resource_files take resource as the first parameter rather than resource id
             # since the extra_data stored on the resource when adding files, e.g., harvested

@@ -120,19 +120,6 @@ def get_page_context(page, user, resource_edit=False, extended_metadata_layout=N
 
     qholder = content_model.get_quota_holder()
 
-    show_pivot_popup = False
-
-    if 'appliance_id' in content_model.extra_data:
-        if content_model.extra_data['appliance_id'].lower().startswith('hail'):
-            # check whether this appliance already exists, and only show popup when the
-            # appliance does not exist
-            app_url = settings.PIVOT_URL + '/' + content_model.extra_data['appliance_id']
-            get_response = requests.get(app_url)
-            if get_response.status_code == status.HTTP_404_NOT_FOUND:
-                show_pivot_popup = True
-            else:
-                show_pivot_popup = False
-
     # user requested the resource in READONLY mode
     if not resource_edit:
         temporal_coverages = content_model.metadata.coverages.all().filter(type='period')
@@ -219,8 +206,7 @@ def get_page_context(page, user, resource_edit=False, extended_metadata_layout=N
                    'is_resource_specific_tab_active': False,
                    'quota_holder': qholder,
                    'belongs_to_collections': belongs_to_collections,
-                   'current_user': user,
-                   'show_pivot_dialog': show_pivot_popup
+                   'current_user': user
         }
 
         if 'task_id' in request.session:
@@ -419,8 +405,7 @@ def get_page_context(page, user, resource_edit=False, extended_metadata_layout=N
                                               type_value != 'isVersionOf' and
                                               type_value != 'hasPart'),
                'is_resource_specific_tab_active': False,
-               'belongs_to_collections': belongs_to_collections,
-               'show_pivot_dialog': show_pivot_popup
+               'belongs_to_collections': belongs_to_collections
     }
 
     return context
