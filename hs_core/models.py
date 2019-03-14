@@ -1679,8 +1679,6 @@ class AbstractResource(ResourcePermissionsMixin, ResourceIRODSMixin):
             raise ValueError('bad input argument: only null, read, write, or own for permission is allowed')
         else:
             istorage = self.get_irods_storage()
-            rpath = '/' + settings.IRODS_ZONE + '/home/' + settings.IRODS_USERNAME
-            istorage.set_access_control(perm, user_or_group_name, rpath, recursive=False)
             istorage.set_access_control(perm, user_or_group_name, self.root_path)
 
 
