@@ -989,7 +989,7 @@ def publish_resource(user, pk, publish_type):
         tmpfile = os.path.join(tmpdir, 'bag.zip')
 
         bag_full_name = 'bags/{res_id}.zip'.format(res_id=resource_id)
-        irods_dest_prefix = "/" + settings.IRODS_ZONE + "/home/" + settings.IRODS_USERNAME
+        irods_dest_prefix = settings.IRODS_HOME_COLLECTION
         srcfile = os.path.join(irods_dest_prefix, bag_full_name)
         istorage.getFile(srcfile, tmpfile)
         sha_checksum = mca.compute_checksum(tmpfile)
@@ -1244,7 +1244,7 @@ def get_resource_files_manifest(resource):
                                                                resource.short_id + irods_file_name)
         else:
             irods_file_name = f.storage_path
-            irods_dest_prefix = "/" + settings.IRODS_ZONE + "/home/" + settings.IRODS_USERNAME
+            irods_dest_prefix = settings.IRODS_HOME_COLLECTION
             srcfile = os.path.join(irods_dest_prefix, irods_file_name)
             fetch_url = '{0}/django_irods/download/{1}'.format(utils.current_site_url(), irods_file_name)
 

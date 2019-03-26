@@ -1792,7 +1792,7 @@ class AbstractResource(ResourcePermissionsMixin, ResourceIRODSMixin):
         has_files = self.has_required_content_files()
         is_sensitive = self.contains_sensitive_payload
 
-        if value and is_sensitive and not (has_metadata and has_files):
+        if value and (is_sensitive or not (has_metadata and has_files)):
 
             if is_sensitive:
                 msg="Resource contains sensitive payload and cannot be set as public"
