@@ -1087,6 +1087,7 @@ class GroupUpdateForm(GroupForm):
 @processor_for('my-resources')
 @login_required
 def my_resources(request, page):
+
     resource_collection = get_my_resources_list(request)
     context = {'collection': resource_collection}
 
@@ -1117,7 +1118,7 @@ def add_generic_context(request, page):
 def create_resource_select(request, *args, **kwargs):
     context = {
         'current_user': request.user.username,
-        'current_irods_store': os.path.join(settings.IRODS_BYOD_COLLECTION, request.user.username)
+        'current_irods_store': '/' + settings.IRODS_ZONE + '/home/' + request.user.username
     }
     return render(request, 'pages/create-resource.html', context)
 
