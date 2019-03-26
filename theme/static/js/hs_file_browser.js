@@ -530,7 +530,6 @@ function showFileTypeMetadata(file_type_time_series, url){
          $("#id-update-sqlite-file").click(update_sqlite_file_ajax_submit);
          showMetadataFormSaveChangesButton();
          initializeDatePickers();
-         setFileTypeSpatialCoverageFormFields(logical_type);
          // Bind event handler for submit button
          setFileTypeMetadataFormsClickHandlers();
 
