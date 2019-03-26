@@ -23,7 +23,8 @@ def copy_data_and_set_access_control(source_path='', res=None):
 
     istorage = IrodsStorage()  # local only
     source_path = os.path.join(source_path, res.short_id, 'data')
-    istorage.copyFiles(source_path, res.root_path)
+    target_path = os.path.join(res.root_path, 'data')
+    istorage.copyFiles(source_path, target_path)
     # set access control accordingly depending on whether the resource is public
     is_public = res.raccess.public
     if is_public:  # can't be public without being discoverable
