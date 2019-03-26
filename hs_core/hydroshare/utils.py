@@ -395,7 +395,7 @@ def copy_resource_files_and_AVUs(src_res_id, dest_res_id):
             istorage.setAVU(tgt_coll, avu_name, 'true')
 
         # everything else gets copied literally
-        else:
+        elif value:
             istorage.setAVU(tgt_coll, avu_name, value)
 
     # link copied resource files to Django resource model
