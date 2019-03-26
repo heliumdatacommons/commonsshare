@@ -3,7 +3,6 @@ import json
 import datetime
 import pytz
 import logging
-import os
 
 from django.core.mail import send_mail
 from django.contrib.auth import authenticate, login as auth_login
