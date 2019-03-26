@@ -11,6 +11,7 @@ from django.conf import settings
 from hs_core.models import BaseResource
 from hs_core.hydroshare.utils import get_resource_by_shortkey
 from django_irods.storage import IrodsStorage
+from django_irods.icommands import SessionException
 
 
 def copy_data_and_set_access_control(source_path='', res=None):
@@ -29,22 +30,48 @@ def copy_data_and_set_access_control(source_path='', res=None):
         res.set_irods_access_control(user_or_group_name='public', perm='read')
     else:
         res.set_irods_access_control(user_or_group_name='public', perm='null')
+
     # give all owners read access
     for owner in res.raccess.owners.all():
-        res.set_irods_access_control(user_or_group_name=owner.username, perm='read')
+        try:
+            res.set_irods_access_control(user_or_group_name=owner.username, perm='read')
+        except SessionException as ex:
+            print('Cannot give owner ' + owner.username + ' read permission to resource ' +
+                  res.short_id + ': ' + ex.stderr)
+            continue
     # give all editors read access
     for editor in res.raccess.edit_users.all():
-        res.set_irods_access_control(user_or_group_name=editor.username, perm='read')
-    # give all views read access
+        try:
+            res.set_irods_access_control(user_or_group_name=editor.username, perm='read')
+        except SessionException as ex:
+            print('Cannot give editor ' + editor.username + ' read permission to resource ' +
+                  res.short_id + ': ' + ex.stderr)
+            continue
+    # give all viewers read access
     for viewer in res.raccess.view_users.all():
-        res.set_irods_access_control(user_or_group_name=viewer.username, perm='read')
+        try:
+            res.set_irods_access_control(user_or_group_name=viewer.username, perm='read')
+        except SessionException as ex:
+            print('Cannot give viewer ' + viewer.username + ' read permission to resource ' +
+                  res.short_id + ': ' + ex.stderr)
+            continue
     # give all group members read access
     for g in res.raccess.edit_groups.all():
         for u in g.gaccess.members:
-            res.set_irods_access_control(user_or_group_name=u.username)
+            try:
+                res.set_irods_access_control(user_or_group_name=u.username)
+            except SessionException as ex:
+                print('Cannot give group member ' + u.username + ' read permission to resource ' +
+                      res.short_id + ': ' + ex.stderr)
+                continue
     for g in res.raccess.view_groups.all():
         for u in g.gaccess.members:
-            res.set_irods_access_control(user_or_group_name=u.username)
+            try:
+                res.set_irods_access_control(user_or_group_name=u.username)
+            except SessionException as ex:
+                print('Cannot give group member ' + u.username + ' read permission to resource ' +
+                      res.short_id + ': ' + ex.stderr)
+                continue
 
 
 class Command(BaseCommand):
