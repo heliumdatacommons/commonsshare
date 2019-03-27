@@ -55,26 +55,28 @@ class GlobusOAuth2:
             except User.DoesNotExist:
                 user = create_account(email=email, username=username, first_name=first_name,
                                       last_name=last_name, superuser=False, active=True)
-                # create corresponding iRODS account with same username via OAuth if not exist
-                # already
-                url = '{}registration/create_account?username={}&zone={}&auth_name={}'.format(
-                    settings.DATA_REG_SERVICE_SERVER_URL, username, settings.IRODS_ZONE, uid)
-                response = requests.get(url,
-                                        headers={'Authorization': auth_header_str},
-                                        verify=False)
-                if response.status_code != status.HTTP_200_OK:
-                    # iRODS user account does not exist and fails to be created, needs to delete
-                    # the created linked account for next level of default user authentication
-                    user.delete()
-                    return None
+                if settings.DATA_REG_SERVICE_SERVER_URL:
+                    # create corresponding iRODS account with same username via OAuth if not exist
+                    # already
+                    url = '{}registration/create_account?username={}&zone={}&auth_name={}'.format(
+                        settings.DATA_REG_SERVICE_SERVER_URL, username, settings.IRODS_ZONE, uid)
+                    response = requests.get(url,
+                                            headers={'Authorization': auth_header_str},
+                                            verify=False)
+                    if response.status_code != status.HTTP_200_OK:
+                        # iRODS user account does not exist and fails to be created, needs to delete
+                        # the created linked account for next level of default user authentication
+                        user.delete()
+                        return None
 
-            hashed_token = hashlib.sha256(access_token).hexdigest()[0:50]
-            url = '{}registration/add_user_oids?username={}&subjectid={}&sessionid={}'.format(
-                settings.DATA_REG_SERVICE_SERVER_URL,
-                username, uid, hashed_token)
-            response = requests.get(url, headers={'Authorization': auth_header_str}, verify=False)
-            if response.status_code !=status.HTTP_200_OK:
-                raise PermissionDenied(response.content)
+            if settings.DATA_REG_SERVICE_SERVER_URL:
+                hashed_token = hashlib.sha256(access_token).hexdigest()[0:50]
+                url = '{}registration/add_user_oids?username={}&subjectid={}&sessionid={}'.format(
+                    settings.DATA_REG_SERVICE_SERVER_URL,
+                    username, uid, hashed_token)
+                response = requests.get(url, headers={'Authorization': auth_header_str}, verify=False)
+                if response.status_code !=status.HTTP_200_OK:
+                    raise PermissionDenied(response.content)
 
             if settings.WHITE_LIST_LOGIN:
                 # needs to make sure the user is in a whitelist group before logging them in
