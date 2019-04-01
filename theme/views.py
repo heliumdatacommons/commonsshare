@@ -33,7 +33,7 @@ from mezzanine.utils.email import send_verification_mail, send_approve_mail, sub
     default_token_generator, send_mail_template
 from mezzanine.utils.urls import login_redirect, next_url
 from mezzanine.accounts.forms import LoginForm
-from mezzanine.utils.views import render
+from django.shortcuts import render
 
 from hs_core.views.utils import authorize, ACTION_TO_AUTHORIZE
 from hs_core.hydroshare.utils import get_file_from_irods, user_from_id

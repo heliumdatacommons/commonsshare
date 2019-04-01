@@ -1,10 +1,9 @@
 # Register your models here.
 from django.contrib.gis import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
+from mezzanine.pages.admin import Page
 
-from mezzanine.pages.admin import PageAdmin
-
-from .models import ToolResource, ToolMetaData, AppHomePageUrl, \
+from .models import ToolMetaData, AppHomePageUrl, \
     HelpPageUrl, TestingProtocolUrl, SourceCodeUrl, IssuesPageUrl, \
     MailingListUrl, Roadmap, ShowOnOpenWithList
 
@@ -64,17 +63,6 @@ class InlineHelpPageUrl(GenericTabularInline):
     max_num = 1
     extra = 1
 
-
-class ToolMetaDataAdmin(admin.ModelAdmin):
-    fields = ['approved']
-
-    inlines = [InlineAppHomePageUrlAdmin, InlineHelpPageUrl, InlineIssuesPageUrlAdmin,
-               InlineSourceCodeUrldmin, InlineTestingProtocolUrlAdmin,
-               InlineMailingListUrlAdmin, InlineRoadmapAdmin, InlineShowOnOpenWithListAdmin]
-
-    def has_add_permission(self, request):
-        return False
-
-
-admin.site.register(ToolMetaData, ToolMetaDataAdmin)
-admin.site.register(ToolResource, PageAdmin)
+admin.site.unregister(ToolMetaData)
+# remove mezzanine Page registration due to it being unusable
+admin.site.unregister(Page)

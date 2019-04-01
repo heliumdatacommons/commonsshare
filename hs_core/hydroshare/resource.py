@@ -1028,8 +1028,7 @@ def publish_resource(user, pk, publish_type):
         author_data = {}
         author_data['@type'] = 'Organization'
         author_data['@id'] = 'doi:/10.25491/5e92-ht74'
-        author_data[
-            'name'] = 'Renaissance Computing Institute (RENCI) at the University of North Carolina at Chapel Hill'
+        author_data['name'] = 'Renaissance Computing Institute (RENCI) at the University of North Carolina at Chapel Hill'
         request_data['author'] = [author_data]
 
         publisher_data = {}

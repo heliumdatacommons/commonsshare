@@ -3,14 +3,11 @@ postgis:
   container_name: postgis
   volumes:
     - "/var/lib/postgresql/data"
-redis:
-  image: redis:2.8
-  container_name: redis
 rabbitmq:
   image: rabbitmq:3.5
   container_name: rabbitmq
 solr:
-  image: makuk66/docker-solr:4.10.4
+  image: solr:6.6
   container_name: solr
   volumes:
     # hydroshare repository
@@ -29,8 +26,6 @@ hydroshare:
   environment:
     POSTGIS_HOST: postgis
     POSTGIS_PORT: 5432
-    REDIS_HOST: redis
-    REDIS_PORT: 6379
     POSTGIS_PASSWORD: postgres
     POSTGIS_DB: postgres
     POSTGIS_USER: postgres
@@ -41,7 +36,7 @@ hydroshare:
     # hydroshare repository
     - "HS_PATH:/hydroshare"
     # pycharm debugging
-    # - "/home/hydro/pycharm-debug:/pycharm-debug"
+    - "/Users/ismagilani/pycharm-debug:/pycharm-debug"
     # log files
     - "HS_LOG_FILES:/hydroshare/log"
     # shared location for gunicorn.sock between containers
@@ -53,7 +48,6 @@ hydroshare:
     - "8000:8000"
   links:
     - postgis:postgis
-    - redis:redis
     - rabbitmq:rabbitmq
     - solr:solr
   command: /bin/bash init-hydroshare
@@ -63,8 +57,6 @@ defaultworker:
   environment:
     POSTGIS_HOST: postgis
     POSTGIS_PORT: 5432
-    REDIS_HOST: redis
-    REDIS_PORT: 6379
     POSTGIS_PASSWORD: postgres
     POSTGIS_DB: postgres
     PGPASSWORD: postgres
@@ -75,6 +67,5 @@ defaultworker:
     - "/var/run/docker.sock:/docker.sock"
   links:
     - postgis:postgis
-    - redis:redis
     - rabbitmq:rabbitmq
   command: /bin/bash init-defaultworker
