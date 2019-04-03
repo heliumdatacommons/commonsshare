@@ -1,7 +1,7 @@
 from django.conf.urls import url
 from hs_core import views
 
-urlpatterns = ['',
+urlpatterns = [
 
     # URLs to resolve hydroshare file urls that are part of the resourcemap xml document
 

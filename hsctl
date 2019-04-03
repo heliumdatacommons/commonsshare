@@ -98,10 +98,13 @@ solr_schema_hs() {
     docker exec hydroshare python manage.py build_solr_schema -f schema.xml
     sleep 1s
     echo "  - docker exec solr cp /hydroshare/schema.xml /opt/solr/server/solr/collection1/conf/schema.xml"
-    docker exec solr cp /hydroshare/schema.xml /opt/solr/example/solr/collection1/conf/schema.xml
+    docker exec solr cp /hydroshare/schema.xml /opt/solr/server/solr/collection1/conf/schema.xml
     echo "  - docker exec solr sed -i '/<schemaFactory class=\"ManagedIndexSchemaFactory\">/,+4d' /opt/solr/server/solr/collection1/conf/solrconfig.xml"
     docker exec solr sed -i '/<schemaFactory class="ManagedIndexSchemaFactory">/,+4d' /opt/solr/server/solr/collection1/conf/solrconfig.xml
-    docker exec solr cp -r /hydroshare/ontology-core /opt/solr/example/solr/ontology-core
+    echo "  - docker exec solr cp -r /hydroshare/ontology-core /opt/solr/server/solr/ontology-core"
+    docker exec solr cp -r /hydroshare/ontology-core /opt/solr/server/solr/ontology-core
+    echo "  - docker exec hydroshare curl \"solr:8983/solr/admin/cores?action=CREATE&name=ontology-core&instanceDir=/opt/solr/server/solr/ontology-core/&config=solrconfig.xml&dataDir=data\""
+    docker exec hydroshare curl "solr:8983/solr/admin/cores?action=CREATE&name=ontology-core&instanceDir=/opt/solr/server/solr/ontology-core/&config=solrconfig.xml&dataDir=data"
     echo "  - docker exec solr rm /opt/solr/server/solr/collection1/conf/managed-schema"
     docker exec solr rm /opt/solr/server/solr/collection1/conf/managed-schema
 }
@@ -270,7 +273,7 @@ solr_reload_hs() {
     echo "SOLR RELOAD"
     echo "  - docker exec hydroshare curl \"solr:8983/solr/admin/cores?action=RELOAD&core=collection1\""
     docker exec hydroshare curl "solr:8983/solr/admin/cores?action=RELOAD&core=collection1"
-    docker exec hydroshare curl "solr:8983/solr/admin/cores?action=CREATE&name=ontology-core&instanceDir=/opt/solr/example/solr/ontology-core/&config=solrconfig.xml&dataDir=data"
+    echo "  - docker exec hydroshare curl \"solr:8983/solr/admin/cores?action=RELOAD&core=ontology-core\""
     docker exec hydroshare curl "solr:8983/solr/admin/cores?action=RELOAD&core=ontology-core"
 }
 

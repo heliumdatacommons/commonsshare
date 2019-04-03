@@ -5,6 +5,7 @@ from hs_core import views as core_views
 
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+
 from rest_framework import permissions
 
 schema_view_yasg = get_schema_view(
@@ -21,7 +22,6 @@ schema_view_yasg = get_schema_view(
 )
 
 urlpatterns = [
-    '',
 
     url(r'^(?P<format>\.json|\.yaml)$', schema_view_yasg.without_ui(cache_timeout=None),
         name='schema-json'),

@@ -2,7 +2,7 @@ from django.conf.urls import url
 from hs_core import views
 from hs_core.views.autocomplete import autocomplete
 
-urlpatterns = ['',
+urlpatterns = [
     # internal API
     url(r'^_internal/(?P<shortkey>[0-9a-f-]+)/add-files-to-resource/$',
         views.add_files_to_resource, name='add_files_to_resource'),

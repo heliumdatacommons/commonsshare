@@ -2,10 +2,6 @@
 
 from haystack import indexes
 from hs_core.models import BaseResource
-from hs_geographic_feature_resource.models import GeographicFeatureMetaData
-from hs_app_netCDF.models import NetcdfMetaData
-from ref_ts.models import RefTSMetadata
-from hs_app_timeseries.models import TimeSeriesMetaData
 from django.db.models import Q
 from datetime import datetime
 from nameparser import HumanName

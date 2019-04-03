@@ -12,7 +12,10 @@ RUN pip install git+https://github.com/theromis/django-inplaceedit.git@e6fa12355
 RUN pip uninstall -y python-irodsclient
 RUN pip install git+https://github.com/theferrit32/python-irodsclient.git@openid
 
-RUN pip install minid
+RUN pip install \
+    minid \
+    haystack_queryparser \
+    elasticsearch
 
 WORKDIR /hydroshare
 
