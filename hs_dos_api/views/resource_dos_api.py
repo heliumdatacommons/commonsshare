@@ -26,7 +26,7 @@ class ResourceToDataObjectListItemMixin(object):
 
         site_url = hydroshare.utils.current_site_url()
         istorage = r.get_irods_storage()
-        irods_dest_prefix = "/" + settings.IRODS_ZONE + "/home/" + settings.IRODS_USERNAME
+        irods_dest_prefix = settings.IRODS_HOME_COLLECTION
 
         urls = []
         for f in r.files.all():

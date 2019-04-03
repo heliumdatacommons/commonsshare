@@ -395,7 +395,7 @@ def copy_resource_files_and_AVUs(src_res_id, dest_res_id):
             istorage.setAVU(tgt_coll, avu_name, 'true')
 
         # everything else gets copied literally
-        else:
+        elif value:
             istorage.setAVU(tgt_coll, avu_name, value)
 
     # link copied resource files to Django resource model
@@ -1090,13 +1090,6 @@ def resolve_request(request):
 
     return {}
 
-def is_pivot_config_file(filename):
-    lower_fname = filename.lower()
-    if lower_fname.startswith('pivot') and lower_fname.endswith('.json'):
-        return True
-    else:
-        return False
-
 
 def validate_url(url):
      """
@@ -1111,48 +1104,3 @@ def validate_url(url):
          validator(url)
      except ValidationError:
          return False, error_message
-
-
-def get_pivot_applicance_info(file_obj):
-    """
-    Get pivot appliance id, number of instances, number of cpus, and memory size from reading
-    the pivot configuration request json file object
-    :param file_obj:a file object that is ready to be read
-    :return: (appliance id, instances, cpus, mem) read from the file_obj, or
-    None if there is any problem along the way
-    """
-    appl_id = None
-    insts = None
-    cpus = None
-    mems = None
-    try:
-        jdata = json.load(file_obj)
-        if 'id' in jdata:
-            appl_id = jdata['id']
-        if 'containers' in jdata:
-            for con in jdata['containers']:
-                if con['id'] == 'workers':
-                    insts = con['instances']
-                    cpus = con['resources']['cpus']
-                    mems = con['resources']['mem']
-                    break
-    except Exception:
-        return appl_id, insts, cpus, mems
-
-    return appl_id, insts, cpus, mems
-
-def save_pivot_appliance_info(res, files):
-    for f in files:
-        openfile = File(f) if not isinstance(f, UploadedFile) else f
-        if is_pivot_config_file(f.name):
-            appliance_id, insts, cpus, mems = get_pivot_applicance_info(openfile)
-            if appliance_id and insts and cpus and mems:
-                res.extra_data = {
-                    'appliance_id': appliance_id,
-                    'num_instances': str(insts),
-                    'num_cpus': str(cpus),
-                    'mem_size': str(mems)
-                }
-                res.save()
-                return
-    return

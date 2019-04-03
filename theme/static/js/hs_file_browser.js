@@ -347,16 +347,6 @@ function bindFileBrowserItemEvents() {
                 // check if this is a left mouse button click
                 if(e.which == 1) {
                     showFileTypeMetadata(false, "");
-                    $("#id_northlimit_filetype").attr("data-map-item", "northlimit");
-                    $("#id_eastlimit_filetype").attr("data-map-item", "eastlimit");
-                    $("#id_southlimit_filetype").attr("data-map-item", "southlimit");
-                    $("#id_westlimit_filetype").attr("data-map-item", "westlimit");
-                    $("#id_east_filetype").attr("data-map-item", "longitude");
-                    $("#id_north_filetype").attr("data-map-item", "latitude");
-
-                    updateEditCoverageState();
-
-                    $("#id-coverage-spatial-filetype").coordinatesPicker();
                 }
             }
             else{
@@ -540,91 +530,23 @@ function showFileTypeMetadata(file_type_time_series, url){
          $("#id-update-sqlite-file").click(update_sqlite_file_ajax_submit);
          showMetadataFormSaveChangesButton();
          initializeDatePickers();
-         setFileTypeSpatialCoverageFormFields(logical_type);
          // Bind event handler for submit button
          setFileTypeMetadataFormsClickHandlers();
 
          var $spatial_type_radio_button_1 = $("#div_id_type_filetype").find("#id_type_1");
          var $spatial_type_radio_button_2 = $("#div_id_type_filetype").find("#id_type_2");
-         if (logical_type === "NetCDFLogicalFile") {
-             // don't let the user open the Projection String Type dropdown list
-             // when editing Oroginal Coverage element
-             $("#id_projection_string_type_filetype").css('pointer-events', 'none');
-             // don't let the user open the Variable type dropdown list when editing
-             // Variable elements
-             $("[id ^=id_Variable-][id $=-type]").css('pointer-events', 'none');
-         }
-         if (logical_type === "RefTimeseriesLogicalFile"){
-             var $startDateElement = $("#id_start_filetype");
-             var $endDateElement = $("#id_end_filetype");
-             $startDateElement.css('pointer-events', 'none');
-             $endDateElement.css('pointer-events', 'none');
-         }
-         if (logical_type === 'TimeSeriesLogicalFile') {
-             $("#series_id_file_type").change(function () {
-                 var $url = $(this.form).attr('action');
-                 $url = $url.replace('series_id', $(this).val());
-                 $url = $url.replace('resource_mode', resource_mode);
-                 // make a recursive call to this function
-                 showFileTypeMetadata(true, $url);
-             });
-             if ($("#metadata-dirty").val() !== 'True' || $("#can-update-sqlite-file").val() !== 'True'){
-                 $("#div-sqlite-file-update").hide();
-             }
-             $(".hs-coordinates-picker").each(function() {
-                    const instance = $(this);
-                    instance.coordinatesPicker();
-             });
-             InitializeTimeSeriesFileTypeForms();
-         }
-         if (logical_type === "GeoRasterLogicalFile"){
+
+         if ($spatial_type_radio_button_1.attr('checked') == 'checked'){
              $spatial_type_radio_button_1.prop("checked", true);
-             $("#div_id_type_filetype input:radio").trigger("change");
-             $spatial_type_radio_button_1.attr('onclick', 'return false');
-             $spatial_type_radio_button_2.attr('onclick', 'return false');
          }
          else {
-             if ($spatial_type_radio_button_1.attr('checked') == 'checked'){
-                 $spatial_type_radio_button_1.prop("checked", true);
-             }
-             else {
-                 $spatial_type_radio_button_2.prop("checked", true);
-             }
+             $spatial_type_radio_button_2.prop("checked", true);
          }
 
          $("#div_id_type_filetype input:radio").trigger("change");
     });
 }
 
-function InitializeTimeSeriesFileTypeForms() {
-    var tsSelect = $(".time-series-forms select");
-
-    tsSelect.append('<option value="Other">Other...</option>');
-
-    tsSelect.parent().parent().append('<div class="controls other-field" style="display:none;"> <label class="text-muted control-label">Specify: </label><input class="form-control input-sm textinput textInput" name="" type="text"> </div>')
-
-    tsSelect.change(function(e){
-        if (e.target.value == "Other") {
-            var name = e.target.name;
-            $(e.target).parent().parent().find(".other-field").show();
-            $(e.target).parent().parent().find(".other-field input").attr("name", name);
-            $(e.target).removeAttr("name");
-        }
-        else {
-            if (!e.target.name.length) {
-                var name = $(e.target).parent().parent().find(".other-field input").attr("name");
-                $(e.target).attr("name", name);
-                $(e.target).parent().parent().find(".other-field input").removeAttr("name");
-                $(e.target).parent().parent().find(".other-field").hide();
-            }
-        }
-    });
-
-    processSiteMetadataElement();
-    processVariableMetadataElement();
-    processMethodMetadataElement();
-    processProcessingLevelMetadataElement();
-}
 function setBreadCrumbs(path) {
     var crumbs = $("#fb-bread-crumbs");
     crumbs.empty();

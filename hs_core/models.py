@@ -1679,8 +1679,6 @@ class AbstractResource(ResourcePermissionsMixin, ResourceIRODSMixin):
             raise ValueError('bad input argument: only null, read, write, or own for permission is allowed')
         else:
             istorage = self.get_irods_storage()
-            rpath = '/' + settings.IRODS_ZONE + '/home/' + settings.IRODS_USERNAME
-            istorage.set_access_control(perm, user_or_group_name, rpath, recursive=False)
             istorage.set_access_control(perm, user_or_group_name, self.root_path)
 
 
@@ -1794,7 +1792,7 @@ class AbstractResource(ResourcePermissionsMixin, ResourceIRODSMixin):
         has_files = self.has_required_content_files()
         is_sensitive = self.contains_sensitive_payload
 
-        if value and is_sensitive and not (has_metadata and has_files):
+        if value and (is_sensitive or not (has_metadata and has_files)):
 
             if is_sensitive:
                 msg="Resource contains sensitive payload and cannot be set as public"

@@ -19,7 +19,7 @@ from forms import CreatorForm, ContributorForm, SubjectsForm, AbstractForm, Rela
     SourceForm, FundingAgencyForm, BaseCreatorFormSet, BaseContributorFormSet, BaseFormSet, \
     MetaDataElementDeleteForm, CoverageTemporalForm, CoverageSpatialForm, ExtendedMetadataForm
 from hs_core.views.utils import show_relations_section, \
-    can_user_copy_resource
+    can_user_copy_resource, get_url_with_token
 from hs_core.hydroshare.resource import METADATA_STATUS_SUFFICIENT, METADATA_STATUS_INSUFFICIENT
 from hs_tools_resource.app_launch_helper import resource_level_tool_urls
 
@@ -80,18 +80,7 @@ def get_page_context(page, user, resource_edit=False, extended_metadata_layout=N
         if landing_page_res_type_str.lower() == "toolresource":
             if landing_page_res_obj.metadata.app_home_page_url:
                 tool_homepage_url = content_model.metadata.app_home_page_url.value
-                anchor_str = '://'
-                start_idx = tool_homepage_url.find(anchor_str)
-                if start_idx > 0:
-                    start_idx += len(anchor_str)
-                    for host in settings.TRUSTED_SERVERS:
-                        if tool_homepage_url[start_idx:].startswith(host):
-                            token = request.session['access_token'] \
-                                if request and 'access_token' in request.session else ''
-                            if token:
-                                tool_homepage_url = '{}?username={}&access_token={}'.format(
-                                    tool_homepage_url, request.user.username, token)
-                            break
+                tool_homepage_url = get_url_with_token(request, tool_homepage_url)
         else:
             relevant_tools = resource_level_tool_urls(landing_page_res_obj, request)
 
@@ -130,19 +119,6 @@ def get_page_context(page, user, resource_edit=False, extended_metadata_layout=N
     allow_copy = can_user_copy_resource(content_model, user)
 
     qholder = content_model.get_quota_holder()
-
-    show_pivot_popup = False
-
-    if 'appliance_id' in content_model.extra_data:
-        if content_model.extra_data['appliance_id'].lower().startswith('hail'):
-            # check whether this appliance already exists, and only show popup when the
-            # appliance does not exist
-            app_url = settings.PIVOT_URL + '/' + content_model.extra_data['appliance_id']
-            get_response = requests.get(app_url)
-            if get_response.status_code == status.HTTP_404_NOT_FOUND:
-                show_pivot_popup = True
-            else:
-                show_pivot_popup = False
 
     # user requested the resource in READONLY mode
     if not resource_edit:
@@ -230,8 +206,7 @@ def get_page_context(page, user, resource_edit=False, extended_metadata_layout=N
                    'is_resource_specific_tab_active': False,
                    'quota_holder': qholder,
                    'belongs_to_collections': belongs_to_collections,
-                   'current_user': user,
-                   'show_pivot_dialog': show_pivot_popup
+                   'current_user': user
         }
 
         if 'task_id' in request.session:
@@ -418,7 +393,7 @@ def get_page_context(page, user, resource_edit=False, extended_metadata_layout=N
                'extended_metadata_layout': extended_metadata_layout,
                'bag_url': bag_url,
                'current_user': user,
-               'current_irods_store': os.path.join(settings.IRODS_BYOD_COLLECTION, user.username),
+               'current_irods_store': '/' + settings.IRODS_ZONE + '/home/' + user.username,
                'show_content_files': show_content_files,
                'validation_error': validation_error if validation_error else None,
                'discoverable': discoverable,
@@ -430,8 +405,7 @@ def get_page_context(page, user, resource_edit=False, extended_metadata_layout=N
                                               type_value != 'isVersionOf' and
                                               type_value != 'hasPart'),
                'is_resource_specific_tab_active': False,
-               'belongs_to_collections': belongs_to_collections,
-               'show_pivot_dialog': show_pivot_popup
+               'belongs_to_collections': belongs_to_collections
     }
 
     return context

@@ -153,57 +153,8 @@
             <a class='btn btn-primary' href="{{ tool_homepage_url }}" target="_blank">Open Web App</a>
         {% endif %}
 
-        {% if request.user.is_authenticated and cm.resource_type != 'ToolResource' %}
-            <span id="apps-dropdown"/>
-            <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Deploy on...
-                <span class="caret"></span>
-            </button>
-            <ul class="dropdown-menu">
-                <input type="hidden" id="pivot_optimal_url" value="{% url 'scidas_virtual_app' cm.short_id 'optimal' %}"/>
-                <input type="hidden" id="pivot_aws_url" value="{% url 'scidas_virtual_app' cm.short_id 'aws' %}"/>
-                <input type="hidden" id="pivot_gcp_url" value="{% url 'scidas_virtual_app' cm.short_id 'gcp' %}"/>
-
-                <li id='pivot-optimal' title="PIVOT appliance provision with optimal placement"
-                {% if show_pivot_dialog %} data-toggle="modal" data-target="#pivot-dialog" {% endif %}>
-                {% if not show_pivot_dialog %}
-                    <a href="{% url 'scidas_virtual_app' cm.short_id 'optimal' %}">
-                {% endif %}
-                  <img class="dropdown-user-webapp-icon" src="/static/img/scidas_logo.jpg">
-                  <span>PIVOT Appliance (Optimal)</span>
-                {% if not show_pivot_dialog %}
-                    </a>
-                {% endif %}
-                </li>
-                <li id='pivot-aws' title="PIVOT appliance provision in Amazon cloud"
-                {% if show_pivot_dialog %} data-toggle="modal" data-target="#pivot-dialog" {% endif %}>
-                {% if not show_pivot_dialog %}
-                  <a href="{% url 'scidas_virtual_app' cm.short_id 'aws' %}">
-                {% endif %}
-                      <img class="dropdown-user-webapp-icon" src="/static/img/scidas_logo.jpg">
-                      <span>PIVOT Appliance (AWS)</span>
-                {% if not show_pivot_dialog %}
-                  </a>
-                {% endif %}
-                </li>
-                <li id='pivot-gcp' title="PIVOT appliance provision in Google cloud"
-                {% if show_pivot_dialog %} data-toggle="modal" data-target="#pivot-dialog" {% endif %}>
-                {% if not show_pivot_dialog %}
-                  <a href="{% url 'scidas_virtual_app' cm.short_id 'gcp' %}">
-                {% endif %}
-                      <img class="dropdown-user-webapp-icon" src="/static/img/scidas_logo.jpg">
-                      <span>PIVOT Appliance (GCP)</span>
-                {% if not show_pivot_dialog %}
-                  </a>
-                {% endif %}
-                </li>
-            </ul>
-        {% endif %}
         {% if relevant_tools and relevant_tools.open_with_app_counter > 0 %}
-          {% if request.user.is_authenticated %}
-            <span id="pivot-apps-dropdown"/>
-          {% else %}
-              <span id="apps-dropdown"/>
-          {% endif %}
+          <span id="apps-dropdown"/>
           <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Open with...
               <span class="caret"></span>
           </button>

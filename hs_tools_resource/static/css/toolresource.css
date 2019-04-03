@@ -37,12 +37,6 @@
     bottom: 20px;
 }
 
-#pivot-apps-dropdown {
-    position: absolute;
-    right: 124px;
-    bottom: 0px;
-}
-
 .dropdown-menu > li > a {
     padding: 0;
 }
