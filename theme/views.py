@@ -430,6 +430,10 @@ def send_verification_mail_for_password_reset(request, user):
 
 
 def oauth_request(request):
+    import sys
+    sys.path.append("/pycharm-debug")
+    import pydevd
+    pydevd.settrace('152.54.6.67', port=21000, suspend=False)
 
     # note that trailing slash should not be added to return_to url
     return_url = '&return_to={}://{}/oauth_return'.format(request.scheme, request.get_host())
