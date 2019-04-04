@@ -11,7 +11,7 @@ class UserInfo(APIView):
         :param request:
         :return:
         """
-        if not request.user.is_authenticated():
+        if not request.user or not request.user.is_authenticated():
             return Response({ "title": "None", "organization": "None"})
 
         user_info = {"username": request.user.username}
