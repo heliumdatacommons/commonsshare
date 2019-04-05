@@ -546,64 +546,64 @@ OAUTH2_PROVIDER = {
 # LOGGING SETTINGS #
 ####################
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format' : "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
-            'datefmt' : "%d/%b/%Y %H:%M:%S"
-        },
-        'simple': {
-            'format': '[%(asctime)s] %(levelname)s %(message)s',
-            'datefmt' : "%d/%b/%Y %H:%M:%S"
-        },
-    },
-    'handlers': {
-        'syslog': {
-            'level': 'WARNING',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': '/hydroshare/log/system.log',
-            'formatter': 'simple',
-            'maxBytes': 1024*1024*15, # 15MB
-            'backupCount': 10,
-        },
-        'djangolog': {
-            'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': '/hydroshare/log/django.log',
-            'formatter': 'verbose',
-            'maxBytes': 1024*1024*15, # 15MB
-            'backupCount': 10,
-        },
-        'hydrosharelog': {
-            'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': '/hydroshare/log/hydroshare.log',
-            'formatter': 'verbose',
-            'maxBytes': 1024*1024*15, # 15MB
-            'backupCount': 10,
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['syslog', 'djangolog'],
-            'propagate': True,
-            'level': 'DEBUG',
-        },
-        'django.db.backends': {
-            'handlers': ['syslog'],
-            'level': 'WARNING',
-            'propagate': False,
-        },
-        # Catch-all logger for CommonsShare apps
-        '': {
-            'handlers': ['hydrosharelog'],
-            'propagate': False,
-            'level': 'DEBUG'
-        },
-    }
-}
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'formatters': {
+#         'verbose': {
+#             'format' : "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+#             'datefmt' : "%d/%b/%Y %H:%M:%S"
+#         },
+#         'simple': {
+#             'format': '[%(asctime)s] %(levelname)s %(message)s',
+#             'datefmt' : "%d/%b/%Y %H:%M:%S"
+#         },
+#     },
+#     'handlers': {
+#         'syslog': {
+#             'level': 'WARNING',
+#             'class': 'logging.handlers.RotatingFileHandler',
+#             'filename': '/hydroshare/log/system.log',
+#             'formatter': 'simple',
+#             'maxBytes': 1024*1024*15, # 15MB
+#             'backupCount': 10,
+#         },
+#         'djangolog': {
+#             'level': 'DEBUG',
+#             'class': 'logging.handlers.RotatingFileHandler',
+#             'filename': '/hydroshare/log/django.log',
+#             'formatter': 'verbose',
+#             'maxBytes': 1024*1024*15, # 15MB
+#             'backupCount': 10,
+#         },
+#         'hydrosharelog': {
+#             'level': 'DEBUG',
+#             'class': 'logging.handlers.RotatingFileHandler',
+#             'filename': '/hydroshare/log/hydroshare.log',
+#             'formatter': 'verbose',
+#             'maxBytes': 1024*1024*15, # 15MB
+#             'backupCount': 10,
+#         },
+#     },
+#     'loggers': {
+#         'django': {
+#             'handlers': ['syslog', 'djangolog'],
+#             'propagate': True,
+#             'level': 'DEBUG',
+#         },
+#         'django.db.backends': {
+#             'handlers': ['syslog'],
+#             'level': 'WARNING',
+#             'propagate': False,
+#         },
+#         # Catch-all logger for CommonsShare apps
+#         '': {
+#             'handlers': ['hydrosharelog'],
+#             'propagate': False,
+#             'level': 'DEBUG'
+#         },
+#     }
+# }
 
 # hs_tracking settings
 TRACKING_SESSION_TIMEOUT = 60 * 15
@@ -723,5 +723,6 @@ SWAGGER_SETTINGS = {
     "VALIDATOR_URL": False
 }
 
-ONTOLOGY_SOLR_URL = 'http://{SOLR_HOST}:{SOLR_PORT}/solr/ontology-core'.format(**globals())
+ONTOLOGY_SOLR_URL = ''
+#ONTOLOGY_SOLR_URL = 'http://{SOLR_HOST}:{SOLR_PORT}/solr/ontology-core'.format(**globals())
 MAX_ROWS_IN_ONTOLOGY_CORE = 15277
