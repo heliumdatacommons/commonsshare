@@ -33,7 +33,7 @@ from mezzanine.utils.email import send_verification_mail, send_approve_mail, sub
     default_token_generator, send_mail_template
 from mezzanine.utils.urls import login_redirect, next_url
 from mezzanine.accounts.forms import LoginForm
-from mezzanine.utils.views import render
+from django.shortcuts import render
 
 from hs_core.views.utils import authorize, ACTION_TO_AUTHORIZE
 from hs_core.hydroshare.utils import get_file_from_irods, user_from_id
@@ -430,7 +430,6 @@ def send_verification_mail_for_password_reset(request, user):
 
 
 def oauth_request(request):
-
     # note that trailing slash should not be added to return_to url
     return_url = '&return_to={}://{}/oauth_return'.format(request.scheme, request.get_host())
     url = '{}authorize?provider=globus&scope=openid%20email%20profile{}'.format(settings.OAUTH_SERVICE_SERVER_URL, return_url)

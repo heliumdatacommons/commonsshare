@@ -24,6 +24,9 @@ class Tracking(object):
 
         # get user info that will be recorded in the visit log
         session = Session.objects.for_request(request)
+        if not session:
+            return response
+
         usertype = utils.get_user_type(session)
         emaildomain = utils.get_user_email_domain(session)
         ip = utils.get_client_ip(request)

@@ -1,18 +1,33 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
 from hs_dictionary import views as dict_views
 from hs_core import views as core_views
-from hs_file_types import views as file_type_views
 
-from rest_framework_swagger.views import get_swagger_view
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
 
-schema_view = get_swagger_view(title='CommonsShare API')
+from rest_framework import permissions
 
-urlpatterns = patterns(
-    '',
+schema_view_yasg = get_schema_view(
+   openapi.Info(
+      title="CommonsShare API",
+      default_version='v1',
+      description="CommonsShare Rest API",
+      terms_of_service="https://help.commonsshare.org/about-commonsshare/policies/terms-of-use/",
+      contact=openapi.Contact(email="help@cuahsi.org"),
+   ),
+   validators=[],
+   public=True,
+   permission_classes=(permissions.AllowAny,),
+)
 
-    # Swagger Docs View
-    url(r'^$', schema_view),
+urlpatterns = [
+
+    url(r'^(?P<format>\.json|\.yaml)$', schema_view_yasg.without_ui(cache_timeout=None),
+        name='schema-json'),
+    url(r'^$', schema_view_yasg.with_ui('swagger', cache_timeout=None),
+        name='schema-swagger-ui'),
+    url(r'^redoc/$', schema_view_yasg.with_ui('redoc', cache_timeout=None), name='schema-redoc'),
 
     # resource API
     url(r'^resource/types/$', core_views.resource_rest_api.ResourceTypes.as_view(),
@@ -107,11 +122,6 @@ urlpatterns = patterns(
     url(r'^resource/(?P<pk>[0-9a-f-]+)/functions/move-or-rename/$',
         core_views.resource_folder_hierarchy.data_store_file_or_folder_move_or_rename_public),
 
-    url(r'^resource/(?P<pk>[0-9a-f-]+)/functions/set-file-type/(?P<file_path>.*)/'
-        r'(?P<hs_file_type>[A-z]+)/$',
-        file_type_views.set_file_type_public,
-        name="set_file_type_public"),
-
     # DEPRECATED: use form above instead. Added unused POST for simplicity
     url(r'^resource/(?P<pk>[0-9a-f-]+)/file_list/$',
         core_views.resource_rest_api.ResourceFileListCreate.as_view(),
@@ -133,4 +143,4 @@ urlpatterns = patterns(
     url(r'^resource/(?P<pk>[0-9a-f-]+)/access/$',
         core_views.resource_access_api.ResourceAccessUpdateDelete.as_view(),
         name='get_update_delete_resource_access'),
-)
+]

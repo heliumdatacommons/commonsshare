@@ -21,6 +21,8 @@ class SessionManager(models.Manager):
     def for_request(self, request, user=None):
         if hasattr(request, 'user'):
             user = request.user
+            if not user:
+                return None
 
         signed_id = request.session.get('hs_tracking_id')
         if signed_id:

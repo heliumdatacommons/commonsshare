@@ -1,24 +1,24 @@
 from __future__ import unicode_literals
 
-from django.conf.urls import patterns, include, url
+from django.conf.urls import include, url
 from django.conf.urls.i18n import i18n_patterns
 from django.contrib import admin
 
 from mezzanine.core.views import direct_to_template
 from mezzanine.conf import settings
+from mezzanine.pages.views import page
 
-import autocomplete_light
+from autocomplete_light import shortcuts as autocomplete_light
 
 from hs_core.views.discovery_view import DiscoveryView
 from hs_core.views.discovery_json_view import DiscoveryJsonView
+from hs_sitemap.views import sitemap
 from hs_core.views.fulltextsearch_view import ftsearchview
 from hs_core.views.harmonizedata_view import hdsearchview
 
 from theme import views as theme
 from hs_tracking import views as tracking
 from hs_core import views as hs_core_views
-from hs_app_timeseries import views as hs_ts_views
-
 
 autocomplete_light.autodiscover()
 admin.autodiscover()
@@ -27,13 +27,13 @@ admin.autodiscover()
 # You can also change the ``home`` view to add your own functionality
 # to the project's homepage.
 
-urlpatterns = i18n_patterns("",
+urlpatterns = i18n_patterns(
 
     # Change the admin prefix here to use an alternate URL for the
     # admin interface, which would be marginally more secure.
     url("^admin/", include(admin.site.urls)),
     url("^inplaceeditform/", include("inplaceeditform.urls")),
-    url('^r/(?P<shortkey>[A-z0-9\-_]+)', 'hs_core.views.short_url'),
+    url('^r/(?P<shortkey>[A-z0-9\-_]+)', hs_core_views.short_url),
     url(r'^tracking/reports/profiles/$', tracking.VisitorProfileReport.as_view(),
         name='tracking-report-profiles'),
     url(r'^tracking/reports/history/$', tracking.HistoryReport.as_view(),
@@ -64,7 +64,7 @@ urlpatterns = i18n_patterns("",
         theme.email_verify, name='email_verify'),
     url(r'^email_verify_password_reset/(?P<token>[-\w]+)/(?P<uidb36>[-\w]+)/',
         theme.email_verify_password_reset, name='email_verify_password_reset'),
-    url(r'^verify/(?P<token>[0-9a-zA-Z:_\-]*)/', 'hs_core.views.verify'),
+    url(r'^verify/(?P<token>[0-9a-zA-Z:_\-]*)/', hs_core_views.verify),
     url(r'^django_irods/', include('django_irods.urls')),
     url(r'^autocomplete/', include('autocomplete_light.urls')),
     url(r'^search/$', DiscoveryView.as_view(), name='haystack_search'),
@@ -73,53 +73,50 @@ urlpatterns = i18n_patterns("",
     url(r'^ftsearch/$', ftsearchview, name='fulltext_search'),
     url(r'^hdsearch/$', hdsearchview, name='harmonizedata_search'),
 
-    url(r'^sitemap/$', 'hs_sitemap.views.sitemap', name='sitemap'),
+    url(r'^sitemap/$', sitemap, name='sitemap'),
+
     url(r'^collaborate/$', hs_core_views.CollaborateView.as_view(), name='collaborate'),
     url(r'^my-groups/$', hs_core_views.MyGroupsView.as_view(), name='my_groups'),
     url(r'^group/(?P<group_id>[0-9]+)', hs_core_views.GroupView.as_view(), name='group'),
-    url(r'^timeseries/sqlite/update/(?P<resource_id>[A-z0-9\-_]+)', hs_ts_views.update_sqlite_file,
-        name='update_sqlite_file'),
     url(r'^apps/$', hs_core_views.apps.AppsView.as_view(), name="apps")
 )
 
 # Filebrowser admin media library.
 if getattr(settings, "PACKAGE_NAME_FILEBROWSER") in settings.INSTALLED_APPS:
-    urlpatterns += i18n_patterns("",
-        ("^admin/media-library/", include("%s.urls" %
+    urlpatterns += i18n_patterns(
+        url("^admin/media-library/", include("%s.urls" %
                                         settings.PACKAGE_NAME_FILEBROWSER)),
     )
 
 # Put API URLs before Mezzanine so that Mezzanine doesn't consume them
-urlpatterns += patterns('',
+urlpatterns += [
     url('^hsapi/', include('hs_rest_api.urls')),
     url('^hsapi/', include('hs_core.urls')),
     url('', include('hs_core.resourcemap_urls')),
     url('', include('hs_core.metadata_terms_urls')),
     url('', include('hs_core.debug_urls')),
-    url('^hsapi/', include('ref_ts.urls')),
     url('^irods/', include('irods_browser_app.urls')),
     url('^globus/', include('globus_data_reg_app.urls')),
     url('^hsapi/', include('hs_labels.urls')),
     url('^hsapi/', include('hs_collection_resource.urls')),
-    url('^hsapi/', include('hs_file_types.urls')),
-    url('^hsapi/', include('hs_app_netCDF.urls')),
-)
+]
 
 # DOS API URLs
-urlpatterns += patterns('',
+urlpatterns += [
     url('^dosapi/', include('hs_dos_api.urls'))
-)
+]
 
 
 # robots.txt URLs for django-robots
-urlpatterns += patterns('',
-    (r'^robots\.txt$', include('robots.urls')),
-)
+urlpatterns += [
+    url(r'^robots\.txt', include('robots.urls')),
+]
 
+from django.views.static import serve
 if settings.DEBUG is False:   # if DEBUG is True it will be served automatically
-  urlpatterns += patterns('',
-  url(r'^static/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.STATIC_ROOT}),
-)
+    urlpatterns += [
+        url(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
+    ]
 
 if 'heartbeat' in settings.INSTALLED_APPS:
   from heartbeat.urls import urlpatterns as heartbeat_urls
@@ -128,7 +125,7 @@ if 'heartbeat' in settings.INSTALLED_APPS:
     url(r'^heartbeat/', include(heartbeat_urls))
   ]
 
-urlpatterns += patterns('',
+urlpatterns += [
 
     # We don't want to presume how your homepage works, so here are a
     # few patterns you can use to set it up.
@@ -156,7 +153,7 @@ urlpatterns += patterns('',
     # "/.html" - so for this case, the template "pages/index.html"
     # should be used if you want to customize the homepage's template.
 
-    url("^$", "mezzanine.pages.views.page", {"slug": "/"}, name="home"),
+    url("^$", page, {"slug": "/"}, name="home"),
 
     # HOMEPAGE FOR A BLOG-ONLY SITE
     # -----------------------------
@@ -169,7 +166,7 @@ urlpatterns += patterns('',
     # url("^$", "mezzanine.blog.views.blog_post_list", name="home"),
 
     # Override Mezzanine URLs here, before the Mezzanine URL include
-    ("^accounts/signup/", "theme.views.signup"),
+    url("^accounts/signup/", theme.signup),
 
     # MEZZANINE'S URLS
     # ----------------
@@ -182,7 +179,7 @@ urlpatterns += patterns('',
     # ``mezzanine.urls``, go right ahead and take the parts you want
     # from it, and use them directly below instead of using
     # ``mezzanine.urls``.
-    ("^", include("mezzanine.urls")),
+    url("^", include("mezzanine.urls")),
 
     # MOUNTING MEZZANINE UNDER A PREFIX
     # ---------------------------------
@@ -200,7 +197,7 @@ urlpatterns += patterns('',
 
     # ("^%s/" % settings.SITE_PREFIX, include("mezzanine.urls"))
 
-)
+]
 
 # Adds ``STATIC_URL`` to the context of error pages, so that error
 # pages can use JS, CSS and images.

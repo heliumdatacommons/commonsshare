@@ -2,10 +2,6 @@
 
 from haystack import indexes
 from hs_core.models import BaseResource
-from hs_geographic_feature_resource.models import GeographicFeatureMetaData
-from hs_app_netCDF.models import NetcdfMetaData
-from ref_ts.models import RefTSMetadata
-from hs_app_timeseries.models import TimeSeriesMetaData
 from django.db.models import Q
 from datetime import datetime
 from nameparser import HumanName
@@ -70,6 +66,12 @@ class BaseResourceIndex(indexes.SearchIndex, indexes.Indexable):
         """Return queryset including discoverable and public resources."""
         return self.get_model().objects.filter(Q(raccess__discoverable=True) |
                                                Q(raccess__public=True))
+
+    def prepare_created(self, obj):
+        return obj.created.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+    def prepare_modified(self, obj):
+        return obj.updated.strftime('%Y-%m-%dT%H:%M:%SZ')
 
     def prepare_title(self, obj):
         """Return metadata title if exists, otherwise return none."""
