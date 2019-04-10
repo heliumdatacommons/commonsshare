@@ -394,7 +394,7 @@ MIDDLEWARE_CLASSES = (
 
 
 AUTHENTICATION_BACKENDS = (
-    'theme.backends.globus.GlobusOAuth2',
+    'theme.backends.auth0.Auth0OAuth2',
     'mezzanine.core.auth_backends.MezzanineBackend',
 )
 

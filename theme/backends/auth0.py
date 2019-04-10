@@ -1,6 +1,5 @@
 """
-Globus Auth backend that authenticates user created using info returned from oauth service, docs at:
-    https://docs.globus.org/api/auth and
+Auth0 Auth backend that authenticates user created using info returned from oauth service, docs at:
     https://github.com/heliumdatacommons/auth_microservice/wiki/API-and-Use
 """
 
@@ -17,7 +16,7 @@ from django.conf import settings
 from hs_core.hydroshare.users import create_account
 
 
-class GlobusOAuth2:
+class Auth0OAuth2:
     def authenticate(self, request, username=None, access_token=None, first_name=None,
                      last_name=None, email='', uid=None):
 
