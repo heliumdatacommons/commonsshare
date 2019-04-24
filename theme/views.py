@@ -1,8 +1,5 @@
-from json import dumps, loads, load
+from json import dumps, loads
 import requests
-import os
-import re
-import hashlib
 import logging
 
 from django.contrib.auth.decorators import login_required
@@ -23,7 +20,6 @@ from django.core.mail import send_mail
 from django.utils.http import int_to_base36
 from django.template.response import TemplateResponse
 from rest_framework import status
-from django.conf import settings as ds
 
 from mezzanine.conf import settings
 from mezzanine.generic.views import initial_validation
@@ -34,10 +30,9 @@ from mezzanine.utils.email import send_verification_mail, send_approve_mail, sub
 from mezzanine.utils.urls import login_redirect, next_url
 from mezzanine.accounts.forms import LoginForm
 from django.shortcuts import render
+from django.core.exceptions import PermissionDenied
 
-from hs_core.views.utils import authorize, ACTION_TO_AUTHORIZE
-from hs_core.hydroshare.utils import get_file_from_irods, user_from_id
-from hs_core.models import ResourceFile, get_user
+from hs_core.hydroshare.utils import user_from_id
 from hs_access_control.models import GroupMembershipRequest
 from hs_dictionary.models import University, UncategorizedTerm
 from theme.forms import ThreadedCommentForm
@@ -473,7 +468,11 @@ def oauth_return(request):
     kwargs['uid'] = uid
 
     # authenticate against oauth with username and access_token and create linked user in CommonsShare
-    tgt_user = authenticate(**kwargs)
+    try:
+        tgt_user = authenticate(**kwargs)
+    except PermissionDenied as ex:
+        info(request, _(ex.message))
+        return login_redirect(request)
 
     if tgt_user:
         login_msg = "Successfully logged in"
