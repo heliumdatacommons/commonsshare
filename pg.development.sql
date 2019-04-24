@@ -1,7 +1,3 @@
--- noinspection SqlDialectInspectionForFile
-
--- noinspection SqlNoDataSourceInspectionForFile
-
 --
 -- PostgreSQL database cluster dump
 --
@@ -214,7 +210,7 @@ CREATE TABLE auth_user (
     password character varying(128) NOT NULL,
     last_login timestamp with time zone,
     is_superuser boolean NOT NULL,
-    username character varying(64) NOT NULL,
+    username character varying(150) NOT NULL,
     first_name character varying(30) NOT NULL,
     last_name character varying(30) NOT NULL,
     email character varying(254) NOT NULL,
@@ -323,7 +319,7 @@ CREATE TABLE blog_blogcategory (
     id integer NOT NULL,
     site_id integer NOT NULL,
     title character varying(500) NOT NULL,
-    slug character varying(2000)
+    slug character varying(2000) NOT NULL
 );
 
 
@@ -363,7 +359,7 @@ CREATE TABLE blog_blogpost (
     rating_average double precision NOT NULL,
     site_id integer NOT NULL,
     title character varying(500) NOT NULL,
-    slug character varying(2000),
+    slug character varying(2000) NOT NULL,
     _meta_title character varying(500),
     description text NOT NULL,
     gen_description boolean NOT NULL,
@@ -1617,14 +1613,14 @@ CREATE TABLE forms_field (
     id integer NOT NULL,
     _order integer,
     form_id integer NOT NULL,
-    label character varying(200) NOT NULL,
+    label text NOT NULL,
     field_type integer NOT NULL,
     required boolean NOT NULL,
     visible boolean NOT NULL,
     choices character varying(1000) NOT NULL,
     "default" character varying(2000) NOT NULL,
     placeholder_text character varying(100) NOT NULL,
-    help_text character varying(100) NOT NULL
+    help_text text NOT NULL
 );
 
 
@@ -2120,7 +2116,7 @@ CREATE TABLE generic_keyword (
     id integer NOT NULL,
     site_id integer NOT NULL,
     title character varying(500) NOT NULL,
-    slug character varying(2000)
+    slug character varying(2000) NOT NULL
 );
 
 
@@ -2215,7 +2211,9 @@ CREATE TABLE hs_access_control_groupaccess (
     description text NOT NULL,
     picture character varying(100),
     purpose text,
-    auto_approve boolean NOT NULL
+    auto_approve boolean NOT NULL,
+    require_dua_signoff boolean NOT NULL,
+    dua_url character varying(200)
 );
 
 
@@ -2251,7 +2249,8 @@ CREATE TABLE hs_access_control_groupmembershiprequest (
     date_requested timestamp with time zone NOT NULL,
     group_to_join_id integer NOT NULL,
     invitation_to_id integer,
-    request_from_id integer NOT NULL
+    request_from_id integer NOT NULL,
+    dua_signed boolean NOT NULL
 );
 
 
@@ -3768,6 +3767,10 @@ CREATE TABLE hs_core_genericresource (
     resource_federation_path character varying(100) NOT NULL,
     extra_data hstore NOT NULL,
     minid character varying(1024),
+    doi character varying(1024),
+    assessment_id integer,
+    contains_sensitive_payload boolean NOT NULL,
+    CONSTRAINT hs_core_genericresource_assessment_id_check CHECK ((assessment_id >= 0)),
     CONSTRAINT hs_core_genericresource_object_id_check CHECK ((object_id >= 0))
 );
 
@@ -7337,22 +7340,6 @@ ALTER SEQUENCE hs_tracking_visitor_id_seq OWNED BY hs_tracking_visitor.id;
 
 
 --
--- Name: oauth2_provider_accesstoken; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE oauth2_provider_accesstoken (
-    id integer NOT NULL,
-    token character varying(255) NOT NULL,
-    expires timestamp with time zone NOT NULL,
-    scope text NOT NULL,
-    application_id integer NOT NULL,
-    user_id integer
-);
-
-
-ALTER TABLE oauth2_provider_accesstoken OWNER TO postgres;
-
---
 -- Name: oauth2_provider_accesstoken_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -7367,30 +7354,23 @@ CREATE SEQUENCE oauth2_provider_accesstoken_id_seq
 ALTER TABLE oauth2_provider_accesstoken_id_seq OWNER TO postgres;
 
 --
--- Name: oauth2_provider_accesstoken_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: oauth2_provider_accesstoken; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
 
-ALTER SEQUENCE oauth2_provider_accesstoken_id_seq OWNED BY oauth2_provider_accesstoken.id;
-
-
---
--- Name: oauth2_provider_application; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE oauth2_provider_application (
-    id integer NOT NULL,
-    client_id character varying(100) NOT NULL,
-    redirect_uris text NOT NULL,
-    client_type character varying(32) NOT NULL,
-    authorization_grant_type character varying(32) NOT NULL,
-    client_secret character varying(255) NOT NULL,
-    name character varying(255) NOT NULL,
-    user_id integer NOT NULL,
-    skip_authorization boolean NOT NULL
+CREATE TABLE oauth2_provider_accesstoken (
+    id bigint DEFAULT nextval('oauth2_provider_accesstoken_id_seq'::regclass) NOT NULL,
+    token character varying(255) NOT NULL,
+    expires timestamp with time zone NOT NULL,
+    scope text NOT NULL,
+    application_id bigint,
+    user_id integer,
+    created timestamp with time zone NOT NULL,
+    updated timestamp with time zone NOT NULL,
+    source_refresh_token_id bigint
 );
 
 
-ALTER TABLE oauth2_provider_application OWNER TO postgres;
+ALTER TABLE oauth2_provider_accesstoken OWNER TO postgres;
 
 --
 -- Name: oauth2_provider_application_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -7407,28 +7387,25 @@ CREATE SEQUENCE oauth2_provider_application_id_seq
 ALTER TABLE oauth2_provider_application_id_seq OWNER TO postgres;
 
 --
--- Name: oauth2_provider_application_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: oauth2_provider_application; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
 
-ALTER SEQUENCE oauth2_provider_application_id_seq OWNED BY oauth2_provider_application.id;
-
-
---
--- Name: oauth2_provider_grant; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE oauth2_provider_grant (
-    id integer NOT NULL,
-    code character varying(255) NOT NULL,
-    expires timestamp with time zone NOT NULL,
-    redirect_uri character varying(255) NOT NULL,
-    scope text NOT NULL,
-    application_id integer NOT NULL,
-    user_id integer NOT NULL
+CREATE TABLE oauth2_provider_application (
+    id bigint DEFAULT nextval('oauth2_provider_application_id_seq'::regclass) NOT NULL,
+    client_id character varying(100) NOT NULL,
+    redirect_uris text NOT NULL,
+    client_type character varying(32) NOT NULL,
+    authorization_grant_type character varying(32) NOT NULL,
+    client_secret character varying(255) NOT NULL,
+    name character varying(255) NOT NULL,
+    user_id integer,
+    skip_authorization boolean NOT NULL,
+    created timestamp with time zone NOT NULL,
+    updated timestamp with time zone NOT NULL
 );
 
 
-ALTER TABLE oauth2_provider_grant OWNER TO postgres;
+ALTER TABLE oauth2_provider_application OWNER TO postgres;
 
 --
 -- Name: oauth2_provider_grant_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -7445,26 +7422,23 @@ CREATE SEQUENCE oauth2_provider_grant_id_seq
 ALTER TABLE oauth2_provider_grant_id_seq OWNER TO postgres;
 
 --
--- Name: oauth2_provider_grant_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: oauth2_provider_grant; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
 
-ALTER SEQUENCE oauth2_provider_grant_id_seq OWNED BY oauth2_provider_grant.id;
-
-
---
--- Name: oauth2_provider_refreshtoken; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE oauth2_provider_refreshtoken (
-    id integer NOT NULL,
-    token character varying(255) NOT NULL,
-    access_token_id integer NOT NULL,
-    application_id integer NOT NULL,
-    user_id integer NOT NULL
+CREATE TABLE oauth2_provider_grant (
+    id bigint DEFAULT nextval('oauth2_provider_grant_id_seq'::regclass) NOT NULL,
+    code character varying(255) NOT NULL,
+    expires timestamp with time zone NOT NULL,
+    redirect_uri character varying(255) NOT NULL,
+    scope text NOT NULL,
+    application_id bigint NOT NULL,
+    user_id integer NOT NULL,
+    created timestamp with time zone NOT NULL,
+    updated timestamp with time zone NOT NULL
 );
 
 
-ALTER TABLE oauth2_provider_refreshtoken OWNER TO postgres;
+ALTER TABLE oauth2_provider_grant OWNER TO postgres;
 
 --
 -- Name: oauth2_provider_refreshtoken_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -7481,11 +7455,22 @@ CREATE SEQUENCE oauth2_provider_refreshtoken_id_seq
 ALTER TABLE oauth2_provider_refreshtoken_id_seq OWNER TO postgres;
 
 --
--- Name: oauth2_provider_refreshtoken_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: oauth2_provider_refreshtoken; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
 
-ALTER SEQUENCE oauth2_provider_refreshtoken_id_seq OWNED BY oauth2_provider_refreshtoken.id;
+CREATE TABLE oauth2_provider_refreshtoken (
+    id bigint DEFAULT nextval('oauth2_provider_refreshtoken_id_seq'::regclass) NOT NULL,
+    token character varying(255) NOT NULL,
+    access_token_id bigint,
+    application_id bigint NOT NULL,
+    user_id integer NOT NULL,
+    created timestamp with time zone NOT NULL,
+    updated timestamp with time zone NOT NULL,
+    revoked timestamp with time zone
+);
 
+
+ALTER TABLE oauth2_provider_refreshtoken OWNER TO postgres;
 
 --
 -- Name: pages_link; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
@@ -7507,7 +7492,7 @@ CREATE TABLE pages_page (
     keywords_string character varying(500) NOT NULL,
     site_id integer NOT NULL,
     title character varying(500) NOT NULL,
-    slug character varying(2000),
+    slug character varying(2000) NOT NULL,
     _meta_title character varying(500),
     description text NOT NULL,
     gen_description boolean NOT NULL,
@@ -9604,34 +9589,6 @@ ALTER TABLE ONLY hs_tracking_visitor ALTER COLUMN id SET DEFAULT nextval('hs_tra
 -- Name: id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY oauth2_provider_accesstoken ALTER COLUMN id SET DEFAULT nextval('oauth2_provider_accesstoken_id_seq'::regclass);
-
-
---
--- Name: id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY oauth2_provider_application ALTER COLUMN id SET DEFAULT nextval('oauth2_provider_application_id_seq'::regclass);
-
-
---
--- Name: id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY oauth2_provider_grant ALTER COLUMN id SET DEFAULT nextval('oauth2_provider_grant_id_seq'::regclass);
-
-
---
--- Name: id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY oauth2_provider_refreshtoken ALTER COLUMN id SET DEFAULT nextval('oauth2_provider_refreshtoken_id_seq'::regclass);
-
-
---
--- Name: id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
 ALTER TABLE ONLY pages_page ALTER COLUMN id SET DEFAULT nextval('pages_page_id_seq'::regclass);
 
 
@@ -9767,6 +9724,7 @@ ALTER TABLE ONLY theme_userquota ALTER COLUMN id SET DEFAULT nextval('theme_user
 
 COPY auth_group (id, name) FROM stdin;
 1	CommonsShare Author
+2	Test
 \.
 
 
@@ -9774,7 +9732,7 @@ COPY auth_group (id, name) FROM stdin;
 -- Name: auth_group_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('auth_group_id_seq', 1, true);
+SELECT pg_catalog.setval('auth_group_id_seq', 2, true);
 
 
 --
@@ -10963,8 +10921,7 @@ SELECT pg_catalog.setval('auth_permission_id_seq', 764, true);
 --
 
 COPY auth_user (id, password, last_login, is_superuser, username, first_name, last_name, email, is_staff, is_active, date_joined) FROM stdin;
-16	!POh8zDnUIAOGgYzx60xLjxyEjDnumkAXYnkIPyEc	2018-08-30 18:53:07.496749+00	f	hyi@unc.edu	Hong	Yi	hyi@unc.edu	f	t	2018-08-30 18:53:06.904133+00
-4	pbkdf2_sha256$20000$AretTDtCdjAs$NCU2pqMCLZqdeaSoLvAv/Xgbb3QDDR3ySWWurPNjb34=	2018-08-30 18:55:11.91741+00	t	admin	CommonsShare	Administrator	admin@example.com	t	t	2016-01-25 19:47:54+00
+4	pbkdf2_sha256$36000$z19UBH8RmHOo$dr4DFHkJltZBYvhGbLFVSw3qYZdx9NTzCIsndDeU8pg=	2019-04-24 20:55:08.420274+00	t	admin	CommonsShare	Administrator	admin@example.com	t	t	2016-01-25 19:47:54+00
 \.
 
 
@@ -10974,7 +10931,6 @@ COPY auth_user (id, password, last_login, is_superuser, username, first_name, la
 
 COPY auth_user_groups (id, user_id, group_id) FROM stdin;
 2	4	1
-11	16	1
 \.
 
 
@@ -10982,14 +10938,14 @@ COPY auth_user_groups (id, user_id, group_id) FROM stdin;
 -- Name: auth_user_groups_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('auth_user_groups_id_seq', 11, true);
+SELECT pg_catalog.setval('auth_user_groups_id_seq', 15, true);
 
 
 --
 -- Name: auth_user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('auth_user_id_seq', 16, true);
+SELECT pg_catalog.setval('auth_user_id_seq', 20, true);
 
 
 --
@@ -11183,6 +11139,11 @@ COPY django_admin_log (id, action_time, object_id, object_repr, action_flag, cha
 49	2017-09-01 18:33:32.402925+00	1	/terms-of-use/ ---> https://help.hydroshare.org/about-hydroshare/policies/terms-of-use/	2	Changed old_path.	10	4
 50	2018-08-30 18:56:44.411212+00	16	Search full text	1		33	4
 51	2018-08-30 18:57:53.291034+00	17	Concept Search	1		33	4
+52	2019-04-23 21:27:59.361629+00	19	houhyi@gmail.com	3		3	4
+53	2019-04-23 21:30:43.847533+00	19	houhyi@gmail.com	3		3	4
+54	2019-04-24 19:20:17.464804+00	16	Search full text	3		32	4
+55	2019-04-24 20:55:22.576309+00	17	hong.yi.hello@gmail.com	3		3	4
+56	2019-04-24 20:55:22.594573+00	16	hyi@unc.edu	3		3	4
 \.
 
 
@@ -11190,7 +11151,7 @@ COPY django_admin_log (id, action_time, object_id, object_repr, action_flag, cha
 -- Name: django_admin_log_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('django_admin_log_id_seq', 51, true);
+SELECT pg_catalog.setval('django_admin_log_id_seq', 56, true);
 
 
 --
@@ -11876,6 +11837,24 @@ COPY django_migrations (id, app, name, applied) FROM stdin;
 213	theme	0009_remove_userprofile_create_irods_user_account	2018-04-24 16:58:57.175777+00
 214	hs_core	0038_baseresource_minid	2018-08-30 18:51:43.791857+00
 215	hs_core	0039_remove_baseresource_doi	2018-08-30 18:51:44.019808+00
+216	sites	0002_alter_domain_unique	2019-04-22 21:23:22.151929+00
+217	admin	0002_logentry_remove_auto_add	2019-04-22 21:23:24.943305+00
+218	auth	0007_alter_validators_add_error_messages	2019-04-22 21:23:25.00956+00
+219	auth	0008_alter_user_username_max_length	2019-04-22 21:23:25.084601+00
+220	blog	0003_auto_20170411_0504	2019-04-22 21:23:25.201488+00
+221	django_comments	0003_add_submit_date_index	2019-04-22 21:23:25.351417+00
+222	forms	0006_auto_20170425_2225	2019-04-22 21:23:25.435411+00
+223	generic	0003_auto_20170411_0504	2019-04-22 21:23:25.477349+00
+224	hs_access_control	0024_groupaccess_require_dua_signoff	2019-04-22 21:23:25.728798+00
+225	hs_access_control	0025_auto_20181221_1636	2019-04-22 21:23:26.220808+00
+226	hs_core	0040_baseresource_doi	2019-04-22 21:23:26.435918+00
+227	hs_core	0041_baseresource_assessment_id	2019-04-22 21:23:26.527372+00
+228	hs_core	0042_baseresource_contains_sensitive_payload	2019-04-22 21:23:27.213724+00
+229	oauth2_provider	0003_auto_20160316_1503	2019-04-22 21:23:27.361466+00
+230	oauth2_provider	0004_auto_20160525_1623	2019-04-22 21:23:28.054349+00
+231	oauth2_provider	0005_auto_20170514_1141	2019-04-22 21:23:35.557398+00
+232	oauth2_provider	0006_auto_20171214_2232	2019-04-22 21:23:36.458356+00
+233	pages	0004_auto_20170411_0504	2019-04-22 21:23:36.68981+00
 \.
 
 
@@ -11883,7 +11862,7 @@ COPY django_migrations (id, app, name, applied) FROM stdin;
 -- Name: django_migrations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('django_migrations_id_seq', 215, true);
+SELECT pg_catalog.setval('django_migrations_id_seq', 233, true);
 
 
 --
@@ -11915,6 +11894,20 @@ mtzyl7dumuj30g4jb8tmyf7scec5ni6y	MmQ4MTVjNDgwY2RlOGVkY2JkZGIyMWU3NzFkMDY4N2JjYmF
 y094t1jbv59xrxfczsvga85awa6ubxvm	MmMzMTRlM2M4OWE3ODc3ZWFiNGUwNzc5MDQ3MDFhYTczMGI4OGY4Yjp7ImhzX3RyYWNraW5nX2lkIjoiZXlKcFpDSTZPSDA6MWRpaVNrOm5YTmU5ZVNtcXowdU5uWTViaEFzdW9PQVdDTSIsIl9hdXRoX3VzZXJfaGFzaCI6IjBjZGYxNDBkN2Q1NDRhMGUyMWMwM2EyMTdjMDJlNGQyMjFhZjhiYTUiLCJfYXV0aF91c2VyX2JhY2tlbmQiOiJtZXp6YW5pbmUuY29yZS5hdXRoX2JhY2tlbmRzLk1lenphbmluZUJhY2tlbmQiLCJfYXV0aF91c2VyX2lkIjoiNCJ9	2017-09-01 14:43:23.173974+00
 diphhiv8ucfe8it42h9hobejjw96ejc5	NzEwY2NkZGY3MWJjOWQ1MzFmYjcxY2M0NmUzNTZiNGIyNTQ3ZGEzMDp7ImhzX3RyYWNraW5nX2lkIjoiZXlKcFpDSTZNVEI5OjFkbnFsdTo0bFRzQUxPTnh1TnM2czJzWkZ0YWFIZ25VaVUifQ==	2017-09-15 18:34:26.171288+00
 nlysfdspuzhw8a85kvd3bnv45mrx1vv8	YTQyODc1OTk4ZDBhZjE0MzNmMDc2MTBkYmRmY2MwMWMwZmJjM2RiYzp7ImhzX3RyYWNraW5nX2lkIjoiZXlKcFpDSTZNVE45OjFmdlNCdDpyTmNWc1cxVmp0dWJtcEF3ZnFFUE9pSHBhakkifQ==	2018-09-13 19:01:13.183227+00
+i46slk512nlyhpm3cehuh83wwjalatkz	MzM2NTFkY2IwYWY5Njg0MDFjMTRiODU3ODA3NTVlMDBlZjExMTUzODp7ImhzX3RyYWNraW5nX2lkIjoiZXlKcFpDSTZNWDA6MWhJZ1JZOmEtNFpuVXZEdXJ0dEtBZTBXYkNhcXpBZ2RCQSJ9	2019-05-06 21:25:40.30938+00
+zunafjhtqfhgaxndtjk0lht2ueh9qdg0	ODQ0MDlmNTgzZDQ1NjZmODY4MTRkY2Q4ZDQxNGIxOTg5NGY3M2FiNjp7ImhzX3RyYWNraW5nX2lkIjoiZXlKcFpDSTZNMzA6MWhJdktMOmRPNHU5aHdPOHk1UmVLVFZxMGxEU3BBNWdBTSJ9	2019-05-07 13:19:13.587313+00
+z2petf5cnugakmpn7ibpkkoc04wixcyr	YTVjNDJkN2FhMzRlNjJhMGQ5ZjA3MmYwZWVhNTYzODBlYTdmY2I2YTp7ImhzX3RyYWNraW5nX2lkIjoiZXlKcFpDSTZOWDA6MWhKMEQyOktIanBITEhTTURxV2ZReC1PWWwwVDNPY0RNYyJ9	2019-05-07 18:32:00.990735+00
+17er53nriit39p7doqnzs02p3uuljuxo	Njg3NWYyZWNkYzc0NWNjYmQ0N2JiYWE2MTUxNTJjYWNkOGUyMDExOTp7ImhzX3RyYWNraW5nX2lkIjoiZXlKcFpDSTZObjA6MWhKMERVOlIxMGd6cWZLU1JTbGt2Y051emVGVzFKUS1fWSJ9	2019-05-07 18:32:28.974749+00
+f2wz70rmlcufhq22h166hr70jqki25zj	MDUyOTAxYWIwNTJhMDk1NjhiMzlmOTlhMzM4YjRmZmM1ZjcyZmI1NTp7ImhzX3RyYWNraW5nX2lkIjoiZXlKcFpDSTZPSDA6MWhKMGNXOjlZVWxsZXdEb1lzRGI3TXVLTmtCbHR5TTNlayJ9	2019-05-07 18:58:20.727282+00
+aiklpy1mzhpjmo6vixybg7ds75rspjlo	ZmQ4ODVlNTEzNzZkNTYzNjM4ZTY4NTU1NjA2NDg1ZDAxMTU5NGRlMzp7ImhzX3RyYWNraW5nX2lkIjoiZXlKcFpDSTZNVEI5OjFoSjBkaTpDOVJrMmVWczJpcWVpbUx1emNfV3lRR3ZOd3cifQ==	2019-05-07 18:59:34.391818+00
+5ed7lceiymbyzt7vaxdoryhyrwx4pe0u	NGFkZjYwNGZiZGY1NjVmODM0ZmNmOTllOGFjZTE0YjMwZmMxMWVlNTp7ImhzX3RyYWNraW5nX2lkIjoiZXlKcFpDSTZNVFI5OjFoSjFYTTpTeHlva1NGUTdPbG9YcExJeUgzZHNHajJPcm8ifQ==	2019-05-07 19:57:04.243351+00
+6t6btyt9hwt7ho8cdrk1ml3z3pbzepik	ZDYyNDQ2MDJjNjk1MzQ4OWExNTFhZDAxYTk4N2ZkZTg3OTZlZjQxNDp7ImhzX3RyYWNraW5nX2lkIjoiZXlKcFpDSTZNVGQ5OjFoSjFZbTptSTAwS1gzOFAyaW9tbTdIZ1I2ZzNBbEtHVFUifQ==	2019-05-07 19:58:32.048619+00
+eoisvietin8cioweutnxms02nydvb492	NDliMTgxMzNhYTgyNzFkYTI4NGYxN2IzNWMxODZlZWRjYmRjYTBjZTp7Il9hdXRoX3VzZXJfaWQiOiIxNyIsImFjY2Vzc190b2tlbiI6IlFWalJGZ2ZJT3hoa2dxQWVWQ0JCMjhwV3VvZDJEcjgxIiwiaHNfdHJhY2tpbmdfaWQiOiJleUpwWkNJNk1UaDk6MWhKMVoxOm9KVjBpNDV3eS1WWGppUldZRVZLUGxmeHFEUSIsInN1YmplY3RfaWQiOiIxMDg1MjU3NjY2MzQ1MDEyODgzNDQiLCJfYXV0aF91c2VyX2JhY2tlbmQiOiJ0aGVtZS5iYWNrZW5kcy5hdXRoMC5BdXRoME9BdXRoMiIsIl9hdXRoX3VzZXJfaGFzaCI6IjFkNTM4YWMzZTE2OTNhMGVmMzZmZjBkNjIzOGZkNGUxNjQ0M2I5OGUifQ==	2019-05-07 20:00:38.018154+00
+hsgqyp0zvmgy7x5y0tiq1kumcc9ih2n4	YWZhOTJmNzQ5NzMyZGQ4OTkyZTMxNWE0MDdhZjZmMTIxNGQ2ZTc0YTp7ImhzX3RyYWNraW5nX2lkIjoiZXlKcFpDSTZNak45OjFoSjJ3aDpGTjZFbnBRSDMxdEd5YTRHZWhrTFZOeDhZc0EifQ==	2019-05-07 21:27:19.279525+00
+bhqc8ntnzpdwfx2x1mfxyugkoujagu98	MTgzMTJlNDNmZmVhZmVkYWRkNmQ5MmU0YzI1OTRhY2Q3ZjA0NGUyNjp7ImhzX3RyYWNraW5nX2lkIjoiZXlKcFpDSTZNalY5OjFoSjMwNTo5TF9EeThSRFIya2o5d0x5NzBJOV9qejVObkUifQ==	2019-05-07 21:30:49.10777+00
+2kt6oulkrkgaoo4m7wmg08296rud0860	ZDRlNzM3MTIwMWY4OGFjNmRmNjRiOTI5ZjE5MTcwMTdmMmY3MTVmODp7ImhzX3RyYWNraW5nX2lkIjoiZXlKcFpDSTZNalo5OjFoSjM0QTpHWDFWLUdMNkZqU1Y4TUhuTGxwaG54NTYwVUEifQ==	2019-05-07 21:35:02.36596+00
+kxam80n5845rf1i0lkingtblbvkdijb9	NDdmMDE0MGZiODBiZjY5ZTBhNzE0MGI1ODcxMzIzNTA4MWE4MTFmZDp7ImhzX3RyYWNraW5nX2lkIjoiZXlKcFpDSTZNamQ5OjFoSjM4YzpmMzB0dWpnd05TQkpKeFI3MGEzNTRGNHlwZFUifQ==	2019-05-07 21:39:38.739428+00
+0x0s177snyrm5eg6jgsz68sgqtxljgg7	NmQyMTVlZmRmMmQ0NzAwMzgzNWYwMWIyM2YyNTUyOTVhNTJmMDNlNTp7ImhzX3RyYWNraW5nX2lkIjoiZXlKcFpDSTZOREI5OjFoSk92Tzo4bV9kTGZ2dnQtZE80Z2Q0dmZDaHh2N0VRVlUifQ==	2019-05-08 20:55:26.045739+00
 \.
 
 
@@ -12274,7 +12267,8 @@ COPY generic_threadedcomment (comment_ptr_id, rating_count, rating_sum, rating_a
 -- Data for Name: hs_access_control_groupaccess; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY hs_access_control_groupaccess (id, active, discoverable, public, shareable, group_id, date_created, description, picture, purpose, auto_approve) FROM stdin;
+COPY hs_access_control_groupaccess (id, active, discoverable, public, shareable, group_id, date_created, description, picture, purpose, auto_approve, require_dua_signoff, dua_url) FROM stdin;
+1	t	f	f	f	2	2019-04-23 18:58:06.443126+00	Test		Test	f	t	https://github.com/heliumplusdatastage/Data-Use-Agreements/blob/master/Helium_Carbon_COPDGene_Internal_Data_Access_Agreement.pdf
 \.
 
 
@@ -12282,14 +12276,14 @@ COPY hs_access_control_groupaccess (id, active, discoverable, public, shareable,
 -- Name: hs_access_control_groupaccess_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('hs_access_control_groupaccess_id_seq', 1, false);
+SELECT pg_catalog.setval('hs_access_control_groupaccess_id_seq', 1, true);
 
 
 --
 -- Data for Name: hs_access_control_groupmembershiprequest; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY hs_access_control_groupmembershiprequest (id, date_requested, group_to_join_id, invitation_to_id, request_from_id) FROM stdin;
+COPY hs_access_control_groupmembershiprequest (id, date_requested, group_to_join_id, invitation_to_id, request_from_id, dua_signed) FROM stdin;
 \.
 
 
@@ -12297,7 +12291,7 @@ COPY hs_access_control_groupmembershiprequest (id, date_requested, group_to_join
 -- Name: hs_access_control_groupmembershiprequest_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('hs_access_control_groupmembershiprequest_id_seq', 1, false);
+SELECT pg_catalog.setval('hs_access_control_groupmembershiprequest_id_seq', 1, true);
 
 
 --
@@ -12342,7 +12336,7 @@ COPY hs_access_control_resourceaccess (id, active, discoverable, public, shareab
 -- Name: hs_access_control_resourceaccess_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('hs_access_control_resourceaccess_id_seq', 1, false);
+SELECT pg_catalog.setval('hs_access_control_resourceaccess_id_seq', 1, true);
 
 
 --
@@ -12351,7 +12345,6 @@ SELECT pg_catalog.setval('hs_access_control_resourceaccess_id_seq', 1, false);
 
 COPY hs_access_control_useraccess (id, user_id) FROM stdin;
 1	4
-2	16
 \.
 
 
@@ -12359,7 +12352,7 @@ COPY hs_access_control_useraccess (id, user_id) FROM stdin;
 -- Name: hs_access_control_useraccess_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('hs_access_control_useraccess_id_seq', 2, true);
+SELECT pg_catalog.setval('hs_access_control_useraccess_id_seq', 6, true);
 
 
 --
@@ -12374,7 +12367,7 @@ COPY hs_access_control_usergroupprivilege (id, privilege, start, grantor_id, gro
 -- Name: hs_access_control_usergroupprivilege_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('hs_access_control_usergroupprivilege_id_seq', 1, false);
+SELECT pg_catalog.setval('hs_access_control_usergroupprivilege_id_seq', 2, true);
 
 
 --
@@ -12389,7 +12382,7 @@ COPY hs_access_control_usergroupprovenance (id, privilege, start, grantor_id, gr
 -- Name: hs_access_control_usergroupprovenance_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('hs_access_control_usergroupprovenance_id_seq', 1, false);
+SELECT pg_catalog.setval('hs_access_control_usergroupprovenance_id_seq', 2, true);
 
 
 --
@@ -12404,7 +12397,7 @@ COPY hs_access_control_userresourceprivilege (id, privilege, start, grantor_id, 
 -- Name: hs_access_control_userresourceprivilege_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('hs_access_control_userresourceprivilege_id_seq', 1, false);
+SELECT pg_catalog.setval('hs_access_control_userresourceprivilege_id_seq', 1, true);
 
 
 --
@@ -12419,7 +12412,7 @@ COPY hs_access_control_userresourceprovenance (id, privilege, start, grantor_id,
 -- Name: hs_access_control_userresourceprovenance_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('hs_access_control_userresourceprovenance_id_seq', 1, false);
+SELECT pg_catalog.setval('hs_access_control_userresourceprovenance_id_seq', 1, true);
 
 
 --
@@ -12780,7 +12773,7 @@ COPY hs_core_coremetadata (id) FROM stdin;
 -- Name: hs_core_coremetadata_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('hs_core_coremetadata_id_seq', 1, false);
+SELECT pg_catalog.setval('hs_core_coremetadata_id_seq', 1, true);
 
 
 --
@@ -12810,7 +12803,7 @@ COPY hs_core_creator (id, object_id, description, name, organization, email, add
 -- Name: hs_core_creator_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('hs_core_creator_id_seq', 1, false);
+SELECT pg_catalog.setval('hs_core_creator_id_seq', 1, true);
 
 
 --
@@ -12825,7 +12818,7 @@ COPY hs_core_date (id, object_id, type, start_date, end_date, content_type_id) F
 -- Name: hs_core_date_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('hs_core_date_id_seq', 1, false);
+SELECT pg_catalog.setval('hs_core_date_id_seq', 2, true);
 
 
 --
@@ -12892,7 +12885,7 @@ SELECT pg_catalog.setval('hs_core_fundingagency_id_seq', 1, false);
 -- Data for Name: hs_core_genericresource; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY hs_core_genericresource (page_ptr_id, comments_count, rating_count, rating_sum, rating_average, content, short_id, object_id, content_type_id, creator_id, last_changed_by_id, user_id, resource_type, file_unpack_message, file_unpack_status, locked_time, extra_metadata, resource_federation_path, extra_data, minid) FROM stdin;
+COPY hs_core_genericresource (page_ptr_id, comments_count, rating_count, rating_sum, rating_average, content, short_id, object_id, content_type_id, creator_id, last_changed_by_id, user_id, resource_type, file_unpack_message, file_unpack_status, locked_time, extra_metadata, resource_federation_path, extra_data, minid, doi, assessment_id, contains_sensitive_payload) FROM stdin;
 \.
 
 
@@ -12938,7 +12931,7 @@ COPY hs_core_identifier (id, object_id, name, url, content_type_id) FROM stdin;
 -- Name: hs_core_identifier_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('hs_core_identifier_id_seq', 1, false);
+SELECT pg_catalog.setval('hs_core_identifier_id_seq', 1, true);
 
 
 --
@@ -12953,7 +12946,7 @@ COPY hs_core_language (id, object_id, code, content_type_id) FROM stdin;
 -- Name: hs_core_language_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('hs_core_language_id_seq', 1, false);
+SELECT pg_catalog.setval('hs_core_language_id_seq', 1, true);
 
 
 --
@@ -13013,7 +13006,7 @@ COPY hs_core_rights (id, object_id, statement, url, content_type_id) FROM stdin;
 -- Name: hs_core_rights_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('hs_core_rights_id_seq', 1, false);
+SELECT pg_catalog.setval('hs_core_rights_id_seq', 1, true);
 
 
 --
@@ -13058,7 +13051,7 @@ COPY hs_core_title (id, object_id, value, content_type_id) FROM stdin;
 -- Name: hs_core_title_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('hs_core_title_id_seq', 1, false);
+SELECT pg_catalog.setval('hs_core_title_id_seq', 1, true);
 
 
 --
@@ -13073,7 +13066,7 @@ COPY hs_core_type (id, object_id, url, content_type_id) FROM stdin;
 -- Name: hs_core_type_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('hs_core_type_id_seq', 1, false);
+SELECT pg_catalog.setval('hs_core_type_id_seq', 1, true);
 
 
 --
@@ -22924,7 +22917,7 @@ COPY hs_labels_resourcelabels (id, resource_id) FROM stdin;
 -- Name: hs_labels_resourcelabels_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('hs_labels_resourcelabels_id_seq', 1, false);
+SELECT pg_catalog.setval('hs_labels_resourcelabels_id_seq', 1, true);
 
 
 --
@@ -22933,7 +22926,6 @@ SELECT pg_catalog.setval('hs_labels_resourcelabels_id_seq', 1, false);
 
 COPY hs_labels_userlabels (id, user_id) FROM stdin;
 1	4
-8	16
 \.
 
 
@@ -22941,7 +22933,7 @@ COPY hs_labels_userlabels (id, user_id) FROM stdin;
 -- Name: hs_labels_userlabels_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('hs_labels_userlabels_id_seq', 8, true);
+SELECT pg_catalog.setval('hs_labels_userlabels_id_seq', 12, true);
 
 
 --
@@ -23739,7 +23731,7 @@ COPY hs_tracking_session (id, begin, visitor_id) FROM stdin;
 -- Name: hs_tracking_session_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('hs_tracking_session_id_seq', 1, false);
+SELECT pg_catalog.setval('hs_tracking_session_id_seq', 40, true);
 
 
 --
@@ -23754,7 +23746,7 @@ COPY hs_tracking_variable (id, "timestamp", name, type, value, session_id) FROM 
 -- Name: hs_tracking_variable_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('hs_tracking_variable_id_seq', 1, false);
+SELECT pg_catalog.setval('hs_tracking_variable_id_seq', 225, true);
 
 
 --
@@ -23769,14 +23761,14 @@ COPY hs_tracking_visitor (id, first_seen, user_id) FROM stdin;
 -- Name: hs_tracking_visitor_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('hs_tracking_visitor_id_seq', 1, false);
+SELECT pg_catalog.setval('hs_tracking_visitor_id_seq', 29, true);
 
 
 --
 -- Data for Name: oauth2_provider_accesstoken; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY oauth2_provider_accesstoken (id, token, expires, scope, application_id, user_id) FROM stdin;
+COPY oauth2_provider_accesstoken (id, token, expires, scope, application_id, user_id, created, updated, source_refresh_token_id) FROM stdin;
 \.
 
 
@@ -23791,7 +23783,7 @@ SELECT pg_catalog.setval('oauth2_provider_accesstoken_id_seq', 1, false);
 -- Data for Name: oauth2_provider_application; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY oauth2_provider_application (id, client_id, redirect_uris, client_type, authorization_grant_type, client_secret, name, user_id, skip_authorization) FROM stdin;
+COPY oauth2_provider_application (id, client_id, redirect_uris, client_type, authorization_grant_type, client_secret, name, user_id, skip_authorization, created, updated) FROM stdin;
 \.
 
 
@@ -23806,7 +23798,7 @@ SELECT pg_catalog.setval('oauth2_provider_application_id_seq', 1, false);
 -- Data for Name: oauth2_provider_grant; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY oauth2_provider_grant (id, code, expires, redirect_uri, scope, application_id, user_id) FROM stdin;
+COPY oauth2_provider_grant (id, code, expires, redirect_uri, scope, application_id, user_id, created, updated) FROM stdin;
 \.
 
 
@@ -23821,7 +23813,7 @@ SELECT pg_catalog.setval('oauth2_provider_grant_id_seq', 1, false);
 -- Data for Name: oauth2_provider_refreshtoken; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY oauth2_provider_refreshtoken (id, token, access_token_id, application_id, user_id) FROM stdin;
+COPY oauth2_provider_refreshtoken (id, token, access_token_id, application_id, user_id, created, updated, revoked) FROM stdin;
 \.
 
 
@@ -23861,8 +23853,7 @@ COPY pages_page (id, keywords_string, site_id, title, slug, _meta_title, descrip
 14		1	Help	https://hydroshare.org/pages	\N	Help	t	2017-09-01 18:12:49.579765+00	2018-01-08 22:48:43.761139+00	2	2017-09-01 18:12:49+00	\N	\N	f	5	\N		Help	link	f
 9		1	Terms of Use	terms-of-use	Terms of Use	CommonsShare Terms of Use\nLast modified January 8, 2018	t	2016-01-25 19:33:24.439209+00	2018-01-09 00:41:14.276924+00	2	2016-01-25 19:33:24+00	\N	\N	t	9	\N		Terms of Use	richtextpage	f
 10		1	Statement of Privacy	privacy	Statement of Privacy	CommonsShare Statement of Privacy\nLast modified January 8, 2018	t	2016-01-25 19:34:22.084583+00	2018-01-09 00:43:12.524218+00	2	2016-01-25 19:34:22+00	\N	\N	t	10	\N		Statement of Privacy	richtextpage	f
-16		1	Search full text	fulltextsearch	Full Text Search	Full text search	t	2018-08-30 18:56:44.403239+00	2018-08-30 18:56:44.403239+00	2	2018-08-30 18:56:44.402967+00	\N	\N	t	13	\N	1,2,3	Search full text	richtextpage	f
-17		1	Concept Search	conceptsearch	Concept Search	Concept Search	t	2018-08-30 18:57:53.280746+00	2018-08-30 18:57:53.280746+00	2	2018-08-30 18:57:53.280428+00	\N	\N	t	14	\N	1,2,3	Concept Search	richtextpage	f
+17		1	Concept Search	conceptsearch	Concept Search	Concept Search	t	2018-08-30 18:57:53.280746+00	2018-08-30 18:57:53.280746+00	2	2018-08-30 18:57:53.280428+00	\N	\N	t	13	\N	1,2,3	Concept Search	richtextpage	f
 \.
 
 
@@ -23870,7 +23861,7 @@ COPY pages_page (id, keywords_string, site_id, title, slug, _meta_title, descrip
 -- Name: pages_page_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('pages_page_id_seq', 17, true);
+SELECT pg_catalog.setval('pages_page_id_seq', 18, true);
 
 
 --
@@ -23886,7 +23877,6 @@ COPY pages_richtextpage (page_ptr_id, content) FROM stdin;
 7	<p class="p1">Thank you for signing up for CommonsShare! We have sent you an email from commonsshare.org to verify your account.  Please click on the link within the email and verify your account with us and you can get started sharing data and models with CommonsShare.</p>\n<p class="p2"></p>
 9	<h2 class="p1"><b>CommonsShare Terms of Use</b></h2>\n<p class="p2"><i>Last modified January 8, 2018</i></p>\n<p class="p2">Thank you for using the CommonsShare hydrologic data sharing system hosted at commonsshare.org.  CommonsShare services are provided by a team of researchers associated with the Renaissance Computing Institute (RENCI) at the University of North Carolina at Chapel Hill and funded by the National Institutes of Health.  The services are hosted at participating institutions including the Renaissance Computing Institute at University of North Carolina (UNC), the UNC School of Medicine and the School of Information and Library Science as well as RTI International, Jackson Laboratory for Genomic Medicine, Johns Hopkins University, Lawrence Berkeley National Laboratory, Maastricht University, University of New Mexico, and Oregon Health and Science University. Your access to commonsshare.org is subject to your agreement to these Terms of Use. By using our services at commonsshare.org, you are agreeing to these terms.  Please read them carefully.</p>\n<h2 class="p3"><b>Modification of the Agreement</b></h2>\n<p class="p2">We maintain the right to modify these Terms of Use and may do so by posting modifications on this page. Any modification is effective immediately upon posting the modification unless otherwise stated. Your continued use of commonsshare.org following the posting of any modification signifies your acceptance of that modification. You should regularly visit this page to review the current Terms of Use.</p>\n<h2 class="p3"><b>Conduct Using our Services</b></h2>\n<p class="p2">The commonsshare.org site is intended to support data and workflow sharing.  This is broadly interpreted to include any discipline or endeavor that has something to do with biology.  You are responsible at all times for using commonsshare.org in a manner that is legal, ethical, and not to the detriment of others and for purposes related to hydrology. You agree that you will not in your use of commonsshare.org:</p>\n<ul class="ul1">\n<li class="li2">Violate any applicable law, commit a criminal offense or perform actions that might encourage others to commit a criminal offense or give rise to a civil liability;</li>\n<li class="li2">Post or transmit any unlawful, threatening, libelous, harassing, defamatory, vulgar, obscene, pornographic, profane, or otherwise objectionable content;</li>\n<li class="li2">Use commonsshare.org to impersonate other parties or entities;</li>\n<li class="li2">Use commonsshare.org to upload any content that contains a software virus, "Trojan Horse" or any other computer code, files, or programs that may alter, damage, or interrupt the functionality of commonsshare.org or the hardware or software of any other person who accesses commonsshare.org;</li>\n<li class="li2">Upload, post, email, or otherwise transmit any materials that you do not have a right to transmit under any law or under a contractual relationship;</li>\n<li class="li2">Alter, damage, or delete any content posted on commonsshare.org, except where such alterations or deletions are consistent with the access control settings of that content in commonsshare.org;</li>\n<li class="li2">Disrupt the normal flow of communication in any way;</li>\n<li class="li2">Claim a relationship with or speak for any business, association, or other organization for which you are not authorized to claim such a relationship;</li>\n<li class="li2">Post or transmit any unsolicited advertising, promotional materials, or other forms of solicitation;</li>\n<li class="li2">Post any material that infringes or violates the intellectual property rights of another.</li>\n</ul>\n<p class="p2">Certain portions of commonsshare.org are limited to registered users and/or allow a user to participate in online services by entering personal information. You agree that any information provided to commonsshare.org in these areas will be complete and accurate, and that you will neither register under the name of nor attempt to enter commonsshare.org under the name of another person or entity.</p>\n<p class="p2">You are responsible for maintaining the confidentiality of your user ID and password, if any, and for restricting access to your computer, and you agree to accept responsibility for all activities that occur under your account or password. Commonsshare.org does not authorize use of your User ID by third-parties.</p>\n<p class="p2">We may, in our sole discretion, terminate or suspend your access to and use of commonsshare.org without notice and for any reason, including for violation of these Terms of Use or for other conduct that we, in our sole discretion, believe to be unlawful or harmful to others. In the event of termination, you are no longer authorized to access hydroshare.org.</p>\n<h2 class="p3"><b>Disclaimers</b></h2>\n<p class="p2">COMMONSSHARE AND ANY INFORMATION, PRODUCTS OR SERVICES ON IT ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Commonsshare.org and its participating institutions do not warrant, and hereby disclaim any warranties, either express or implied, with respect to the accuracy, adequacy or completeness of any good, service, or information obtained from commonsshare.org. Commonsshare.org and its participating institutions do not warrant that Commonsshare.org will operate in an uninterrupted or error-free manner or that Commonsshare.org is free of viruses or other harmful components. Use of commonsshare.org is at your own risk.</p>\n<p class="p2">You agree that commonsshare.org and its participating institutions shall have no liability for any consequential, indirect, punitive, special or incidental damages, whether foreseeable or unforeseeable (including, but not limited to, claims for defamation, errors, loss of data, or interruption in availability of data), arising out of or relating to your use of any resource that you access through commonsshare.org.</p>\n<p class="p2">The commonsshare.org site hosts content from a number of authors. The statements and views of these authors are theirs alone, and do not reflect the stances or policies of the CommonsShare research team or their sponsors, nor does their posting imply the endorsement of CommonsShare or their sponsors.</p>\n<h2 class="p3"><b>Choice of Law/Forum Selection/Attorney Fees</b></h2>\n<p class="p2">You agree that any dispute arising out of or relating to commonsshare.org, whether based in contract, tort, statutory or other law, will be governed by federal law and by the laws of North Carolina, excluding its conflicts of law provisions. You further consent to the personal jurisdiction of and exclusive venue in the federal and state courts located in and serving the United States of America, North Carolina as the exclusive legal forums for any such dispute.</p>
 10	<h2 class="p1"><b>CommonsShare Statement of Privacy</b></h2>\n<p class="p2"><i>Last modified January 8, 2018</i></p>\n<p class="p2">CommonsShare is operated by a team of researchers associated with the Renaissance Computing Institute at University of North Carolina (UNC) and funded by the National Institutes of Health.  The services are hosted at participating institutions including the Renaissance Computing Institute at University of North Carolina, the UNC School of Medicine and the School of Information and Library Science as well as RTI International, Jackson Laboratory for Genomic Medicine, Johns Hopkins University, Lawrence Berkeley National Laboratory, Maastricht University, University of New Mexico, and Oregon Health and Science University.  In the following these are referred to as participating institutions.</p>\n<p class="p2">We respect your privacy. We will only use your personal identification information to support and manage your use of hydroshare.org, including the use of tracking cookies to facilitate commonsshare.org security procedures. The CommonsShare participating institutions and the National Institutes of Health (which funds commonsshare.org development) regularly request commonsshare.org usages statistics and other information. Usage of commonsshare.org is monitored and usage statistics are collected and reported on a regular basis. Commonsshare.org also reserves the right to contact you to request additional information or to keep you updated on changes to Commonsshare.org. You may opt out of receiving newsletters and other non-essential communications. No information that would identify you personally will be provided to sponsors or third parties without your permission.</p>\n<p class="p2">While CommonsShare uses policies and procedures to manage the access to content according to the access control settings set by users all information posted or stored on commonsshare.org is potentially available to other users of commonsshare.org and the public. The CommonsShare participating institutions and commonsshare.org disclaim any responsibility for the preservation of confidentiality of such information. <i>Do not post or store information on commonsshare.org if you expect to or are obligated to protect the confidentiality of that information.</i></p>
-16	<p><span>Full text search</span></p>
 17	<p><span>Concept Search</span></p>
 \.
 
@@ -24163,7 +24153,6 @@ SELECT pg_catalog.setval('theme_siteconfiguration_id_seq', 1, true);
 --
 
 COPY theme_userprofile (id, picture, title, subject_areas, organization, phone_1, phone_1_type, phone_2, phone_2_type, public, cv, details, user_id, country, middle_name, state, user_type, website) FROM stdin;
-16		\N	\N	\N	\N	\N	\N	\N	t		\N	16	\N	\N	\N	Unspecified	\N
 \.
 
 
@@ -24171,7 +24160,7 @@ COPY theme_userprofile (id, picture, title, subject_areas, organization, phone_1
 -- Name: theme_userprofile_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('theme_userprofile_id_seq', 16, true);
+SELECT pg_catalog.setval('theme_userprofile_id_seq', 20, true);
 
 
 --
@@ -24179,7 +24168,6 @@ SELECT pg_catalog.setval('theme_userprofile_id_seq', 16, true);
 --
 
 COPY theme_userquota (id, allocated_value, used_value, unit, zone, remaining_grace_period, user_id) FROM stdin;
-7	20	0	GB	hydroshare_internal	-1	16
 \.
 
 
@@ -24187,7 +24175,7 @@ COPY theme_userquota (id, allocated_value, used_value, unit, zone, remaining_gra
 -- Name: theme_userquota_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('theme_userquota_id_seq', 7, true);
+SELECT pg_catalog.setval('theme_userquota_id_seq', 11, true);
 
 
 --
@@ -24604,6 +24592,14 @@ ALTER TABLE ONLY django_redirect
 
 ALTER TABLE ONLY django_session
     ADD CONSTRAINT django_session_pkey PRIMARY KEY (session_key);
+
+
+--
+-- Name: django_site_domain_a2e37b91_uniq; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY django_site
+    ADD CONSTRAINT django_site_domain_a2e37b91_uniq UNIQUE (domain);
 
 
 --
@@ -26663,6 +26659,22 @@ ALTER TABLE ONLY oauth2_provider_accesstoken
 
 
 --
+-- Name: oauth2_provider_accesstoken_source_refresh_token_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY oauth2_provider_accesstoken
+    ADD CONSTRAINT oauth2_provider_accesstoken_source_refresh_token_id_key UNIQUE (source_refresh_token_id);
+
+
+--
+-- Name: oauth2_provider_accesstoken_token_8af090f8_uniq; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY oauth2_provider_accesstoken
+    ADD CONSTRAINT oauth2_provider_accesstoken_token_8af090f8_uniq UNIQUE (token);
+
+
+--
 -- Name: oauth2_provider_application_client_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -26676,6 +26688,14 @@ ALTER TABLE ONLY oauth2_provider_application
 
 ALTER TABLE ONLY oauth2_provider_application
     ADD CONSTRAINT oauth2_provider_application_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: oauth2_provider_grant_code_49ab4ddf_uniq; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY oauth2_provider_grant
+    ADD CONSTRAINT oauth2_provider_grant_code_49ab4ddf_uniq UNIQUE (code);
 
 
 --
@@ -26700,6 +26720,14 @@ ALTER TABLE ONLY oauth2_provider_refreshtoken
 
 ALTER TABLE ONLY oauth2_provider_refreshtoken
     ADD CONSTRAINT oauth2_provider_refreshtoken_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: oauth2_provider_refreshtoken_token_revoked_af8a5134_uniq; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY oauth2_provider_refreshtoken
+    ADD CONSTRAINT oauth2_provider_refreshtoken_token_revoked_af8a5134_uniq UNIQUE (token, revoked);
 
 
 --
@@ -27159,6 +27187,13 @@ CREATE INDEX django_comments_site_id ON public.django_comments USING btree (site
 
 
 --
+-- Name: django_comments_submit_date_514ed2d9; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE INDEX django_comments_submit_date_514ed2d9 ON public.django_comments USING btree (submit_date);
+
+
+--
 -- Name: django_comments_user_id; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -27317,6 +27352,13 @@ CREATE INDEX django_session_de54fa62 ON public.django_session USING btree (expir
 --
 
 CREATE INDEX django_session_session_key_461cfeaa630ca218_like ON public.django_session USING btree (session_key varchar_pattern_ops);
+
+
+--
+-- Name: django_site_domain_a2e37b91_like; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE INDEX django_site_domain_a2e37b91_like ON public.django_site USING btree (domain varchar_pattern_ops);
 
 
 --
@@ -28083,6 +28125,20 @@ CREATE INDEX hs_core_genericresource_collections_91410dc4 ON public.hs_core_gene
 
 
 --
+-- Name: hs_core_genericresource_doi_fcc7bc04; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE INDEX hs_core_genericresource_doi_fcc7bc04 ON public.hs_core_genericresource USING btree (doi);
+
+
+--
+-- Name: hs_core_genericresource_doi_fcc7bc04_like; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE INDEX hs_core_genericresource_doi_fcc7bc04_like ON public.hs_core_genericresource USING btree (doi varchar_pattern_ops);
+
+
+--
 -- Name: hs_core_genericresource_e8701ad4; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -28706,13 +28762,6 @@ CREATE INDEX oauth2_provider_accesstoken_6bc0a4eb ON public.oauth2_provider_acce
 
 
 --
--- Name: oauth2_provider_accesstoken_94a08da1; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE INDEX oauth2_provider_accesstoken_94a08da1 ON public.oauth2_provider_accesstoken USING btree (token);
-
-
---
 -- Name: oauth2_provider_accesstoken_e8701ad4; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -28720,10 +28769,10 @@ CREATE INDEX oauth2_provider_accesstoken_e8701ad4 ON public.oauth2_provider_acce
 
 
 --
--- Name: oauth2_provider_accesstoken_token_3f77f86fb4ecbe0f_like; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: oauth2_provider_accesstoken_token_8af090f8_like; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
 --
 
-CREATE INDEX oauth2_provider_accesstoken_token_3f77f86fb4ecbe0f_like ON public.oauth2_provider_accesstoken USING btree (token varchar_pattern_ops);
+CREATE INDEX oauth2_provider_accesstoken_token_8af090f8_like ON public.oauth2_provider_accesstoken USING btree (token varchar_pattern_ops);
 
 
 --
@@ -28762,17 +28811,10 @@ CREATE INDEX oauth2_provider_grant_6bc0a4eb ON public.oauth2_provider_grant USIN
 
 
 --
--- Name: oauth2_provider_grant_c1336794; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: oauth2_provider_grant_code_49ab4ddf_like; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
 --
 
-CREATE INDEX oauth2_provider_grant_c1336794 ON public.oauth2_provider_grant USING btree (code);
-
-
---
--- Name: oauth2_provider_grant_code_a5c88732687483b_like; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE INDEX oauth2_provider_grant_code_a5c88732687483b_like ON public.oauth2_provider_grant USING btree (code varchar_pattern_ops);
+CREATE INDEX oauth2_provider_grant_code_49ab4ddf_like ON public.oauth2_provider_grant USING btree (code varchar_pattern_ops);
 
 
 --
@@ -28790,24 +28832,10 @@ CREATE INDEX oauth2_provider_refreshtoken_6bc0a4eb ON public.oauth2_provider_ref
 
 
 --
--- Name: oauth2_provider_refreshtoken_94a08da1; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE INDEX oauth2_provider_refreshtoken_94a08da1 ON public.oauth2_provider_refreshtoken USING btree (token);
-
-
---
 -- Name: oauth2_provider_refreshtoken_e8701ad4; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
 --
 
 CREATE INDEX oauth2_provider_refreshtoken_e8701ad4 ON public.oauth2_provider_refreshtoken USING btree (user_id);
-
-
---
--- Name: oauth2_provider_refreshtoken_token_1e4e9388e6a22527_like; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE INDEX oauth2_provider_refreshtoken_token_1e4e9388e6a22527_like ON public.oauth2_provider_refreshtoken USING btree (token varchar_pattern_ops);
 
 
 --
@@ -29417,22 +29445,6 @@ ALTER TABLE ONLY hs_modflow_modelinstance_modflowmodelinstancemetadata
 
 
 --
--- Name: D9aead397b25d8154e554023da34d33b; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY oauth2_provider_refreshtoken
-    ADD CONSTRAINT "D9aead397b25d8154e554023da34d33b" FOREIGN KEY (access_token_id) REFERENCES oauth2_provider_accesstoken(id) DEFERRABLE INITIALLY DEFERRED;
-
-
---
--- Name: a17250f96ea449de36002be9c6c6acfb; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY oauth2_provider_accesstoken
-    ADD CONSTRAINT a17250f96ea449de36002be9c6c6acfb FOREIGN KEY (application_id) REFERENCES oauth2_provider_application(id) DEFERRABLE INITIALLY DEFERRED;
-
-
---
 -- Name: a7a04a83e3272ec48b241a40cc3fe88d; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -29641,14 +29653,6 @@ ALTER TABLE ONLY hs_file_types_cvelevationdatum
 
 
 --
--- Name: da2196e2988877260c8db8e9bb03265e; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY oauth2_provider_refreshtoken
-    ADD CONSTRAINT da2196e2988877260c8db8e9bb03265e FOREIGN KEY (application_id) REFERENCES oauth2_provider_application(id) DEFERRABLE INITIALLY DEFERRED;
-
-
---
 -- Name: djan_content_type_id_697914295151027a_fk_django_content_type_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -29750,14 +29754,6 @@ ALTER TABLE ONLY hs_modflow_modelinstance_boundarycondition_head_dependent_f1e14
 
 ALTER TABLE ONLY django_docker_processes_overrideport
     ADD CONSTRAINT ed07907c5bbff48aa33f866d15220f0a FOREIGN KEY (container_overrides_id) REFERENCES django_docker_processes_containeroverrides(id) DEFERRABLE INITIALLY DEFERRED;
-
-
---
--- Name: ed9fd5eb4f62c9b049823c4a9799fadb; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY oauth2_provider_grant
-    ADD CONSTRAINT ed9fd5eb4f62c9b049823c4a9799fadb FOREIGN KEY (application_id) REFERENCES oauth2_provider_application(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -30753,35 +30749,75 @@ ALTER TABLE ONLY hs_tracking_visitor
 
 
 --
--- Name: oauth2_provider_access_user_id_5e2f004fdebea22d_fk_auth_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: oauth2_provider_acce_source_refresh_token_e66fbc72_fk_oauth2_pr; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY oauth2_provider_accesstoken
-    ADD CONSTRAINT oauth2_provider_access_user_id_5e2f004fdebea22d_fk_auth_user_id FOREIGN KEY (user_id) REFERENCES auth_user(id) DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT oauth2_provider_acce_source_refresh_token_e66fbc72_fk_oauth2_pr FOREIGN KEY (source_refresh_token_id) REFERENCES oauth2_provider_refreshtoken(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
--- Name: oauth2_provider_applic_user_id_7fa13387c260b798_fk_auth_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: oauth2_provider_accesstoken_application_id_b22886e1_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY oauth2_provider_accesstoken
+    ADD CONSTRAINT oauth2_provider_accesstoken_application_id_b22886e1_fk FOREIGN KEY (application_id) REFERENCES oauth2_provider_application(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: oauth2_provider_accesstoken_user_id_6e4c9a65_fk_auth_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY oauth2_provider_accesstoken
+    ADD CONSTRAINT oauth2_provider_accesstoken_user_id_6e4c9a65_fk_auth_user_id FOREIGN KEY (user_id) REFERENCES auth_user(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: oauth2_provider_application_user_id_79829054_fk_auth_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY oauth2_provider_application
-    ADD CONSTRAINT oauth2_provider_applic_user_id_7fa13387c260b798_fk_auth_user_id FOREIGN KEY (user_id) REFERENCES auth_user(id) DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT oauth2_provider_application_user_id_79829054_fk_auth_user_id FOREIGN KEY (user_id) REFERENCES auth_user(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
--- Name: oauth2_provider_grant_user_id_3111344894d452da_fk_auth_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: oauth2_provider_grant_application_id_81923564_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY oauth2_provider_grant
-    ADD CONSTRAINT oauth2_provider_grant_user_id_3111344894d452da_fk_auth_user_id FOREIGN KEY (user_id) REFERENCES auth_user(id) DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT oauth2_provider_grant_application_id_81923564_fk FOREIGN KEY (application_id) REFERENCES oauth2_provider_application(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
--- Name: oauth2_provider_refres_user_id_3f695b639cfbc9a3_fk_auth_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: oauth2_provider_grant_user_id_e8f62af8_fk_auth_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY oauth2_provider_grant
+    ADD CONSTRAINT oauth2_provider_grant_user_id_e8f62af8_fk_auth_user_id FOREIGN KEY (user_id) REFERENCES auth_user(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: oauth2_provider_refr_access_token_id_775e84e8_fk_oauth2_pr; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY oauth2_provider_refreshtoken
-    ADD CONSTRAINT oauth2_provider_refres_user_id_3f695b639cfbc9a3_fk_auth_user_id FOREIGN KEY (user_id) REFERENCES auth_user(id) DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT oauth2_provider_refr_access_token_id_775e84e8_fk_oauth2_pr FOREIGN KEY (access_token_id) REFERENCES oauth2_provider_accesstoken(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: oauth2_provider_refreshtoken_application_id_2d1c311b_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY oauth2_provider_refreshtoken
+    ADD CONSTRAINT oauth2_provider_refreshtoken_application_id_2d1c311b_fk FOREIGN KEY (application_id) REFERENCES oauth2_provider_application(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: oauth2_provider_refreshtoken_user_id_da837fce_fk_auth_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY oauth2_provider_refreshtoken
+    ADD CONSTRAINT oauth2_provider_refreshtoken_user_id_da837fce_fk_auth_user_id FOREIGN KEY (user_id) REFERENCES auth_user(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
