@@ -299,13 +299,9 @@ def delete_corresponding_irods_user(sender, instance, **kwargs):
         url = '{}registration/delete_user'.format(settings.DATA_REG_SERVICE_SERVER_URL)
         auth_header_str = 'Basic {}'.format(settings.DATA_REG_API_KEY)
         p_data = {"username": username}
-        response = requests.post(url,
-                                 headers={'Authorization': auth_header_str},
-                                 data=dumps(p_data))
-
-        if response.status_code != status.HTTP_200_OK:
-            # iRODS user account cannot be deleted
-            raise Exception("Corresponding iRODS user fails to be deleted: " + response.content)
+        requests.post(url,
+                      headers={'Authorization': auth_header_str},
+                      data=dumps(p_data))
 
 
 def force_unique_emails(sender, instance, **kwargs):
