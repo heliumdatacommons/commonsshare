@@ -491,8 +491,8 @@ def create_resource(
 
     # set quota of this resource to this creator
     resource.set_quota_holder(owner, owner)
-
-    notify_fts_indexer(resource.short_id)
+    if settings.FTS_URL:
+        notify_fts_indexer(resource.short_id)
     return resource
 
 
@@ -685,7 +685,8 @@ def add_resource_files(resource, *files, **kwargs):
     # make sure data directory exists if not exist already
     utils.create_empty_contents_directory(resource)
 
-    notify_fts_indexer(resource.short_id)
+    if settings.FTS_URL:
+        notify_fts_indexer(resource.short_id)
 
     return ret
 
@@ -789,8 +790,8 @@ def delete_resource(pk):
             obsolete_res.raccess.immutable = False
             obsolete_res.raccess.save()
     res.delete()
-
-    notify_fts_indexer(pk)
+    if settings.FTS_URL:
+        notify_fts_indexer(pk)
 
     return pk
 
@@ -820,7 +821,8 @@ def delete_resource_file_only(resource, f):
     """
     short_path = f.short_path
     f.delete()
-    notify_fts_indexer(resource.short_id)
+    if settings.FTS_URL:
+        notify_fts_indexer(resource.short_id)
     return short_path
 
 

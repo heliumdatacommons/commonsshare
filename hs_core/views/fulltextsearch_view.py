@@ -12,7 +12,10 @@ from hs_core.models import ResourceFile
 from hs_core.views.utils import authorize, ACTION_TO_AUTHORIZE
 
 
-es = Elasticsearch([settings.FTS_URL])
+if settings.FTS_URL:
+    es = Elasticsearch([settings.FTS_URL])
+else:
+    es = None
 
 
 def ftsearchview(request):
