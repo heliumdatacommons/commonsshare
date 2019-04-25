@@ -61,7 +61,7 @@ def get_openid_token(request):
     if not uid:
         response_data['error'] = "cannot retrieve user's subject id to request token"
         return JsonResponse(response_data, status=status.HTTP_400_BAD_REQUEST)
-    url = 'token?uid={}&provider=globus&scope=openid%20email%20profile'.format(uid)
+    url = 'token?uid={}&provider=auth0&scope=openid%20email%20profile'.format(uid)
     # note that trailing slash should not be added to return_to url
     # return_url = '&return_to={}://{}/irods/openid_return'.format(request.scheme, request.get_host())
     # req_url = '{}{}{}'.format(settings.OAUTH_SERVICE_SERVER_URL, url, return_url)
@@ -100,7 +100,7 @@ def store(request):
     return_object = {}
     irods_sess = iRODSSession(user=request.user.username, access_token=str(request.POST['token']),
                               zone=settings.IRODS_ZONE, host=settings.IRODS_HOST,
-                              authentication_scheme='openid', openid_provider='globus',
+                              authentication_scheme='openid', openid_provider='auth0',
                               port=settings.IRODS_PORT)
     datastore = str(request.POST['store']).strip()
     if datastore.endswith('/'):
