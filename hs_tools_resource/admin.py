@@ -65,4 +65,4 @@ class InlineHelpPageUrl(GenericTabularInline):
 
 admin.site.unregister(ToolMetaData)
 # remove mezzanine Page registration due to it being unusable
-admin.site.unregister(Page)
+# admin.site.unregister(Page)
