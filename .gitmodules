@@ -1,3 +1,0 @@
-[submodule "django_irods"]
-	path = django_irods
-	url = https://github.com/heliumdatacommons/django_irods.git
