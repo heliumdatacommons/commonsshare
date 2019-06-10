@@ -15,13 +15,9 @@ from icommands import Session, GLOBAL_SESSION, GLOBAL_ENVIRONMENT, SessionExcept
 @deconstructible
 class IrodsStorage(Storage):
     def __init__(self, option=None):
-        if option == 'federated':
-            # resource should be saved in federated zone
-            self.set_fed_zone_session()
-        else:
-            self.session = GLOBAL_SESSION
-            self.environment = GLOBAL_ENVIRONMENT
-            icommands.ACTIVE_SESSION = self.session
+        self.session = GLOBAL_SESSION
+        self.environment = GLOBAL_ENVIRONMENT
+        icommands.ACTIVE_SESSION = self.session
 
     def set_user_session(self, username=None, password=None, host=settings.IRODS_HOST,
                          port=settings.IRODS_PORT, def_res=None, zone=settings.IRODS_ZONE,
@@ -51,18 +47,6 @@ class IrodsStorage(Storage):
 
         self.session.run('iinit', None, self.environment.auth)
         icommands.ACTIVE_SESSION = self.session
-
-    # Set iRODS session to wwwHydroProxy for irods_storage input object for iRODS federated
-    # zone direct file operations
-    def set_fed_zone_session(self):
-        if settings.REMOTE_USE_IRODS:
-            self.set_user_session(username=settings.HS_WWW_IRODS_PROXY_USER,
-                                  password=settings.HS_WWW_IRODS_PROXY_USER_PWD,
-                                  host=settings.HS_WWW_IRODS_HOST,
-                                  port=settings.IRODS_PORT,
-                                  def_res=settings.HS_IRODS_LOCAL_ZONE_DEF_RES,
-                                  zone=settings.HS_WWW_IRODS_ZONE,
-                                  sess_id='federated_session')
 
     def delete_user_session(self):
         if self.session != GLOBAL_SESSION and self.session.session_file_exists():
