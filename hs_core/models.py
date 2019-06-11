@@ -1778,8 +1778,6 @@ class AbstractResource(ResourcePermissionsMixin, ResourceIRODSMixin):
         If `user` is None, access control is not checked.  This happens when a resource has been
         invalidated outside of the control of a specific user. In this case, user can be None
         """
-        # avoid import loop
-        from hs_core.views.utils import run_script_to_update_hyrax_input_files
 
         # access control is separate from validation logic
         if user is not None and not user.uaccess.can_change_resource_flags(self):
@@ -1822,26 +1820,6 @@ class AbstractResource(ResourcePermissionsMixin, ResourceIRODSMixin):
             if value != old_value:
                 self.setAVU("isPublic", self.raccess.public)
 
-                # TODO: why does this only run when something becomes public?
-                # TODO: Should it be run when a NetcdfResource becomes private?
-                # Answer to TODO above: it is intentional not to run it when a target resource
-                # becomes private for performance reasons. The nightly script run will clean up
-                # to make sure all private resources are not available to hyrax server as well as
-                # to make sure all resources files available to hyrax server are up to date with
-                # the CommonsShare iRODS data store.
-
-                # run script to update hyrax input files when private netCDF resource becomes
-                # public or private composite resource that includes netCDF files becomes public
-
-                is_netcdf_to_public = False
-                if self.resource_type == 'NetcdfResource':
-                    is_netcdf_to_public = True
-                elif self.resource_type == 'CompositeResource' and \
-                        self.get_logical_files('NetCDFLogicalFile'):
-                    is_netcdf_to_public = True
-
-                if value and settings.RUN_HYRAX_UPDATE and is_netcdf_to_public:
-                    run_script_to_update_hyrax_input_files(self.short_id)
 
     def set_require_download_agreement(self, user, value):
         """Set resource require_download_agreement flag to True or False.
@@ -2292,304 +2270,6 @@ class AbstractResource(ResourcePermissionsMixin, ResourceIRODSMixin):
                 except BaseResource.DoesNotExist:
                     print("relation {} {} {} (this does not exist)"
                           .format(self.short_id, r.type, target))
-
-    def fix_irods_user_paths(self, log_actions=True, echo_actions=False, return_actions=False):
-        """Move iRODS user paths to the locations specified in settings.
-
-        :param log_actions: whether to log actions to Django log
-        :param echo_actions: whether to print actions on stdout
-        :param return_actions: whether to collect actions in an array and return them.
-
-        This is a temporary fix to the user resources, which are currently stored like
-        federated resources but whose paths are dynamically determined. This function points
-        the paths for user-level resources to where they are stored in the current environment,
-        as specified in hydroshare/local_settings.py.
-
-        * This only does something if the environment is not a production environment.
-        * It is idempotent, in the sense that it can be repeated more than once without problems.
-        * It must be done once whenever the django database is reloaded.
-        * It does not check whether the paths exist afterward. This is done by check_irods_files.
-        """
-        logger = logging.getLogger(__name__)
-        actions = []
-        ecount = 0
-
-        # location of the user files in production
-        defaultpath = getattr(settings, 'HS_USER_ZONE_PRODUCTION_PATH',
-                              '/hydroshareuserZone/home/localHydroProxy')
-        # where resource should be found; this is equal to the default path in production
-        userpath = '/' + os.path.join(
-            getattr(settings, 'HS_USER_IRODS_ZONE', 'hydroshareuserZone'),
-            'home',
-            getattr(settings, 'HS_LOCAL_PROXY_USER_IN_FED_ZONE', 'localHydroProxy'))
-
-        msg = "fix_irods_user_paths: user path is {}".format(userpath)
-        if echo_actions:
-            print(msg)
-        if log_actions:
-            logger.info(msg)
-        if return_actions:
-            actions.append(msg)
-
-        # only take action if you find a path that is a default user path and not in production
-        if self.resource_federation_path == defaultpath and userpath != defaultpath:
-            msg = "fix_irods_user_paths: mapping existing user federation path {} to {}"\
-                  .format(self.resource_federation_path, userpath)
-            if echo_actions:
-                print(msg)
-            if log_actions:
-                logger.info(msg)
-            if return_actions:
-                actions.append(msg)
-
-            self.resource_federation_path = userpath
-            self.save()
-            for f in self.files.all():
-                path = f.storage_path
-                if path.startswith(defaultpath):
-                    newpath = userpath + path[len(defaultpath):]
-                    f.set_storage_path(newpath, test_exists=False)  # does implicit save
-                    ecount += 1
-                    msg = "fix_irods_user_paths: rewriting {} to {}".format(path, newpath)
-                    if echo_actions:
-                        print(msg)
-                    if log_actions:
-                        logger.info(msg)
-                    if return_actions:
-                        actions.append(msg)
-                else:
-                    msg = ("fix_irods_user_paths: ERROR: malformed path {} in resource" +
-                           " {} should start with {}; cannot convert")\
-                        .format(path, self.short_id, defaultpath)
-                    if echo_actions:
-                        print(msg)
-                    if log_actions:
-                        logger.error(msg)
-                    if return_actions:
-                        actions.append(msg)
-
-        if ecount > 0:  # print information about the affected resource (not really an error)
-            msg = "fix_irods_user_paths: affected resource {} type is {}, title is '{}'"\
-                .format(self.short_id, self.resource_type, self.metadata.title.value)
-            if log_actions:
-                logger.info(msg)
-            if echo_actions:
-                print(msg)
-            if return_actions:
-                actions.append(msg)
-
-        return actions, ecount  # empty unless return_actions=True
-
-    def check_irods_files(self, stop_on_error=False, log_errors=True,
-                          echo_errors=False, return_errors=False,
-                          sync_ispublic=False, clean_irods=False, clean_django=False):
-        """Check whether files in self.files and on iRODS agree.
-
-        :param stop_on_error: whether to raise a ValidationError exception on first error
-        :param log_errors: whether to log errors to Django log
-        :param echo_errors: whether to print errors on stdout
-        :param return_errors: whether to collect errors in an array and return them.
-        :param sync_ispublic: whether to repair deviations between ResourceAccess.public
-               and AVU isPublic
-        :param clean_irods: whether to delete files in iRODs that are not in Django
-        :param clean_django: whether to delete files in Django that are not in iRODs
-        """
-        from hs_core.hydroshare.resource import delete_resource_file
-
-        logger = logging.getLogger(__name__)
-        istorage = self.get_irods_storage()
-        errors = []
-        ecount = 0
-        defaultpath = getattr(settings, 'HS_USER_ZONE_PRODUCTION_PATH',
-                              '/hydroshareuserZone/home/localHydroProxy')
-
-        # skip federated resources if not configured to handle these
-        if self.is_federated and not settings.REMOTE_USE_IRODS:
-            msg = "check_irods_files: skipping check of federated resource {} in unfederated mode"\
-                .format(self.short_id)
-            if echo_errors:
-                print(msg)
-            if log_errors:
-                logger.info(msg)
-
-        # skip resources that do not exist in iRODS
-        elif not istorage.exists(self.root_path):
-                msg = "root path {} does not exist in iRODS".format(self.root_path)
-                ecount += 1
-                if echo_errors:
-                    print(msg)
-                if log_errors:
-                    logger.error(msg)
-                if return_errors:
-                    errors.append(msg)
-
-        else:
-            # Step 1: repair irods user file paths if necessary
-            if clean_irods or clean_django:
-                # fix user paths before check (required). This is an idempotent step.
-                if self.resource_federation_path == defaultpath:
-                    error2, ecount2 = self.fix_irods_user_paths(log_actions=log_errors,
-                                                                echo_actions=echo_errors,
-                                                                return_actions=False)
-                    errors.extend(error2)
-                    ecount += ecount2
-
-            # Step 2: does every file here refer to an existing file in iRODS?
-            for f in self.files.all():
-                if not istorage.exists(f.storage_path):
-                    ecount += 1
-                    msg = "check_irods_files: django file {} does not exist in iRODS"\
-                        .format(f.storage_path)
-                    if clean_django:
-                        delete_resource_file(self.short_id, f.short_path, self.creator,
-                                             delete_logical_file=False)
-                        msg += " (DELETED FROM DJANGO)"
-                    if echo_errors:
-                        print(msg)
-                    if log_errors:
-                        logger.error(msg)
-                    if return_errors:
-                        errors.append(msg)
-                    if stop_on_error:
-                        raise ValidationError(msg)
-
-            # Step 3: does every iRODS file correspond to a record in files?
-            error2, ecount2 = self.__check_irods_directory(self.file_path, logger,
-                                                           stop_on_error=stop_on_error,
-                                                           log_errors=log_errors,
-                                                           echo_errors=echo_errors,
-                                                           return_errors=return_errors,
-                                                           clean=clean_irods)
-            errors.extend(error2)
-            ecount += ecount2
-
-            # Step 4: check whether the iRODS public flag agrees with Django
-            django_public = self.raccess.public
-            irods_public = None
-            try:
-                irods_public = self.getAVU('isPublic')
-            except SessionException as ex:
-                msg = "cannot read isPublic attribute of {}: {}"\
-                    .format(self.short_id, ex.stderr)
-                ecount += 1
-                if log_errors:
-                    logger.error(msg)
-                if echo_errors:
-                    print(msg)
-                if return_errors:
-                    errors.append(msg)
-                if stop_on_error:
-                    raise ValidationError(msg)
-
-            if irods_public is not None:
-                # convert to boolean
-                irods_public = str(irods_public).lower() == 'true'
-
-            if irods_public is None or irods_public != django_public:
-                ecount += 1
-                if not django_public:  # and irods_public
-                    msg = "check_irods_files: resource {} public in irods, private in Django"\
-                        .format(self.short_id)
-                    if sync_ispublic:
-                        try:
-                            self.setAVU('isPublic', 'false')
-                            msg += " (REPAIRED IN IRODS)"
-                        except SessionException as ex:
-                            msg += ": (CANNOT REPAIR: {})"\
-                                .format(ex.stderr)
-
-                else:  # django_public and not irods_public
-                    msg = "check_irods_files: resource {} private in irods, public in Django"\
-                        .format(self.short_id)
-                    if sync_ispublic:
-                        try:
-                            self.setAVU('isPublic', 'true')
-                            msg += " (REPAIRED IN IRODS)"
-                        except SessionException as ex:
-                            msg += ": (CANNOT REPAIR: {})"\
-                                .format(ex.stderr)
-
-                if msg != '':
-                    if echo_errors:
-                        print(msg)
-                    if log_errors:
-                        logger.error(msg)
-                    if return_errors:
-                        errors.append(msg)
-                    if stop_on_error:
-                        raise ValidationError(msg)
-
-        if ecount > 0:  # print information about the affected resource (not really an error)
-            msg = "check_irods_files: affected resource {} type is {}, title is '{}'"\
-                .format(self.short_id, self.resource_type, self.metadata.title.value)
-            if log_errors:
-                logger.error(msg)
-            if echo_errors:
-                print(msg)
-            if return_errors:
-                errors.append(msg)
-
-        return errors, ecount  # empty unless return_errors=True
-
-    def __check_irods_directory(self, dir, logger,
-                                stop_on_error=False, log_errors=True,
-                                echo_errors=False, return_errors=False,
-                                clean=False):
-        """List a directory and check files there for conformance with django ResourceFiles.
-
-        :param stop_on_error: whether to raise a ValidationError exception on first error
-        :param log_errors: whether to log errors to Django log
-        :param echo_errors: whether to print errors on stdout
-        :param return_errors: whether to collect errors in an array and return them.
-
-        """
-        errors = []
-        ecount = 0
-        istorage = self.get_irods_storage()
-        try:
-            listing = istorage.listdir(dir)
-            for fname in listing[1]:  # files
-                fullpath = os.path.join(dir, fname)
-                found = False
-                for f in self.files.all():
-                    if f.storage_path == fullpath:
-                        found = True
-                        break
-                if not found:
-                    ecount += 1
-                    msg = "check_irods_files: file {} in iRODs does not exist in Django"\
-                        .format(fullpath)
-                    if clean:
-                        try:
-                            istorage.delete(fullpath)
-                            msg += " (DELETED FROM IRODS)"
-                        except SessionException as ex:
-                            msg += ": (CANNOT DELETE: {})"\
-                                .format(ex.stderr)
-                    if echo_errors:
-                        print(msg)
-                    if log_errors:
-                        logger.error(msg)
-                    if return_errors:
-                        errors.append(msg)
-                    if stop_on_error:
-                        raise ValidationError(msg)
-
-            for dname in listing[0]:  # directories
-                error2, ecount2 = self.__check_irods_directory(os.path.join(dir, dname), logger,
-                                                               stop_on_error=stop_on_error,
-                                                               echo_errors=echo_errors,
-                                                               log_errors=log_errors,
-                                                               return_errors=return_errors,
-                                                               clean=clean)
-                errors.extend(error2)
-                ecount += ecount2
-
-        except SessionException:
-            pass  # not an error not to have a file directory.
-            # Non-existence of files is checked elsewhere.
-
-        return errors, ecount  # empty unless return_errors=True
 
 
 def get_path(instance, filename, folder=None):
@@ -3322,10 +3002,7 @@ class BaseResource(Page, AbstractResource):
 
     def get_irods_storage(self):
         """Return either IrodsStorage or FedStorage."""
-        if self.resource_federation_path:
-            return FedStorage()
-        else:
-            return IrodsStorage()
+        return IrodsStorage()
 
     @property
     def is_federated(self):
@@ -3378,11 +3055,7 @@ class BaseResource(Page, AbstractResource):
         """
         bagit_path = getattr(settings, 'IRODS_BAGIT_PATH', 'bags')
         bagit_postfix = getattr(settings, 'IRODS_BAGIT_POSTFIX', 'zip')
-        if self.is_federated:
-            return os.path.join(self.resource_federation_path, bagit_path,
-                                self.short_id + '.' + bagit_postfix)
-        else:
-            return os.path.join(bagit_path, self.short_id + '.' + bagit_postfix)
+        return os.path.join(bagit_path, self.short_id + '.' + bagit_postfix)
 
     @property
     def bag_url(self):

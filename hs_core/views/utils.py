@@ -166,15 +166,6 @@ def run_ssh_command(host, uname, pwd, exec_cmd):
         return ''
 
 
-# run the update script on hyrax server via ssh session for netCDF resources on demand
-# when private netCDF resources are made public so that all links of data services
-# provided by Hyrax service are instantaneously available on demand
-def run_script_to_update_hyrax_input_files(shortkey):
-    run_ssh_command(host=settings.HYRAX_SSH_HOST, uname=settings.HYRAX_SSH_PROXY_USER,
-                    pwd=settings.HYRAX_SSH_PROXY_USER_PWD,
-                    exec_cmd=settings.HYRAX_SCRIPT_RUN_COMMAND + ' ' + shortkey)
-
-
 def can_user_copy_resource(res, user):
     """
     Check whether resource copy is permitted or not

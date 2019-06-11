@@ -94,7 +94,6 @@ urlpatterns += [
     url('^hsapi/', include('hs_core.urls')),
     url('', include('hs_core.resourcemap_urls')),
     url('', include('hs_core.metadata_terms_urls')),
-    url('', include('hs_core.debug_urls')),
     url('^irods/', include('irods_browser_app.urls')),
     url('^globus/', include('globus_data_reg_app.urls')),
     url('^hsapi/', include('hs_labels.urls')),

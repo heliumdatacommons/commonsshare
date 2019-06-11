@@ -408,12 +408,6 @@ def create_resource(
             fed_zone_home_path = fed_res_path
             resource.save()
 
-        # TODO: It would be safer to require an explicit zone path rather than harvesting file path
-        elif len(source_names) > 0 and fed_res_path:
-            fed_zone_home_path = utils.get_federated_zone_home_path(source_names[0])
-            resource.resource_federation_path = fed_zone_home_path
-            resource.save()
-
         if len(files) == 1 and unpack_file and zipfile.is_zipfile(files[0]):
             # Add contents of zipfile as resource files asynchronously
             # Note: this is done asynchronously as unzipping may take
