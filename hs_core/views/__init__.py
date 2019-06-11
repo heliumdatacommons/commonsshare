@@ -16,7 +16,6 @@ from django.core.exceptions import ValidationError, PermissionDenied, ObjectDoes
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse, \
     HttpResponseBadRequest, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render, redirect
-from django.template import RequestContext
 from django.core import signing
 from django.db import Error, IntegrityError
 from django import forms
@@ -36,8 +35,8 @@ from django_irods.icommands import SessionException
 
 from hs_core import hydroshare
 from hs_core.hydroshare.utils import get_resource_by_shortkey, resource_modified, resolve_request
-from .utils import authorize, upload_from_irods, ACTION_TO_AUTHORIZE, run_script_to_update_hyrax_input_files, \
-    get_my_resources_list, send_action_to_take_email, get_coverage_data_dict, get_size_and_avu_for_irods_ref_files
+from .utils import authorize, upload_from_irods, ACTION_TO_AUTHORIZE, get_my_resources_list, \
+    send_action_to_take_email, get_coverage_data_dict, get_size_and_avu_for_irods_ref_files
 from hs_core.models import GenericResource, resource_processor, CoreMetaData, Subject
 from hs_core.hydroshare.resource import METADATA_STATUS_SUFFICIENT, METADATA_STATUS_INSUFFICIENT
 
@@ -48,7 +47,6 @@ from . import resource_folder_hierarchy
 
 from . import resource_access_api
 from . import resource_folder_rest_api
-from . import debug_resource_view
 from . import apps
 
 from hs_core.hydroshare import utils

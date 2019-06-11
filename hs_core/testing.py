@@ -48,11 +48,7 @@ class TestCaseCommonUtilities(object):
 
     def is_federated_irods_available(self):
         """Check if federated iRODS is available."""
-        if not settings.REMOTE_USE_IRODS or settings.HS_USER_ZONE_HOST != 'users.local.org' \
-                or settings.IRODS_HOST != 'data.local.org':
-            return False
-        else:
-            return True
+        return False
 
     def save_files_to_user_zone(self, file_name_to_target_name_dict):
         """Save a list of files to iRODS user zone using the same IrodsStorage() object.

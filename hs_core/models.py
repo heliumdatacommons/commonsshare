@@ -1778,8 +1778,6 @@ class AbstractResource(ResourcePermissionsMixin, ResourceIRODSMixin):
         If `user` is None, access control is not checked.  This happens when a resource has been
         invalidated outside of the control of a specific user. In this case, user can be None
         """
-        # avoid import loop
-        from hs_core.views.utils import run_script_to_update_hyrax_input_files
 
         # access control is separate from validation logic
         if user is not None and not user.uaccess.can_change_resource_flags(self):
@@ -1822,26 +1820,6 @@ class AbstractResource(ResourcePermissionsMixin, ResourceIRODSMixin):
             if value != old_value:
                 self.setAVU("isPublic", self.raccess.public)
 
-                # TODO: why does this only run when something becomes public?
-                # TODO: Should it be run when a NetcdfResource becomes private?
-                # Answer to TODO above: it is intentional not to run it when a target resource
-                # becomes private for performance reasons. The nightly script run will clean up
-                # to make sure all private resources are not available to hyrax server as well as
-                # to make sure all resources files available to hyrax server are up to date with
-                # the CommonsShare iRODS data store.
-
-                # run script to update hyrax input files when private netCDF resource becomes
-                # public or private composite resource that includes netCDF files becomes public
-
-                is_netcdf_to_public = False
-                if self.resource_type == 'NetcdfResource':
-                    is_netcdf_to_public = True
-                elif self.resource_type == 'CompositeResource' and \
-                        self.get_logical_files('NetCDFLogicalFile'):
-                    is_netcdf_to_public = True
-
-                if value and settings.RUN_HYRAX_UPDATE and is_netcdf_to_public:
-                    run_script_to_update_hyrax_input_files(self.short_id)
 
     def set_require_download_agreement(self, user, value):
         """Set resource require_download_agreement flag to True or False.
@@ -3024,10 +3002,7 @@ class BaseResource(Page, AbstractResource):
 
     def get_irods_storage(self):
         """Return either IrodsStorage or FedStorage."""
-        if self.resource_federation_path:
-            return FedStorage()
-        else:
-            return IrodsStorage()
+        return IrodsStorage()
 
     @property
     def is_federated(self):
@@ -3080,11 +3055,7 @@ class BaseResource(Page, AbstractResource):
         """
         bagit_path = getattr(settings, 'IRODS_BAGIT_PATH', 'bags')
         bagit_postfix = getattr(settings, 'IRODS_BAGIT_POSTFIX', 'zip')
-        if self.is_federated:
-            return os.path.join(self.resource_federation_path, bagit_path,
-                                self.short_id + '.' + bagit_postfix)
-        else:
-            return os.path.join(bagit_path, self.short_id + '.' + bagit_postfix)
+        return os.path.join(bagit_path, self.short_id + '.' + bagit_postfix)
 
     @property
     def bag_url(self):
