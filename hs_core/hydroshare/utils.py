@@ -169,8 +169,6 @@ def get_resource_file_url(res_file):
 
     if res_file.resource_file:
         f_url = res_file.resource_file.url
-    elif res_file.fed_resource_file:
-        f_url = res_file.fed_resource_file.url
     elif res_file.reference_file_path:
         f_url = res_file.reference_file_path
 
@@ -198,17 +196,6 @@ def get_resource_file_by_name(resource, file_name):
 def get_resource_file_by_id(resource, file_id):
     return resource.files.filter(id=file_id).first()
 
-
-# TODO: This is unnecessary since delete now cascades.
-def delete_fed_zone_file(file_name_with_full_path):
-    '''
-    Args:
-        file_name_with_full_path: the absolute full logical path in a federated iRODS zone
-    Returns:
-        None, but exceptions will be raised if there is an issue with iRODS delete operation
-    '''
-    istorage = IrodsStorage('federated')
-    istorage.delete(file_name_with_full_path)
 
 def copy_resource_files_and_AVUs(src_res_id, dest_res_id):
     """
@@ -543,12 +530,6 @@ def resource_pre_create_actions(resource_type, resource_title, page_redirect_url
         validate_metadata(metadata, resource_type)
 
     page_url_dict = {}
-    # this is needed since raster and feature resource types allows to upload a zip file,
-    # then replace zip file with exploded files. If the zip file is loaded from hydroshare
-    # federation zone, the original zip file encoded in source_names gets deleted
-    # in this case and fed_res_path is used to keep the federation path, so that the resource
-    # will be stored in the federated zone rather than the hydroshare zone
-    fed_res_path = []
     # receivers need to change the values of this dict if file validation fails
     file_validation_dict = {'are_files_valid': True, 'message': 'Files are valid'}
 
@@ -561,12 +542,12 @@ def resource_pre_create_actions(resource_type, resource_title, page_redirect_url
                              url_key=page_redirect_url_key, page_url_dict=page_url_dict,
                              validate_files=file_validation_dict,
                              source_names=source_names,
-                             user=requesting_user, fed_res_path=fed_res_path, **kwargs)
+                             user=requesting_user, **kwargs)
 
     if len(files) > 0:
         check_file_dict_for_error(file_validation_dict)
 
-    return page_url_dict, resource_title,  metadata, fed_res_path
+    return page_url_dict, resource_title,  metadata
 
 
 def resource_post_create_actions(resource, user, metadata,  **kwargs):

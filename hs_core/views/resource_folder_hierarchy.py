@@ -104,7 +104,7 @@ def data_store_structure(request):
         if store_path == 'data':
             # show reference file links if any which don't have physical presence in iRODS
             for f in ResourceFile.objects.filter(object_id=resource.id):
-                if not f.resource_file and not f.fed_resource_file and f.reference_file_path:
+                if not f.resource_file and f.reference_file_path:
                     files.append({'name': f.reference_file_path, 'size': f.reference_file_size,
                                   'type': 'Reference',
                                   'pk': f.pk,

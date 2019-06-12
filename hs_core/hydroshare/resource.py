@@ -156,12 +156,6 @@ def update_resource_file(pk, filename, f):
                 # TODO: should use add_file_to_resource
                 rf.resource_file = File(f) if not isinstance(f, UploadedFile) else f
                 rf.save()
-            if rf.fed_resource_file:
-                # TODO: should use delete_resource_file
-                rf.fed_resource_file.delete()
-                # TODO: should use add_file_to_resource
-                rf.fed_resource_file = File(f) if not isinstance(f, UploadedFile) else f
-                rf.save()
             return rf
     raise ObjectDoesNotExist(filename)
 
@@ -307,7 +301,7 @@ def create_resource(
         resource_type, owner, title,
         edit_users=None, view_users=None, edit_groups=None, view_groups=None,
         keywords=(), metadata=None, extra_metadata=None,
-        files=(), source_names=[], source_sizes=[], fed_res_path='', move=False, is_file_reference=False,
+        files=(), source_names=[], source_sizes=[], move=False, is_file_reference=False,
         create_metadata=True,
         create_bag=True, unpack_file=False, **kwargs):
     """
@@ -355,9 +349,6 @@ def create_resource(
          used to create the resource in the federated zone, default is empty list
     :param source_sizes: a list of file sizes corresponding to source_names if if_file_reference is True; otherwise,
          it is not of any use and should be empty.
-    :param fed_res_path: the federated zone path in the format of
-         /federation_zone/home/localHydroProxy that indicate where the resource
-         is stored, default is empty string
     :param move: a value of False or True indicating whether the content files
          should be erased from the source directory. default is False.
     :param is_file_reference: a value of False or True indicating whether the files stored in
@@ -400,12 +391,6 @@ def create_resource(
 
         if extra_metadata is not None:
             resource.extra_metadata = extra_metadata
-            resource.save()
-
-        fed_zone_home_path = ''
-        if fed_res_path:
-            resource.resource_federation_path = fed_res_path
-            fed_zone_home_path = fed_res_path
             resource.save()
 
         if len(files) == 1 and unpack_file and zipfile.is_zipfile(files[0]):
@@ -526,7 +511,6 @@ def create_empty_resource(pk, user, action='version'):
         owner=user,
         title=res.metadata.title.value,
         create_metadata=False,
-        fed_res_path=res.resource_federation_path,
         create_bag=False
     )
     return new_resource

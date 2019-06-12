@@ -172,7 +172,6 @@ def upload_add(request):
         request.session['file_type_error'] = "Invalid file type: {ext}".format(ext=ext)
         return HttpResponseRedirect(request.META['HTTP_REFERER'])
     else:
-        # TODO: this should happen whether resource is federated or not
         irods_fsizes = []
         irods_avus = {}
         if irods_fnames:

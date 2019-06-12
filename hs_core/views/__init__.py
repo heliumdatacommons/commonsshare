@@ -1150,7 +1150,7 @@ def create_resource(request, *args, **kwargs):
 
     url_key = "page_redirect_url"
     try:
-        _, res_title, metadata, fed_res_path = \
+        _, res_title, metadata = \
             hydroshare.utils.resource_pre_create_actions(resource_type=resource_type,
                                                          files=resource_files,
                                                          resource_title=res_title,
@@ -1183,8 +1183,6 @@ def create_resource(request, *args, **kwargs):
             files=resource_files,
             source_names=source_names,
             source_sizes=irods_fsizes,
-            # TODO: should probably be resource_federation_path like it is set to.
-            fed_res_path=fed_res_path[0] if len(fed_res_path) == 1 else '',
             is_file_reference=is_file_reference,
             content=res_title
     )
