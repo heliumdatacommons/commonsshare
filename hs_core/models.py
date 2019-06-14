@@ -37,8 +37,6 @@ from mezzanine.pages.managers import PageManager
 
 from dominate.tags import div, legend, table, tbody, tr, th, td, h4
 
-from hs_core.irods import ResourceIRODSMixin
-
 
 class GroupOwnership(models.Model):
     """Define lookup table allowing django auth users to own django auth groups."""
