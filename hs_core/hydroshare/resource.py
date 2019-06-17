@@ -419,7 +419,8 @@ def create_resource(
                                     privilege=PrivilegeCodes.OWNER)
 
         # give read permission to corresponding iRODS user
-        resource.set_irods_access_control(user_or_group_name=owner.username)
+        if settings.USE_IRODS:
+            resource.set_irods_access_control(user_or_group_name=owner.username)
 
         resource_labels = ResourceLabels(resource=resource)
         resource_labels.save()
@@ -462,14 +463,15 @@ def create_resource(
             resource.save()
 
 
-    # set the resource to private
-    resource.setAVU('isPublic', resource.raccess.public)
+    if settings.USE_IRODS:
+        # set the resource to private
+        resource.setAVU('isPublic', resource.raccess.public)
 
-    # set the resource type (which is immutable)
-    resource.setAVU("resourceType", resource._meta.object_name)
+        # set the resource type (which is immutable)
+        resource.setAVU("resourceType", resource._meta.object_name)
 
-    # set quota of this resource to this creator
-    resource.set_quota_holder(owner, owner)
+        # set quota of this resource to this creator
+        resource.set_quota_holder(owner, owner)
     if settings.FTS_URL:
         notify_fts_indexer(resource.short_id)
     return resource

@@ -23,7 +23,7 @@ from django.utils.timezone import now
 from django_irods.storage import IrodsStorage
 from django.conf import settings
 from django.core.files import File
-from django.core.files.storage import DefaultStorage
+from django.core.files.storage import FileSystemStorage
 from django.core.exceptions import ObjectDoesNotExist, ValidationError, \
     SuspiciousFileOperation, PermissionDenied
 from django.forms.models import model_to_dict
@@ -1860,16 +1860,19 @@ class AbstractResource(ResourcePermissionsMixin):
 
         return User instance of the quota holder for the resource or None if it does not exist
         """
-        try:
-            uname = self.getAVU("quotaUserName")
-        except SessionException:
-            # quotaUserName AVU does not exist, return None
-            return None
+        if settings.USE_IRODS:
+            try:
+                uname = self.getAVU("quotaUserName")
+            except SessionException:
+                # quotaUserName AVU does not exist, return None
+                return None
 
-        if uname:
-            return User.objects.filter(username=uname).first()
+            if uname:
+                return User.objects.filter(username=uname).first()
+            else:
+                # quotaUserName AVU does not exist, return None
+                return None
         else:
-            # quotaUserName AVU does not exist, return None
             return None
 
     def setAVU(self, attribute, value):
@@ -1945,12 +1948,6 @@ class AbstractResource(ResourcePermissionsMixin):
         """Delete resource along with all of its metadata and data bag."""
         from hydroshare import hs_bagit
         for fl in self.files.all():
-            if fl.logical_file is not None:
-                # delete of metadata file deletes the logical file (one-to-one relation)
-                # so no need for fl.logical_file.delete() and deleting of metadata file
-                # object deletes (cascade delete) all the contained GenericRelated metadata
-                # elements
-                fl.logical_file.metadata.delete()
             # COUCH: delete of file objects now cascades.
             fl.delete()
 
@@ -2346,7 +2343,11 @@ class ResourceFile(models.Model):
 
     # This pair of FileFields deals with the fact that there are two kinds of storage
     resource_file = models.FileField(upload_to=get_path, max_length=4096,
-                                     null=True, blank=True, storage=IrodsStorage())
+                                     null=True, blank=True,
+                                     storage=IrodsStorage()
+                                     if getattr(settings, 'USE_IRODS', False)
+                                     else FileSystemStorage(location=settings.FILE_SYSTEM_ROOT,
+                                                            base_url='/static/bagsdata/'))
 
     # This is used to hold the reference path to an external file, e.g., a logical iRODS
     # path refering to a file stored in an external iRODS zone, a URL that points to an external file
@@ -2495,7 +2496,10 @@ class ResourceFile(models.Model):
     # TODO: write unit test
     @property
     def exists(self):
-        istorage = self.resource.get_irods_storage()
+        if settings.USE_IRODS:
+            istorage = self.resource.get_irods_storage()
+        else:
+            istorage = self.resource.get_file_system_storage()
         return istorage.exists(self.resource_file.name)
 
     # TODO: write unit test
@@ -2635,16 +2639,6 @@ class ResourceFile(models.Model):
 
         return folder, base
 
-    # def rename(self, new_name):
-    #     """ rename a file, setting all path variables appropriately """
-    #     pass
-
-    # def copy_irods(self, source_path, dest_path=None):
-    #     """ copy an irods file into this FileField, setting all paths appropriately """
-    #     pass
-
-    # def move_irods(self, source_path, dest_path=None):
-    #     """ move an irods file into this object, setting all paths appropriately """
 
     # classmethods do things that query or affect all files.
 
@@ -2881,10 +2875,13 @@ class BaseResource(Page, AbstractResource):
         """Return either IrodsStorage."""
         return IrodsStorage()
 
+    def get_file_system_storage(self):
+        return FileSystemStorage(location=settings.FILE_SYSTEM_ROOT, base_url='/static/bagsdata/')
+
     # Paths relative to the resource
     @property
     def root_path(self):
-        """Return the root folder of the iRODS structure containing resource files.
+        """Return the root folder of containing resource files.
 
         Note that this folder doesn't directly contain the resource files;
         They are contained in ./data/* instead.

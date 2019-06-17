@@ -491,8 +491,12 @@ def file_download_url_mapper(request, shortkey):
     :return:
     """
 
-    resource, _, _ = authorize(request, shortkey, needed_permission=ACTION_TO_AUTHORIZE.VIEW_RESOURCE)
-    istorage = resource.get_irods_storage()
+    resource, _, _ = authorize(request, shortkey,
+                               needed_permission=ACTION_TO_AUTHORIZE.VIEW_RESOURCE)
+    if settings.USE_IRODS:
+        istorage = resource.get_irods_storage()
+    else:
+        istorage = resource.get_file_system_storage()
     irods_file_path = '/'.join(request.path.split('/')[2:-1])
     file_download_url = istorage.url(irods_file_path)
     return HttpResponseRedirect(file_download_url)

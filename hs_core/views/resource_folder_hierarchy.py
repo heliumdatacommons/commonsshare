@@ -8,6 +8,7 @@ from rest_framework.exceptions import NotFound, status, PermissionDenied, \
     ValidationError as DRF_ValidationError
 from rest_framework.decorators import api_view
 from django.core.exceptions import ValidationError
+from django.conf import settings
 
 from django_irods.icommands import SessionException
 
@@ -15,7 +16,7 @@ from hs_core.hydroshare.utils import get_file_mime_type, \
     get_resource_file_url, resolve_request
 from hs_core.views.utils import authorize, ACTION_TO_AUTHORIZE, zip_folder, unzip_file, \
     create_folder, remove_folder, move_or_rename_file_or_folder, move_to_folder, \
-    rename_file_or_folder, get_coverage_data_dict, irods_path_is_directory
+    rename_file_or_folder, irods_path_is_directory
 from hs_core.models import ResourceFile
 
 logger = logging.getLogger(__name__)
@@ -67,10 +68,15 @@ def data_store_structure(request):
         return HttpResponse('Bad request - store_path cannot contain /../',
                             status=status.HTTP_400_BAD_REQUEST)
 
-    istorage = resource.get_irods_storage()
     res_coll = os.path.join(resource.root_path, store_path)
     try:
-        store = istorage.listdir(res_coll)
+        if settings.USE_IRODS:
+            istorage = resource.get_irods_storage()
+        else:
+            istorage = resource.get_file_system_storage()
+
+        dirs_list, files_list = istorage.listdir(res_coll)
+        store = (dirs_list, files_list)
         files = []
         for fname in store[1]:  # files
             fname = fname.decode('utf-8')
@@ -82,21 +88,15 @@ def data_store_structure(request):
                 mtype = mtype[idx + 1:]
             f_pk = ''
             f_url = ''
-            logical_file_type = ''
-            logical_file_id = ''
             for f in ResourceFile.objects.filter(object_id=resource.id):
                 if name_with_full_path == f.storage_path:
                     f_pk = f.pk
                     f_url = get_resource_file_url(f)
-                    if resource.resource_type == "CompositeResource":
-                        f_logical = f.get_or_create_logical_file
-                        logical_file_type = f.logical_file_type_name
-                        logical_file_id = f_logical.id
                     break
             if f_pk:  # file is found in Django
                 files.append({'name': fname, 'size': size, 'type': mtype, 'pk': f_pk, 'url': f_url,
-                              'logical_type': logical_file_type,
-                              'logical_file_id': logical_file_id})
+                              'logical_type': '',
+                              'logical_file_id': ''})
             else:  # file is not found in Django
                 logger.error("data_store_structure: filename {} in iRODs has no analogue in Django"
                              .format(name_with_full_path))
@@ -120,11 +120,6 @@ def data_store_structure(request):
                      'can_be_public': resource.can_be_public_or_discoverable,
                      'sensitive': resource.contains_sensitive_payload}
 
-    if resource.resource_type == "CompositeResource":
-        spatial_coverage_dict = get_coverage_data_dict(resource)
-        temporal_coverage_dict = get_coverage_data_dict(resource, coverage_type='temporal')
-        return_object['spatial_coverage'] = spatial_coverage_dict
-        return_object['temporal_coverage'] = temporal_coverage_dict
     return HttpResponse(
         json.dumps(return_object),
         content_type="application/json"

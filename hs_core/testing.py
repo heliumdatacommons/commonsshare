@@ -69,7 +69,8 @@ class TestCaseCommonUtilities(object):
         create_folder(res.short_id, 'data/sub_test_dir')
         istorage = res.get_irods_storage()
         res_path = res.file_path
-        store = istorage.listdir(res_path)
+        dirs_list, files_list = istorage.listdir(res_path)
+        store = (dirs_list, files_list)
         self.assertIn('sub_test_dir', store[0], msg='resource does not contain created sub-folder')
 
         # rename the third file in file_name_list

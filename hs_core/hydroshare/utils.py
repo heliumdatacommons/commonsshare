@@ -702,10 +702,11 @@ def resource_file_add_process(resource, files, user, extract_metadata=False,
 
 # TODO: move this to BaseResource
 def create_empty_contents_directory(resource):
-    res_contents_dir = resource.file_path
-    istorage = resource.get_irods_storage()
-    if not istorage.exists(res_contents_dir):
-        istorage.session.run("imkdir", None, '-p', res_contents_dir)
+    if settings.USE_IRODS:
+        res_contents_dir = resource.file_path
+        istorage = resource.get_irods_storage()
+        if not istorage.exists(res_contents_dir):
+            istorage.session.run("imkdir", None, '-p', res_contents_dir)
 
 
 def add_file_to_resource(resource, f, folder=None, source_name='', source_size=0,

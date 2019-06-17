@@ -280,7 +280,7 @@ class IrodsStorage(Storage):
                 filename = stdout[i].strip()
                 if filename:
                     listing[1].append(filename)
-        return listing
+        return listing[0], listing[1]
 
     def size(self, name):
         stdout = self.session.run("ils", None, "-l", name)[0].split()

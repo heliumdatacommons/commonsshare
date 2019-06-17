@@ -1,6 +1,8 @@
 import os
-import shutil
 import logging
+import shutil
+
+from django.conf import settings
 
 from hs_core.models import Bags
 
@@ -14,14 +16,18 @@ def delete_files_and_bag(resource):
     :param resource: the resource to delete the bag and files for.
     :return: none
     """
-    istorage = resource.get_irods_storage()
+    if settings.USE_IRODS:
+        istorage = resource.get_irods_storage()
+        # delete resource directory first to remove all generated bag-related files for the resource
+        if istorage.exists(resource.root_path):
+            istorage.delete(resource.root_path)
 
-    # delete resource directory first to remove all generated bag-related files for the resource
-    if istorage.exists(resource.root_path):
-        istorage.delete(resource.root_path)
-
-    if istorage.exists(resource.bag_path):
-        istorage.delete(resource.bag_path)
+        if istorage.exists(resource.bag_path):
+            istorage.delete(resource.bag_path)
+    else:
+        istorage = resource.get_file_system_storage()
+        location = istorage.location
+        shutil.rmtree(os.path.join(location, resource.short_id))
 
     # TODO: delete this whole mechanism; redundant.
     # delete the bags table
