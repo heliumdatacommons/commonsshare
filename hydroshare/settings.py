@@ -235,7 +235,7 @@ MEDIA_ROOT = os.path.join(PROJECT_ROOT, *MEDIA_URL.strip("/").split("/"))
 ROOT_URLCONF = "%s.urls" % PROJECT_DIRNAME
 
 # file system storage root directory
-FILE_SYSTEM_ROOT = os.path.join(STATIC_ROOT, 'bagsdata')
+FILE_SYSTEM_ROOT = os.path.join(PROJECT_ROOT, 'bagsdata')
 
 ADAPTOR_INPLACEEDIT_EDIT = 'hs_core.models.HSAdaptorEditInline'
 INPLACE_SAVE_URL = '/hsapi/save_inline/'

@@ -47,18 +47,32 @@ def download(request, path, rest_call=False, use_async=True, *args, **kwargs):
         idx_sep = path.find('/')
         path = path[idx_sep:]
 
-    if not settings.USE_IRODS and is_bag_download:
-        try:
-            _, bag_path = create_bag(res)
-            # obtain mime_type to set content_type
-            mtype = 'application/zip'
-            response = FileResponse(open(bag_path, 'rb'), content_type=mtype)
+    if not settings.USE_IRODS:
+        if is_bag_download:
+            try:
+                _, bag_path = create_bag(res)
+                # obtain mime_type to set content_type
+                mtype = 'application/zip'
+                response = FileResponse(open(bag_path, 'rb'), content_type=mtype)
+                response['Content-Disposition'] = 'attachment; filename="{name}"'.format(
+                    name=path.split('/')[-1])
+                response['Content-Length'] = os.path.getsize(bag_path)
+                return response
+            except Exception as ex:
+                return HttpResponse(content='Failed to create the bag', status=500)
+        else:
+            istorage = res.get_file_system_storage()
+            location = istorage.location
+            file_path = os.path.join(location, path)
+            mtype = 'application-x/octet-stream'
+            mime_type = mimetypes.guess_type(path)
+            if mime_type[0] is not None:
+                mtype = mime_type[0]
+            response = FileResponse(open(file_path, 'rb'), content_type=mtype)
             response['Content-Disposition'] = 'attachment; filename="{name}"'.format(
                 name=path.split('/')[-1])
-            response['Content-Length'] = os.path.getsize(bag_path)
+            response['Content-Length'] = os.path.getsize(file_path)
             return response
-        except Exception as ex:
-            return HttpResponse(content='Failed to create the bag', status=500)
 
     istorage = IrodsStorage()
 

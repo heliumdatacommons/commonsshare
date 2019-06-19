@@ -2344,7 +2344,7 @@ class ResourceFile(models.Model):
                                      storage=IrodsStorage()
                                      if getattr(settings, 'USE_IRODS', False)
                                      else FileSystemStorage(location=settings.FILE_SYSTEM_ROOT,
-                                                            base_url='/static/bagsdata/'))
+                                                            base_url='/django_irods/download/'))
 
     # This is used to hold the reference path to an external file, e.g., a logical iRODS
     # path refering to a file stored in an external iRODS zone, a URL that points to an external file
@@ -2873,7 +2873,8 @@ class BaseResource(Page, AbstractResource):
         return IrodsStorage()
 
     def get_file_system_storage(self):
-        return FileSystemStorage(location=settings.FILE_SYSTEM_ROOT, base_url='/static/bagsdata/')
+        return FileSystemStorage(location=settings.FILE_SYSTEM_ROOT,
+                                 base_url='/django_irods/download/')
 
     # Paths relative to the resource
     @property
