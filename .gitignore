@@ -11,6 +11,7 @@
 /config/hydroshare-config.yaml
 /hydroshare/local_settings.py
 /hydroshare/static
+/hydroshare/bagsdata
 /log
 /nginx/config-files/hs-nginx.conf
 /nginx/.htpasswd
