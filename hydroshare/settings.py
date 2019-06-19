@@ -147,12 +147,6 @@ USE_I18N = False
 #   * Receive x-headers
 INTERNAL_IPS = ("127.0.0.1",)
 
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    "django.template.loaders.filesystem.Loader",
-    "django.template.loaders.app_directories.Loader",
-)
-
 # make django file uploader to always write uploaded file to a temporary directory
 # rather than holding uploaded file in memory for small files. This is due to
 # the difficulty of metadata extraction from an uploaded file being held in memory
@@ -207,8 +201,6 @@ DATABASES = {
 # PATHS #
 #########
 
-import os
-
 # Full filesystem path to the project.
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
@@ -244,12 +236,6 @@ ROOT_URLCONF = "%s.urls" % PROJECT_DIRNAME
 
 # file system storage root directory
 FILE_SYSTEM_ROOT = os.path.join(STATIC_ROOT, 'bagsdata')
-
-# Put strings here, like "/home/html/django_templates"
-# or "C:/www/django/templates".
-# Always use forward slashes, even on Windows.
-# Don't forget to use absolute paths, not relative paths.
-TEMPLATE_DIRS = (os.path.join(PROJECT_ROOT, "templates"),)
 
 ADAPTOR_INPLACEEDIT_EDIT = 'hs_core.models.HSAdaptorEditInline'
 INPLACE_SAVE_URL = '/hsapi/save_inline/'
