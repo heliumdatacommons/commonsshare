@@ -539,7 +539,8 @@ def link_irods_folder_to_django(resource, istorage, foldername, exclude=()):
         istorage = resource.get_irods_storage()
 
     if foldername:
-        store = istorage.listdir(foldername)
+        dirs_list, files_list = istorage.listdir(foldername)
+        store = (dirs_list, files_list)
         # add files into Django resource model
         for file in store[1]:
             if file not in exclude:
@@ -771,7 +772,9 @@ def list_folder(res_id, folder_path):
     istorage = resource.get_irods_storage()
     coll_path = os.path.join(resource.root_path, folder_path)
 
-    return istorage.listdir(coll_path)
+    dirs_list, files_list = istorage.listdir(coll_path)
+
+    return (dirs_list, files_list)
 
 
 # TODO: modify this to take short paths not including data/

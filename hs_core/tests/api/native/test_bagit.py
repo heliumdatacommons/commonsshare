@@ -39,7 +39,7 @@ class TestBagIt(TestCase):
         old_bag = self.test_res.bags.all().first()
 
         # this is the api call we are testing
-        new_bag = hs_bagit.create_bag(self.test_res)
+        new_bag, _ = hs_bagit.create_bag(self.test_res)
 
         # resource should have one new bags object
         self.assertEquals(self.test_res.bags.count(), 1)

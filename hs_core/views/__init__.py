@@ -431,9 +431,6 @@ def update_metadata_element(request, shortkey, element_name, element_id, *args, 
                     res.update_public_and_discoverable()
                 if is_update_success:
                     resource_modified(res, request.user, overwrite_bag=False)
-                    if res.resource_type == "TimeSeriesResource" and element_name != "subject":
-                        res.metadata.is_dirty = True
-                        res.metadata.save()
             elif "errors" in response:
                 err_msg = err_msg.format(element_name, response['errors'])
 
@@ -491,8 +488,12 @@ def file_download_url_mapper(request, shortkey):
     :return:
     """
 
-    resource, _, _ = authorize(request, shortkey, needed_permission=ACTION_TO_AUTHORIZE.VIEW_RESOURCE)
-    istorage = resource.get_irods_storage()
+    resource, _, _ = authorize(request, shortkey,
+                               needed_permission=ACTION_TO_AUTHORIZE.VIEW_RESOURCE)
+    if settings.USE_IRODS:
+        istorage = resource.get_irods_storage()
+    else:
+        istorage = resource.get_file_system_storage()
     irods_file_path = '/'.join(request.path.split('/')[2:-1])
     file_download_url = istorage.url(irods_file_path)
     return HttpResponseRedirect(file_download_url)
@@ -545,7 +546,7 @@ def delete_resource(request, shortkey, *args, **kwargs):
     ajax_response_data = {'status': 'success'}
     try:
         hydroshare.delete_resource(shortkey)
-    except ValidationError as ex:
+    except Exception as ex:
         if request.is_ajax():
             ajax_response_data['status'] = 'error'
             ajax_response_data['message'] = ex.message
@@ -776,13 +777,15 @@ def _share_resource(request, shortkey, privilege, user_or_group_id, user_or_grou
         try:
             if user_or_group == 'user':
                 user.uaccess.share_resource_with_user(res, user_to_share_with, access_privilege)
-                # set iRODS read permission accordingly
-                res.set_irods_access_control(user_or_group_name=user_to_share_with.username)
+                if settings.USE_IRODS:
+                    # set iRODS read permission accordingly
+                    res.set_irods_access_control(user_or_group_name=user_to_share_with.username)
             else:
                 user.uaccess.share_resource_with_group(res, group_to_share_with, access_privilege)
-                # give all users in the group iRODS read permission accordingly
-                for gu in group_to_share_with.gaccess.members:
-                    res.set_irods_access_control(user_or_group_name=gu.username)
+                if settings.USE_IRODS:
+                    # give all users in the group iRODS read permission accordingly
+                    for gu in group_to_share_with.gaccess.members:
+                        res.set_irods_access_control(user_or_group_name=gu.username)
 
         except PermissionDenied as exp:
             status = 'error'
@@ -834,8 +837,9 @@ def unshare_resource_with_user(request, shortkey, user_id, *args, **kwargs):
     ajax_response_data = {'status': 'success'}
     try:
         user.uaccess.unshare_resource_with_user(res, user_to_unshare_with)
-        # set iRODS null permission accordingly
-        res.set_irods_access_control(user_or_group_name=user_to_unshare_with.username, perm='null')
+        if settings.USE_IRODS:
+            # set iRODS null permission accordingly
+            res.set_irods_access_control(user_or_group_name=user_to_unshare_with.username, perm='null')
         if user not in res.raccess.view_users:
             # user has no explict access to the resource - redirect to resource listing page
             ajax_response_data['redirect_to'] = '/my-resources/'
@@ -855,9 +859,10 @@ def unshare_resource_with_group(request, shortkey, group_id, *args, **kwargs):
     ajax_response_data = {'status': 'success'}
     try:
         user.uaccess.unshare_resource_with_group(res, group_to_unshare_with)
-        # give all users in the group iRODS null permission accordingly
-        for gu in group_to_unshare_with.gaccess.members:
-            res.set_irods_access_control(user_or_group_name=gu.username, perm='null')
+        if settings.USE_IRODS:
+            # give all users in the group iRODS null permission accordingly
+            for gu in group_to_unshare_with.gaccess.members:
+                res.set_irods_access_control(user_or_group_name=gu.username, perm='null')
 
         if user not in res.raccess.view_users:
             # user has no explicit access to the resource - redirect to resource listing page
@@ -886,8 +891,9 @@ def undo_share_resource_with_user(request, shortkey, user_id, *args, **kwargs):
             undo_user_privilege = "owner"
         else:
             undo_user_privilege = 'none'
-            # set iRODS permission to null accordingly
-            res.set_irods_access_control(user_or_group_name=user_to_unshare_with.username, perm='null')
+            if settings.USE_IRODS:
+                # set iRODS permission to null accordingly
+                res.set_irods_access_control(user_or_group_name=user_to_unshare_with.username, perm='null')
 
         ajax_response_data['undo_user_privilege'] = undo_user_privilege
 
@@ -916,9 +922,10 @@ def undo_share_resource_with_group(request, shortkey, group_id, *args, **kwargs)
             undo_group_privilege = 'view'
         else:
             undo_group_privilege = 'none'
-            # set iRODS permission to null accordingly
-            for ug in group_to_unshare_with.gaccess.members:
-                res.set_irods_access_control(user_or_group_name=ug.username, perm='null')
+            if settings.USE_IRODS:
+                # set iRODS permission to null accordingly
+                for ug in group_to_unshare_with.gaccess.members:
+                    res.set_irods_access_control(user_or_group_name=ug.username, perm='null')
 
         ajax_response_data['undo_group_privilege'] = undo_group_privilege
 
@@ -1085,7 +1092,6 @@ class GroupUpdateForm(GroupForm):
 @processor_for('my-resources')
 @login_required
 def my_resources(request, page):
-
     resource_collection = get_my_resources_list(request)
     context = {'collection': resource_collection}
 
@@ -1117,6 +1123,7 @@ def create_resource_select(request, *args, **kwargs):
     context = {
         'current_user': request.user.username,
         'current_irods_store': '/' + settings.IRODS_ZONE + '/home/' + request.user.username
+        if settings.USE_IRODS else ''
     }
     return render(request, 'pages/create-resource.html', context)
 
@@ -1150,7 +1157,7 @@ def create_resource(request, *args, **kwargs):
 
     url_key = "page_redirect_url"
     try:
-        _, res_title, metadata, fed_res_path = \
+        _, res_title, metadata = \
             hydroshare.utils.resource_pre_create_actions(resource_type=resource_type,
                                                          files=resource_files,
                                                          resource_title=res_title,
@@ -1183,8 +1190,6 @@ def create_resource(request, *args, **kwargs):
             files=resource_files,
             source_names=source_names,
             source_sizes=irods_fsizes,
-            # TODO: should probably be resource_federation_path like it is set to.
-            fed_res_path=fed_res_path[0] if len(fed_res_path) == 1 else '',
             is_file_reference=is_file_reference,
             content=res_title
     )

@@ -28,8 +28,6 @@ from django_irods.icommands import SessionException
 
 from minid_client import minid_client_api as mca
 
-FILE_SIZE_LIMIT = 1*(1024 ** 3)
-FILE_SIZE_LIMIT_FOR_DISPLAY = '1G'
 METADATA_STATUS_SUFFICIENT = 'Sufficient to publish or make public'
 METADATA_STATUS_INSUFFICIENT = 'Insufficient to publish or make public'
 
@@ -156,12 +154,6 @@ def update_resource_file(pk, filename, f):
                 # TODO: should use add_file_to_resource
                 rf.resource_file = File(f) if not isinstance(f, UploadedFile) else f
                 rf.save()
-            if rf.fed_resource_file:
-                # TODO: should use delete_resource_file
-                rf.fed_resource_file.delete()
-                # TODO: should use add_file_to_resource
-                rf.fed_resource_file = File(f) if not isinstance(f, UploadedFile) else f
-                rf.save()
             return rf
     raise ObjectDoesNotExist(filename)
 
@@ -251,10 +243,6 @@ def check_resource_files(files=()):
             except (TypeError, OSError):
                 size = 0
         sum += size
-        if size > FILE_SIZE_LIMIT:
-            # file is greater than FILE_SIZE_LIMIT, which is not allowed
-            return False, -1
-
     return True, sum
 
 
@@ -307,7 +295,7 @@ def create_resource(
         resource_type, owner, title,
         edit_users=None, view_users=None, edit_groups=None, view_groups=None,
         keywords=(), metadata=None, extra_metadata=None,
-        files=(), source_names=[], source_sizes=[], fed_res_path='', move=False, is_file_reference=False,
+        files=(), source_names=[], source_sizes=[], move=False, is_file_reference=False,
         create_metadata=True,
         create_bag=True, unpack_file=False, **kwargs):
     """
@@ -355,9 +343,6 @@ def create_resource(
          used to create the resource in the federated zone, default is empty list
     :param source_sizes: a list of file sizes corresponding to source_names if if_file_reference is True; otherwise,
          it is not of any use and should be empty.
-    :param fed_res_path: the federated zone path in the format of
-         /federation_zone/home/localHydroProxy that indicate where the resource
-         is stored, default is empty string
     :param move: a value of False or True indicating whether the content files
          should be erased from the source directory. default is False.
     :param is_file_reference: a value of False or True indicating whether the files stored in
@@ -402,12 +387,6 @@ def create_resource(
             resource.extra_metadata = extra_metadata
             resource.save()
 
-        fed_zone_home_path = ''
-        if fed_res_path:
-            resource.resource_federation_path = fed_res_path
-            fed_zone_home_path = fed_res_path
-            resource.save()
-
         if len(files) == 1 and unpack_file and zipfile.is_zipfile(files[0]):
             # Add contents of zipfile as resource files asynchronously
             # Note: this is done asynchronously as unzipping may take
@@ -434,7 +413,8 @@ def create_resource(
                                     privilege=PrivilegeCodes.OWNER)
 
         # give read permission to corresponding iRODS user
-        resource.set_irods_access_control(user_or_group_name=owner.username)
+        if settings.USE_IRODS:
+            resource.set_irods_access_control(user_or_group_name=owner.username)
 
         resource_labels = ResourceLabels(resource=resource)
         resource_labels.save()
@@ -477,14 +457,15 @@ def create_resource(
             resource.save()
 
 
-    # set the resource to private
-    resource.setAVU('isPublic', resource.raccess.public)
+    if settings.USE_IRODS:
+        # set the resource to private
+        resource.setAVU('isPublic', resource.raccess.public)
 
-    # set the resource type (which is immutable)
-    resource.setAVU("resourceType", resource._meta.object_name)
+        # set the resource type (which is immutable)
+        resource.setAVU("resourceType", resource._meta.object_name)
 
-    # set quota of this resource to this creator
-    resource.set_quota_holder(owner, owner)
+        # set quota of this resource to this creator
+        resource.set_quota_holder(owner, owner)
     if settings.FTS_URL:
         notify_fts_indexer(resource.short_id)
     return resource
@@ -526,7 +507,6 @@ def create_empty_resource(pk, user, action='version'):
         owner=user,
         title=res.metadata.title.value,
         create_metadata=False,
-        fed_res_path=res.resource_federation_path,
         create_bag=False
     )
     return new_resource

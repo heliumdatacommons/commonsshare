@@ -169,8 +169,6 @@ def get_resource_file_url(res_file):
 
     if res_file.resource_file:
         f_url = res_file.resource_file.url
-    elif res_file.fed_resource_file:
-        f_url = res_file.fed_resource_file.url
     elif res_file.reference_file_path:
         f_url = res_file.reference_file_path
 
@@ -198,17 +196,6 @@ def get_resource_file_by_name(resource, file_name):
 def get_resource_file_by_id(resource, file_id):
     return resource.files.filter(id=file_id).first()
 
-
-# TODO: This is unnecessary since delete now cascades.
-def delete_fed_zone_file(file_name_with_full_path):
-    '''
-    Args:
-        file_name_with_full_path: the absolute full logical path in a federated iRODS zone
-    Returns:
-        None, but exceptions will be raised if there is an issue with iRODS delete operation
-    '''
-    istorage = IrodsStorage('federated')
-    istorage.delete(file_name_with_full_path)
 
 def copy_resource_files_and_AVUs(src_res_id, dest_res_id):
     """
@@ -337,9 +324,10 @@ def resource_modified(resource, by_user=None, overwrite_bag=True):
     if overwrite_bag:
         hs_bagit.create_bag(resource)
 
-    # set bag_modified-true AVU pair for the modified resource in iRODS to indicate
-    # the resource is modified for on-demand bagging.
-    set_dirty_bag_flag(resource)
+    if settings.USE_IRODS:
+        # set bag_modified-true AVU pair for the modified resource in iRODS to indicate
+        # the resource is modified for on-demand bagging.
+        set_dirty_bag_flag(resource)
 
 
 # TODO: should be part of BaseResource
@@ -406,18 +394,9 @@ def check_file_dict_for_error(file_validation_dict):
             raise ResourceFileValidationException(error_message)
 
 
-def raise_file_size_exception():
-    from .resource import FILE_SIZE_LIMIT_FOR_DISPLAY
-    error_msg = 'The resource file is larger than the supported size limit: %s.' \
-                % FILE_SIZE_LIMIT_FOR_DISPLAY
-    raise ResourceFileSizeException(error_msg)
-
-
 def validate_resource_file_size(resource_files):
     from .resource import check_resource_files
     valid, size = check_resource_files(resource_files)
-    if not valid:
-        raise_file_size_exception()
     # if no exception, return the total size of all files
     return size
 
@@ -543,12 +522,6 @@ def resource_pre_create_actions(resource_type, resource_title, page_redirect_url
         validate_metadata(metadata, resource_type)
 
     page_url_dict = {}
-    # this is needed since raster and feature resource types allows to upload a zip file,
-    # then replace zip file with exploded files. If the zip file is loaded from hydroshare
-    # federation zone, the original zip file encoded in source_names gets deleted
-    # in this case and fed_res_path is used to keep the federation path, so that the resource
-    # will be stored in the federated zone rather than the hydroshare zone
-    fed_res_path = []
     # receivers need to change the values of this dict if file validation fails
     file_validation_dict = {'are_files_valid': True, 'message': 'Files are valid'}
 
@@ -561,12 +534,12 @@ def resource_pre_create_actions(resource_type, resource_title, page_redirect_url
                              url_key=page_redirect_url_key, page_url_dict=page_url_dict,
                              validate_files=file_validation_dict,
                              source_names=source_names,
-                             user=requesting_user, fed_res_path=fed_res_path, **kwargs)
+                             user=requesting_user, **kwargs)
 
     if len(files) > 0:
         check_file_dict_for_error(file_validation_dict)
 
-    return page_url_dict, resource_title,  metadata, fed_res_path
+    return page_url_dict, resource_title,  metadata
 
 
 def resource_post_create_actions(resource, user, metadata,  **kwargs):
@@ -721,10 +694,11 @@ def resource_file_add_process(resource, files, user, extract_metadata=False,
 
 # TODO: move this to BaseResource
 def create_empty_contents_directory(resource):
-    res_contents_dir = resource.file_path
-    istorage = resource.get_irods_storage()
-    if not istorage.exists(res_contents_dir):
-        istorage.session.run("imkdir", None, '-p', res_contents_dir)
+    if settings.USE_IRODS:
+        res_contents_dir = resource.file_path
+        istorage = resource.get_irods_storage()
+        if not istorage.exists(res_contents_dir):
+            istorage.session.run("imkdir", None, '-p', res_contents_dir)
 
 
 def add_file_to_resource(resource, f, folder=None, source_name='', source_size=0,

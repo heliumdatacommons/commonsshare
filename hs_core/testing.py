@@ -46,22 +46,6 @@ class MockIRODSTestCaseMixin(object):
 class TestCaseCommonUtilities(object):
     """Enable common utilities for iRODS testing."""
 
-    def is_federated_irods_available(self):
-        """Check if federated iRODS is available."""
-        return False
-
-    def save_files_to_user_zone(self, file_name_to_target_name_dict):
-        """Save a list of files to iRODS user zone using the same IrodsStorage() object.
-
-        :param file_name_to_target_name_dict: a dictionary in the form of {ori_file, target_file}
-        where ori_file is the file to be save to, and the target_file is the full path file name
-        in iRODS user zone to save ori_file to
-        :return:
-        """
-        self.irods_storage = IrodsStorage('federated')
-        for file_name, target_name in file_name_to_target_name_dict.iteritems():
-            self.irods_storage.saveFile(file_name, target_name)
-
     def resource_file_oprs(self):
         """Test common iRODS file operations.
 
@@ -85,7 +69,8 @@ class TestCaseCommonUtilities(object):
         create_folder(res.short_id, 'data/sub_test_dir')
         istorage = res.get_irods_storage()
         res_path = res.file_path
-        store = istorage.listdir(res_path)
+        dirs_list, files_list = istorage.listdir(res_path)
+        store = (dirs_list, files_list)
         self.assertIn('sub_test_dir', store[0], msg='resource does not contain created sub-folder')
 
         # rename the third file in file_name_list
@@ -130,19 +115,8 @@ class TestCaseCommonUtilities(object):
         self.assertEqual(res.files.all().count(), 2,
                          msg="resource file count didn't match-")
 
-        # test unzip does not allow override of existing files
-        # add an existing file in the zip to the resource
-        if res.resource_federation_path:
-            fed_test_file1_full_path = '/{zone}/home/{uname}/{fname}'.format(
-                zone=settings.HS_USER_IRODS_ZONE, uname=user.username, fname=file_name_list[0])
-            # TODO: why isn't this a method of resource?
-            # TODO: Why do we repeat the resource_federation_path?
-            add_resource_files(res, source_names=[fed_test_file1_full_path],
-                               move=False)
-
-        else:
-            # TODO: Why isn't this a method of resource?
-            add_resource_files(res, self.test_file_1)
+        # TODO: Why isn't this a method of resource?
+        add_resource_files(res, self.test_file_1)
 
         # TODO: use ResourceFile.create_folder, which doesn't require data prefix
         create_folder(res.short_id, 'data/sub_test_dir')
