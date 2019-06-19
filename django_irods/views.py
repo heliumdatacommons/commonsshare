@@ -11,7 +11,6 @@ from django.http import HttpResponse, FileResponse
 from django.core.exceptions import PermissionDenied
 
 from hs_core.views.utils import authorize, ACTION_TO_AUTHORIZE
-from hs_core.hydroshare.resource import FILE_SIZE_LIMIT
 from hs_core.signals import pre_download_file
 from hs_core.hydroshare import check_resource_type
 from hs_core.hydroshare.hs_bagit import create_bag
@@ -47,6 +46,19 @@ def download(request, path, rest_call=False, use_async=True, *args, **kwargs):
     if not is_bag_download and "/data" not in path:
         idx_sep = path.find('/')
         path = path[idx_sep:]
+
+    if not settings.USE_IRODS and is_bag_download:
+        try:
+            _, bag_path = create_bag(res)
+            # obtain mime_type to set content_type
+            mtype = 'application/zip'
+            response = FileResponse(open(bag_path, 'rb'), content_type=mtype)
+            response['Content-Disposition'] = 'attachment; filename="{name}"'.format(
+                name=path.split('/')[-1])
+            response['Content-Length'] = os.path.getsize(bag_path)
+            return response
+        except Exception as ex:
+            return HttpResponse(content='Failed to create the bag', status=500)
 
     istorage = IrodsStorage()
 

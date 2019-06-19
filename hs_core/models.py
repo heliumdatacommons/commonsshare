@@ -517,12 +517,6 @@ class Description(AbstractMetaDataElement):
     @classmethod
     def update(cls, element_id, **kwargs):
         """Create custom update method for Description model."""
-        element = Description.objects.get(id=element_id)
-        resource = element.metadata.resource
-        if resource.resource_type == "TimeSeriesResource":
-            element.metadata.is_dirty = True
-            element.metadata.save()
-
         super(Description, cls).update(element_id, **kwargs)
 
     @classmethod
@@ -1807,15 +1801,18 @@ class AbstractResource(ResourcePermissionsMixin):
             self.raccess.public = value
             if value:  # can't be public without being discoverable
                 self.raccess.discoverable = value
-                self.set_irods_access_control(user_or_group_name='public', perm='read')
+                if settings.USE_IRODS:
+                    self.set_irods_access_control(user_or_group_name='public', perm='read')
             else:
-                self.set_irods_access_control(user_or_group_name='public', perm='null')
+                if settings.USE_IRODS:
+                    self.set_irods_access_control(user_or_group_name='public', perm='null')
 
             self.raccess.save()
 
-            # public changed state: set isPublic metadata AVU accordingly
-            if value != old_value:
-                self.setAVU("isPublic", self.raccess.public)
+            if settings.USE_IRODS:
+                # public changed state: set isPublic metadata AVU accordingly
+                if value != old_value:
+                    self.setAVU("isPublic", self.raccess.public)
 
 
     def set_require_download_agreement(self, user, value):

@@ -28,8 +28,6 @@ from django_irods.icommands import SessionException
 
 from minid_client import minid_client_api as mca
 
-FILE_SIZE_LIMIT = 1*(1024 ** 3)
-FILE_SIZE_LIMIT_FOR_DISPLAY = '1G'
 METADATA_STATUS_SUFFICIENT = 'Sufficient to publish or make public'
 METADATA_STATUS_INSUFFICIENT = 'Insufficient to publish or make public'
 
@@ -245,10 +243,6 @@ def check_resource_files(files=()):
             except (TypeError, OSError):
                 size = 0
         sum += size
-        if size > FILE_SIZE_LIMIT:
-            # file is greater than FILE_SIZE_LIMIT, which is not allowed
-            return False, -1
-
     return True, sum
 
 

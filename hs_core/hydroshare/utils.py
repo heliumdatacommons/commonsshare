@@ -324,9 +324,10 @@ def resource_modified(resource, by_user=None, overwrite_bag=True):
     if overwrite_bag:
         hs_bagit.create_bag(resource)
 
-    # set bag_modified-true AVU pair for the modified resource in iRODS to indicate
-    # the resource is modified for on-demand bagging.
-    set_dirty_bag_flag(resource)
+    if settings.USE_IRODS:
+        # set bag_modified-true AVU pair for the modified resource in iRODS to indicate
+        # the resource is modified for on-demand bagging.
+        set_dirty_bag_flag(resource)
 
 
 # TODO: should be part of BaseResource
@@ -393,18 +394,9 @@ def check_file_dict_for_error(file_validation_dict):
             raise ResourceFileValidationException(error_message)
 
 
-def raise_file_size_exception():
-    from .resource import FILE_SIZE_LIMIT_FOR_DISPLAY
-    error_msg = 'The resource file is larger than the supported size limit: %s.' \
-                % FILE_SIZE_LIMIT_FOR_DISPLAY
-    raise ResourceFileSizeException(error_msg)
-
-
 def validate_resource_file_size(resource_files):
     from .resource import check_resource_files
     valid, size = check_resource_files(resource_files)
-    if not valid:
-        raise_file_size_exception()
     # if no exception, return the total size of all files
     return size
 

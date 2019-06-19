@@ -152,29 +152,30 @@
                                     <span>Multiple file upload is allowed.</span>
                                 </div>
                             </div>
+                            {% if current_irods_store %}
+                                <div class="row">
+                                    <div class="col-xs-12">
+                                        <hr>
+                                        <label>To load files from your iRODS space:</label>
 
-                            <div class="row">
-                                <div class="col-xs-12">
-                                    <hr>
-                                    <label>To load files from your iRODS space:</label>
+                                        <div id="irods-browse">
+                                            <input type="hidden" id="irods_file_names" name="irods_file_names" value="">
+                                            <input type="hidden" id="token" name="token" value="">
+                                            <input type="hidden" id="is_file_reference" name="is_file_reference" value="">
+                                            <a id="btn-select-irods-file" type="button"
+                                               class="btn btn-success"
+                                               data-toggle="modal" data-target="#irodsContent">
+                                                Browse your iRODS space...
+                                            </a>
 
-                                    <div id="irods-browse">
-                                        <input type="hidden" id="irods_file_names" name="irods_file_names" value="">
-                                        <input type="hidden" id="token" name="token" value="">
-                                        <input type="hidden" id="is_file_reference" name="is_file_reference" value="">
-                                        <a id="btn-select-irods-file" type="button"
-                                           class="btn btn-success"
-                                           data-toggle="modal" data-target="#irodsContent">
-                                            Browse your iRODS space...
-                                        </a>
-
-                                        <span id="irods-sel-file">No file selected.</span>
-                                        <div class="alert alert-danger hidden" id="sign-in-info">
-                                            <div id="sign-in-name"></div>
+                                            <span id="irods-sel-file">No file selected.</span>
+                                            <div class="alert alert-danger hidden" id="sign-in-info">
+                                                <div id="sign-in-name"></div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            {% endif %}
                         </form>
 
                         <div id="preview-template" class="dz-preview dz-file-preview" style="display: none;">
@@ -200,11 +201,6 @@
                         </div>
 
                         <br>
-
-                        <div id="file-move-warning" class="alert alert-warning hidden-form">
-                            You selected move option which will move the selected files out of your iRODS account into a
-                            CommonsShare resource once created.
-                        </div>
 
                         {% if file_size_error %}
                             <div class="alert alert-danger alert-dismissible">
@@ -241,18 +237,16 @@
                             <li class="list-group-item">Files you upload here will be grouped together into a
                                 "Resource" in CommonsShare.
                             </li>
-                            <li class="list-group-item">Files uploaded directly from a browser are limited to 1 GB per
-                                file.
-                            </li>
+                            {% if current_irods_store %}
                             <li class="list-group-item">
-                                <p>Use iRODS to add files larger than 1 GB. Any iRODS server may be used. If you do not
-                                have an account on an iRODS server you can create a CommonsShare iRODS account from your
-                                 <a href="/user/{{ user.id }}/">User Profile page</a>.</p>
+                                <p>Browse your own iRODS space to add referenced files into a CommonsShare resource. The
+                                referenced files will stay in your iRODS space. Only a referenced pointer will be created in
+                                a CommonsShare resource.</p>
 
-                                <p>See <a href="https://help.hydroshare.org/creating-and-managing-resources/"
-                                          target="_blank">Creating and Managing Resources</a> for more information on
-                                    working with iRODS directly.</p>
+                                <p>See <a href="https://irods.org/documentation/"target="_blank">iRODS documentation</a> for
+                                    more information on working with iRODS directly.</p>
                             </li>
+                            {% endif %}
                         </ul>
                     </div>
                 </div>
