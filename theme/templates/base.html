@@ -195,9 +195,13 @@
     <footer>
         <div class="container">
             <div class="row">
+                <div class="col-md-3 col-sm-3 margin-top-15">
+                    <a class="navbar-brand" href="/"><img id="img-brand-logo" src="{{ STATIC_URL }}img/logo-2-footer.jpg"
+                                                      alt="{{ settings.SITE_TITLE }}"/></a>
+                </div>
                 <!-- Contact Us
                 =================  -->
-                <div class="col-md-4 col-sm-4">
+                <div class="col-md-3 col-sm-3">
                     {% editable siteconf.col1_heading siteconf.col1_content %}
                     <div class="headline">
                         <h3>{{ siteconf.col1_heading }}</h3>
@@ -209,7 +213,7 @@
                 </div>
                 <!-- Social icons
                 ===================== -->
-                <div class="col-md-4 col-sm-4">
+                <div class="col-md-3 col-sm-3">
                     {% editable siteconf.col2_heading siteconf.twitter_link siteconf.facebook_link siteconf.pinterest_link siteconf.youtube_link siteconf.github_link siteconf.linkedin_link siteconf.vk_link siteconf.gplus_link %}
                     <div class="headline"><h3>{{ siteconf.col2_heading }}</h3></div>
                     {% endeditable %}
@@ -265,7 +269,7 @@
                 </div>
                 <!-- Subscribe
                 =============== -->
-                <div class="col-md-4 col-sm-4">
+                <div class="col-md-3 col-sm-3">
                     {% editable siteconf.col3_heading siteconf.col3_content %}
                     <div class="headline"><h3>{{ siteconf.col3_heading }}</h3></div>
                     <div class="content">
