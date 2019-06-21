@@ -54,7 +54,7 @@ class Auth0OAuth2:
             except User.DoesNotExist:
                 user = create_account(email=email, username=username, first_name=first_name,
                                       last_name=last_name, superuser=False, active=True)
-                if settings.DATA_REG_SERVICE_SERVER_URL:
+                if settings.DATA_REG_SERVICE_SERVER_URL and settings.USE_IRODS:
                     # create corresponding iRODS account with same username via OAuth if not exist
                     # already
                     url = '{}registration/create_account?username={}&zone={}&auth_name={}'.format(
@@ -68,7 +68,7 @@ class Auth0OAuth2:
                         user.delete()
                         return None
 
-            if settings.DATA_REG_SERVICE_SERVER_URL:
+            if settings.DATA_REG_SERVICE_SERVER_URL and settings.USE_IRODS:
                 hashed_token = hashlib.sha256(access_token).hexdigest()[0:50]
                 url = '{}registration/add_user_oids?username={}&subjectid={}&sessionid={}'.format(
                     settings.DATA_REG_SERVICE_SERVER_URL,
