@@ -249,7 +249,6 @@ INSTALLED_APPS = (
     "autocomplete_light",
     "django.contrib.admin",
     "django.contrib.auth",
-    "oauth2_provider",
     "corsheaders",
     "django.contrib.contenttypes",
     "django.contrib.redirects",
@@ -491,7 +490,6 @@ REST_FRAMEWORK = {
         'theme.backends.oauth2.OAuth2Authentication',
         'theme.backends.apikey_auth.APIKeyAuthentication',
         'rest_framework.authentication.SessionAuthentication',
-        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
     ),
 }
 
