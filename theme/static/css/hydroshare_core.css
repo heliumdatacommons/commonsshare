@@ -628,7 +628,7 @@ footer a {
 	color: #B5E655;
 }
 footer a:hover {
-	color: #81D685;
+	color: #41ABF5;
 	text-decoration: none;
 }
 footer .headline {
@@ -677,7 +677,7 @@ footer .headline h3{
     -webkit-transition: color 0.1s;
     -moz-transition: color 0.1s;
     -o-transition: color 0.1s;
-    color: #B5E655;
+    color: #41ABF5;
 }
 
 footer .hl-btn-default {

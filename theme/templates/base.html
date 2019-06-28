@@ -202,14 +202,11 @@
                 <!-- Contact Us
                 =================  -->
                 <div class="col-md-3 col-sm-3">
-                    {% editable siteconf.col1_heading siteconf.col1_content %}
-                    <div class="headline">
-                        <h3>{{ siteconf.col1_heading }}</h3>
+                    <div class="content social">
+                        <ul>
+                        <h1><li><a href="mailto:help@commonsshare.org?Subject=Contact%20us" target="_top"><i class="fa fa-question-circle-o" aria-hidden="true"></i></a></li></h1>
+                        </ul>
                     </div>
-                    <div class="content">
-                        {{ siteconf.col1_content|richtext_filters|safe }}
-                    </div>
-                    {% endeditable %}
                 </div>
                 <!-- Social icons
                 ===================== -->
