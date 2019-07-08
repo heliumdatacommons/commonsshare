@@ -195,13 +195,13 @@
     <footer>
         <div class="container">
             <div class="row">
-                <div class="col-md-3 col-sm-3 margin-top-15">
+                <div class="col-md-2 col-sm-2 margin-top-15">
                     <a class="navbar-brand" href="/"><img id="img-brand-logo" src="{{ STATIC_URL }}img/logo-2-footer.png"
                                                       alt="{{ settings.SITE_TITLE }}"/></a>
                 </div>
                 <!-- Contact Us
                 =================  -->
-                <div class="col-md-3 col-sm-3">
+                <div class="col-md-2 col-sm-2">
                     <div class="content social">
                         <ul>
                         <h1><li><a href="mailto:help@commonsshare.org?Subject=Contact%20us" target="_top"><i class="fa fa-question-circle-o" aria-hidden="true"></i></a></li></h1>
@@ -273,6 +273,10 @@
                         {{ siteconf.col3_content|richtext_filters|safe }}
                     </div>
                     {% endeditable %}
+                </div>
+                <div class="col-md-2 col-sm-2 margin-top-15">
+                    <a class="navbar-brand" href="/"><img id="img-brand-logo" src="{{ STATIC_URL }}img/logo-3-footer.jpg"
+                                                      alt="{{ settings.SITE_TITLE }}"/></a>
                 </div>
             </div>
         </div>
