@@ -1,0 +1,102 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.18.0 (06a2e56)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: hydroshare
+  name: hydroshare
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: hydroshare
+    spec:
+      containers:
+      - args:
+        - /bin/bash
+        - init-hydroshare
+        env:
+        - name: DATA_REG_API_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: DATA_REG_API_KEY
+              name: hydroshare-env
+        - name: DOI_OAUTH_TOKEN
+          valueFrom:
+            configMapKeyRef:
+              key: DOI_OAUTH_TOKEN
+              name: hydroshare-env
+        - name: EMAIL_HOST_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              key: EMAIL_HOST_PASSWORD
+              name: hydroshare-env
+        - name: NEVERCACHE_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: NEVERCACHE_KEY
+              name: hydroshare-env
+        - name: OAUTH_APP_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: OAUTH_APP_KEY
+              name: hydroshare-env
+        - name: OAUTH_SERVICE_SERVER_URL
+          valueFrom:
+            configMapKeyRef:
+              key: OAUTH_SERVICE_SERVER_URL
+              name: hydroshare-env
+        - name: PGPASSWORD
+          valueFrom:
+            configMapKeyRef:
+              key: PGPASSWORD
+              name: hydroshare-env
+        - name: POSTGIS_DB
+          valueFrom:
+            configMapKeyRef:
+              key: POSTGIS_DB
+              name: hydroshare-env
+        - name: POSTGIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: POSTGIS_HOST
+              name: hydroshare-env
+        - name: POSTGIS_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              key: POSTGIS_PASSWORD
+              name: hydroshare-env
+        - name: POSTGIS_PORT
+          value: "5432"
+        - name: POSTGIS_USER
+          valueFrom:
+            configMapKeyRef:
+              key: POSTGIS_USER
+              name: hydroshare-env
+        - name: SECRET_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: SECRET_KEY
+              name: hydroshare-env
+        - name: SOLR_HOST
+          value: solr
+        - name: TMP
+          value: /hs_tmp
+        image: hongyi/cs-k8s
+        name: hydroshare
+        ports:
+        - containerPort: 8000
+        resources: {}
+        securityContext:
+          capabilities:
+            add:
+            - SYS_ADMIN
+          privileged: true
+      restartPolicy: Always
+status: {}
