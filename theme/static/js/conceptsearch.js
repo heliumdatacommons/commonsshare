@@ -9,7 +9,7 @@ function hd_search() {
           response.results.forEach(function (result) {
               var defi_res = '';
               var curie_res = '';
-              var curie_url_prefix = 'https://putmantime.github.io/HeliumPhenotypeSearch/';
+              var curie_url_prefix = 'https://monarchinitiative.org/disease/';
               if (result.definitions)
                   defi_res = result.definitions;
               if (result.curie)
