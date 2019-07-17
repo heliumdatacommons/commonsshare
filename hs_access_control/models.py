@@ -1301,9 +1301,9 @@ class UserAccess(models.Model):
             raise PermissionDenied("Group is not active")
 
         if this_user is None:
-            if self.user in this_group.gaccess.members:
+            if this_group.gaccess.members.filter(id=self.user.id).exists():
                 raise PermissionDenied("You are already a member of this group")
-        elif this_user in this_group.gaccess.members:
+        elif this_group.gaccess.members.filter(id=this_user.id).exists():
                 raise PermissionDenied("User is already a member of this group")
 
         # user (self) requesting to join a group
@@ -1646,7 +1646,7 @@ class UserAccess(models.Model):
         access_group = this_group.gaccess
 
         return self.user.is_superuser or access_group.public \
-            or self.user in this_group.gaccess.members
+            or this_group.gaccess.members.filter(id=self.user.id).exists()
 
     def can_view_group_metadata(self, this_group):
         """
@@ -2041,7 +2041,7 @@ class UserAccess(models.Model):
     def __check_unshare_group_with_user(self, this_group, this_user):
         """ Check whether an unshare of a group with a user is permitted. """
 
-        if this_user not in this_group.gaccess.members:
+        if not this_group.gaccess.members.filter(id=this_user.id).exists():
             raise PermissionDenied("User is not a member of the group")
 
         # Check for sufficient privilege
@@ -2109,7 +2109,7 @@ class UserAccess(models.Model):
                 return access_group.members
 
         # unprivileged user can only remove grants to self, if any
-        elif self.user in access_group.members:
+        elif access_group.members.filter(id=self.user.id).exists():
             if access_group.owners.count() == 1:
                 # if self is not an owner,
                 if not UserGroupPrivilege.objects.filter(user=self.user,
@@ -2742,7 +2742,7 @@ class UserAccess(models.Model):
             raise PermissionDenied("User has insufficient sharing privilege over resource")
 
         access_group = this_group.gaccess
-        if self.user not in access_group.members and not self.user.is_superuser:
+        if not access_group.members.filter(id=self.user.id).exists() and not self.user.is_superuser:
             raise PermissionDenied("User is not a member of the group and not an admin")
 
         # enforce non-idempotence for unprivileged users
@@ -2868,7 +2868,7 @@ class UserAccess(models.Model):
 -       Note that can_unshare_X is parallel to unshare_X and returns False exactly
 -       when __check_unshare_X and unshare_X will raise an exception.
         """
-        if this_user not in this_resource.raccess.view_users:
+        if not this_resource.raccess.view_users.filter(id=this_user.id).exists():
             raise PermissionDenied("User is not a member of the group")
 
         # Check for sufficient privilege
@@ -2994,7 +2994,7 @@ class UserAccess(models.Model):
 
     def __check_unshare_resource_with_group(self, this_resource, this_group):
         """ check that one can unshare a group with a resource, raise PermissionDenied if not """
-        if this_group not in this_resource.raccess.view_groups:
+        if not this_resource.raccess.view_groups.filter(id=this_group.id).exists():
             raise PermissionDenied("Group does not have access to resource")
 
         # Check for sufficient privilege
@@ -3040,7 +3040,7 @@ class UserAccess(models.Model):
                 return access_resource.view_users
 
         # unprivileged user can only remove grants to self, if any
-        elif self.user in access_resource.view_users:
+        elif access_resource.view_users.filter(id=self.user.id).exists():
             if access_resource.owners.count() == 1:
                 # if self is not an owner,
                 if not UserResourcePrivilege.objects\
@@ -3163,7 +3163,7 @@ class UserAccess(models.Model):
         if not this_user.is_active:
             raise PermissionDenied("User is not active")
 
-        return this_user in self.__get_group_undo_users(this_group)
+        return self.__get_group_undo_users(this_group).filter(id=this_user.id).exists()
 
     def undo_share_group_with_user(self, this_group, this_user):
         """
@@ -3201,12 +3201,12 @@ class UserAccess(models.Model):
             raise PermissionDenied("User is not active")
 
         qual_undo = self.__get_group_undo_users(this_group)
-        if this_user in qual_undo:
+        if qual_undo.filter(id=this_user.id).exists():
             UserGroupPrivilege.undo_share(group=this_group, user=this_user, grantor=self.user)
         else:
             # determine which exception to raise.
             raw_undo = UserGroupPrivilege.get_undo_users(group=this_group, grantor=self.user)
-            if this_user in raw_undo:
+            if raw_undo.filter(id=this_user.id).exists():
                 raise PermissionDenied("Cannot remove last owner of group")
             else:
                 raise PermissionDenied("User did not grant last privilege")
@@ -3261,7 +3261,7 @@ class UserAccess(models.Model):
         if not this_user.is_active:
             raise PermissionDenied("User is not active")
 
-        return this_user in self.__get_resource_undo_users(this_resource)
+        return self.__get_resource_undo_users(this_resource).filter(id=this_user.id).exists()
 
     def undo_share_resource_with_user(self, this_resource, this_user):
         """
@@ -3297,7 +3297,7 @@ class UserAccess(models.Model):
             raise PermissionDenied("User is not active")
 
         qual_undo = self.__get_resource_undo_users(this_resource)
-        if this_user in qual_undo:
+        if qual_undo.filter(id=this_user.id).exists():
             UserResourcePrivilege.undo_share(resource=this_resource,
                                              user=this_user,
                                              grantor=self.user)
@@ -3305,7 +3305,7 @@ class UserAccess(models.Model):
             # determine which exception to raise.
             raw_undo = UserResourcePrivilege.get_undo_users(resource=this_resource,
                                                             grantor=self.user)
-            if this_user in raw_undo:
+            if raw_undo.filter(id=this_user.id).exists():
                 raise PermissionDenied("Cannot remove last owner of resource")
             else:
                 raise PermissionDenied("User did not grant last privilege")
@@ -3353,7 +3353,7 @@ class UserAccess(models.Model):
         if not this_group.gaccess.active:
             raise PermissionDenied("Group is not active")
 
-        return this_group in self.__get_resource_undo_groups(this_resource)
+        return self.__get_resource_undo_groups(this_resource).filter(id=this_group.id).exists()
 
     def undo_share_resource_with_group(self, this_resource, this_group):
         """
@@ -3389,7 +3389,7 @@ class UserAccess(models.Model):
             raise PermissionDenied("Group is not active")
 
         qual_undo = self.__get_resource_undo_groups(this_resource)
-        if this_group in qual_undo:
+        if qual_undo.filter(id=this_group.id).exists():
             GroupResourcePrivilege.undo_share(resource=this_resource,
                                               group=this_group,
                                               grantor=self.user)
