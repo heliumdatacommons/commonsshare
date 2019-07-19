@@ -267,10 +267,13 @@ class SupportedSharingStatus(AbstractMetaDataElement):
     @classmethod
     def _add_sharing_status(cls, meta_instance, sharing_status_list):
         for sharing_status in sharing_status_list:
-            # there are two possibilities for res_type_str values:
+            # there are three possibilities for res_type_str values:
+            # list of SupportedSharingStatusChoices object or
             # list of string (during normal create or update) or
             # integer (during creating new version of the resource)
-            if isinstance(sharing_status, int):
+            if isinstance(sharing_status, SupportedSharingStatusChoices):
+                meta_instance.sharing_status.add(sharing_status)
+            elif isinstance(sharing_status, int):
                 # "copy res" or "create a new version"
                 qs = SupportedSharingStatusChoices.objects.filter(id=sharing_status)
                 if not qs.exists():
