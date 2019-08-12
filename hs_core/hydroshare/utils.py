@@ -239,22 +239,10 @@ def copy_resource_files_and_AVUs(src_res_id, dest_res_id):
     # link copied resource files to Django resource model
     files = src_res.files.all()
 
-    # if resource files are part of logical files, then logical files also need copying
-    src_logical_files = list(set([f.logical_file for f in files if f.has_logical_file]))
-    map_logical_files = {}
-    for src_logical_file in src_logical_files:
-        map_logical_files[src_logical_file] = src_logical_file.get_copy()
-
     for n, f in enumerate(files):
         folder, base = os.path.split(f.short_path)  # strips object information.
-        new_resource_file = ResourceFile.create(tgt_res, base, folder=folder,
-                                                is_file_reference=True if f.reference_file_path else False)
-
-        # if the original file is part of a logical file, then
-        # add the corresponding new resource file to the copy of that logical file
-        if f.has_logical_file:
-            tgt_logical_file = map_logical_files[f.logical_file]
-            tgt_logical_file.add_resource_file(new_resource_file)
+        ResourceFile.create(tgt_res, base, folder=folder,
+                            is_file_reference=True if f.reference_file_path else False)
 
     if src_res.resource_type.lower() == "collectionresource":
         # clone contained_res list of original collection and add to new collection
