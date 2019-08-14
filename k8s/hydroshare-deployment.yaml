@@ -98,5 +98,9 @@ spec:
             add:
             - SYS_ADMIN
           privileged: true
+      initContainers:
+      - name: init-postgis
+        image: busybox
+        command: ['sh', '-c', 'until nc -z postgis:5432; do echo waiting for postgis; sleep 2; done;']
       restartPolicy: Always
 status: {}
