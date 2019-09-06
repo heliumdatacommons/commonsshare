@@ -2,6 +2,222 @@
 
 CommonsShare is Helium Team's Web User Interface that explores using the cloud to access and share FAIR Biomedical big data.
 
+## Installation instructions to get CommonsShare web service up and running
+
+In a production deployment of CommonsShare, [iRODS](http://irods.org) is used as the backend storage, and CommonsShare can be configured to interface with an iRODS server via iRODS python client and icommand iRODS interface once an iRODS server is up and running. CommonsShare is also dependent upon two services, namely, user authentication service and data registration service, to be completely functional. The instructions below cover the process and steps to install these two services on the same VM where the iRODS server has been installed. iRODS server installation is not covered here, but installation instructions for iRODS can be found [here](https://irods.org/download/).
+
+### Installation instructions for user authentication service
+
+Refer to [auth service installation instructions](https://github.com/heliumdatacommons/auth_microservice/blob/master/README.md) for detailed step-by-step installation guide. For CommonsShare user authentication to work in conjunction with iRODS, iRODS OAuth plugin also needs to be installed in iRODS server. Installation commands for iRODS OAuth plugin is also covered in this subsection. The source code and readme for iRODS OAuth plugin can be found [here](https://github.com/irods-contrib/irods_auth_plugin_openid/).
+
+Supplemental notes:
+
+- move `manage.py` from auth_microservice/auth_microservice directory to its parent directory auth_microservice. Otherwise, django command run will fail. In addition, make sure to run ```python manage.py migrate``` to migrate database tables after running setup script to create a database.
+- put ssl key and certificates for commonsshare.org domain with right permission and configure them correctly in nginx.conf for user authentication service and in server_config.json for iRODS OAuth plugin.
+- The example config.json.example file in the [github repo](https://github.com/heliumdatacommons/auth_microservice/blob/master/example/config/config.json.example) may not be sufficient for CommonsShare openid oauth user authentication to work in different scenarios. A config.json example in an existing working setup may need to be referred to in order to fill the gaps. An working example of config.json with domain-specific info stripped out is copied below for reference:
+
+
+```
+    {
+        "allow_return_regex": ["^[\\w\\d\\-\\_]+\\.<my-domain>"],
+        "redirect_uri": "https://<my-app>/authcallback",
+        "root_return_to": "https://<my-app>/oauth_return",
+        "root_default_provider": "auth0",
+        "url_expiration_timeout": 3600,
+        "real_time_validate_default": false,
+        "real_time_validate_cache_retention_timeout": 60,
+        "providers": {
+            "globus": {
+                "standard": "OpenID Connect",
+                "client_id": "<client_id>",
+                "client_secret": "<client_secret>",
+                "metadata_url": "https://auth.globus.org/.well-known/openid-configuration",
+                "introspection_endpoint": "https://auth.globus.org/v2/oauth2/token/introspect",
+                "revocation_endpoint": "https://auth.globus.org/v2/oauth2/token/revoke"
+            },
+            "google": {
+                "standard": "OpenID Connect",
+                "client_id": "<client_id>",
+                "client_secret": "<client_secret>",
+                "metadata_url": "https://accounts.google.com/.well-known/openid-configuration",
+                "introspection_endpoint": "https://www.googleapis.com/oauth2/v3/tokeninfo"
+            },
+            "auth0": {
+                "standard": "OpenID Connect",
+                "client_id": "<client_id>",
+                "client_secret": "<client_secret>",
+                "metadata_url": "https://heliumdatacommons.auth0.com/.well-known/openid-configuration",
+                "userinfo_endpoint": "https://heliumdatacommons.auth0.com/userinfo",
+                "login_endpoint": "https://heliumdatacommons.auth0.com/login"
+            }
+        }
+    }
+```
+
+- If the VM has python 2.7 as the default python version, make sure you will use python3 to install the user authentication microservice. For example, run the command below to create an virtualenv using python3:
+`python3 -m venv venv && source venv/bin/activate`. If python3 virtualenv is not installed, you can run the command below to install it: `sudo apt-get install python3-venv`. You can also run the following command sequences as needed to get system libraries and build environments ready for building the authentication microservices:
+
+```
+    sudo apt update && sudo apt dist-upgrade
+    sudo apt install build-essential
+    sudo apt install python3-dev
+    sudo apt install python-dev
+    sudo apt-get install python-psycopg2
+    sudo apt-get install python3-psycopg2
+    sudo apt-get update
+    sudo apt-get install nginx
+```
+
+- After sudo su to auth_microservice user account, can add the following to .profile so that virtual environment is activated automatically when switching user to auth_microservice user account:
+
+```
+    export PATH
+    cd ~/auth_microservice/
+    source venv/bin/activate
+```
+
+- After sudo su to auth_microservice, need to run the following command in order to get virtual env set up correctly for the auth service:
+
+```
+    pip install --upgrade pip
+    pip install wheel
+    pip install psycopg2-binary
+    pip install uwsgi
+    pip install .
+```
+
+- Make sure to enable ssl connection by uncommenting 2 lines ```listen 443 default_server;``` and ```listen [::]:443 ssl default_server;``` while commenting the default listening to 80 lines in order to connect to the service via https ssl connection.
+- Run the command ```echo Q > /tmp/auth_microservice.fifo``` to stop user auth microservice.
+- Run the command ```echo r > /tmp/auth_microservice.fifo``` to start user auth microservice or just run ```uwsgi --ini ./uwsgi.ini``` to start user auth microservice if the echo command does not work.
+- Run the command ```ps -ef | grep uwsgi``` to check whether user auth microservice process is running.
+- Run the command ```tail -f -n 0 /tmp/auth_microservice.log``` to monitor auth service log when things are not working right.
+
+
+#### Commands to get iRODS OAuth plugin installed and set up on iRODS server
+
+**Install needed system packages**
+
+```
+   sudo apt install cmake
+   sudo apt-get install irods-dev
+   wget -qO - https://packages.irods.org/irods-signing-key.asc | sudo apt-key add -
+   sudo apt-get install irods-externals-zeromq4-14.1.6-0
+   sudo apt-get install libkrb5-dev
+   sudo apt-get install libcurl4-gnutls-dev
+```
+
+**Install iRODS openid plugin**
+
+```
+   git clone https://github.com/irods-contrib/irods_auth_plugin_openid.git
+   cd irods_auth_plugin_openid
+   Update CMakeLists.txt to reflect the right iRODS version to build iRODS openid plugin again.
+   export IRODS_EXTERNALS=/opt/irods-externals
+   export PATH=$IRODS_EXTERNALS/cmake3.11.4-0/bin:$PATH
+   mkdir build
+   cd build
+   cmake ..
+   make
+   sudo cp libopenid_client.so libopenid_server.so /usr/lib/irods/plugins/auth
+```
+If something goes wrong, build directory can be deleted and the cmake build process can start over
+
+**Configure iRODS openid plugin**
+
+Need to run ```curl -H "Authorization: Basic <admin_key>" "https://<user_auth_service_hostname>.commonsshare.org/admin/key?owner=irods"``` to get a API key for iRODS and put the API key into the following block in server_config.json in iRODS server:
+
+```
+"plugin_configuration": {
+        "authentication": {
+            "openid": {
+                "default_provider": "auth0",
+                "token_service": "https://<user_auth_service_hostname>.commonsshare.org",
+                "token_service_key": "<API_KEY>",
+                "token_exchange_min_port": 52000,
+                "token_exchange_max_port": 52100
+            }
+        },
+       ...
+}
+```
+
+
+### Installation instructions for data registration service
+
+Refer to [data registration service installation instructions](https://github.com/heliumdatacommons/auth_microservice/blob/master/README.md) for detailed step-by-step installation guide.
+
+Supplemental notes:
+
+- After sudo su to data_registration_service, need to run the following commands in order to get virtual env set up correctly for the service:
+
+```
+    pip install --upgrade pip
+    pip install wheel
+    pip install psycopg2-binary
+    pip install uwsgi
+    pip install .
+```
+
+- Need to call the command ```curl -H "Authorization: Basic 7e93116d2910ee54b9afacca26f31f49e41bd7932cfbab8eb2642b7e7861e904" "https://scidas-icat.commonsshare.org/registration/admin/create_key?owner=CommonsShare"``` to create an API key to set in CommonsShare local_settings.py as data registration API key.
+
+- Make sure to change ALLOWED_HOSTS in src/microservice/microservice/settings.py
+
+### Other miscellaneous supplemental notes
+
+- Can run ```iadmin modresc demoResc name commonssharehelxResc``` to rename demoResc to whatever resource for the project, then update server_config.json, core.re, and irods_environment.json to replace demoResc with the renamed resource as the default resource for iRODS server, rules, and icommands.
+- Update core.re to replace msiCreateCollByAdmin rule with the following to work around an iRODS bug that inherit attribute is not honored when creating a new user by rods admin:
+
+```
+    acCreateCollByAdmin(*parColl,*childColl) {
+      msiCollCreate(*parColl ++ "/" ++ *childColl, 0, *status);
+      msiSetACL("default", "own", $otherUserName, *parColl ++ "/" ++ *childColl);
+      msiSetACL("default", "null", $userNameClient, *parColl ++ "/" ++ *childColl);
+    }
+```
+
+- Commands to run to create needed iRODS user and resource for interfacing with CommonsShare
+
+```
+    iadmin mkuser bagsdata#commonssharescidasZone rodsuser
+    iadmin moduser bagsdata#commonssharescidasZone password <pwd>
+    imkdir /commonssharescidasZone/data
+    imkdir /commonssharescidasZone/data/bagsdata
+    ichmod own bagsdata /commonssharescidasZone/data/bagsdata
+    ichmod -rM read bagsdata /commonssharescidasZone/home
+    ichmod -rM inherit /commonssharescidasZone/home
+    ichmod -rM inherit /commonssharescidasZone/data
+
+```
+
+### Installation instructions for CommonsShare
+
+- Install docker
+
+```
+    curl -fsSL https://get.docker.com/ | sh
+    sudo usermod -aG docker <user>
+    sudo systemctl start docker
+    sudo systemctl status docker
+    sudo systemctl enable docker
+```
+    Run `docker version` from that user to verify docker works. You may need to log out, then log back in to get rid of the permission defined error.
+
+- Install docker-compose
+
+```
+    sudo curl -L https://github.com/docker/compose/releases/download/1.24.0/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
+    sudo chmod +x /usr/local/bin/docker-compose
+```
+    Run `docker-compose --version` to verify docker-compose works.
+
+- Create commons-service account and use it as the service account to install CommonsShare. Make sure to add commons-service into docker group so that this service account can run docker.
+
+
+## Historical instructions
+
+For reference, the following are historical instructions mostly inherited from 
+[HydroShare](http://github.com/hydroshare/hydroshare) since CommonsShare was cloned from HydroShare initially.
+
 #### Nightly Build Status generated by [Jenkins CI](http://ci.hydroshare.org:8080) (develop branch)
 
 | Workflow | Clean | Build/Deploy | Unit Tests | Flake8 | Requirements |
