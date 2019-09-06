@@ -22,7 +22,7 @@ spec:
         - sh
         - -c
         - /bin/bash /opt/solr/bin/solr -f
-        image: hongyi/cs-solr
+        image: solr:6.6
         name: solr
         resources: {}
       restartPolicy: Always

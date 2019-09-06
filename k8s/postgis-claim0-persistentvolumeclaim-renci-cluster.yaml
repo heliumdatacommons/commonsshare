@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgis-claim0
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: nfscpsc-arrival-k8s-pvs
+  resources:
+    requests:
+      storage: 100Mi
+

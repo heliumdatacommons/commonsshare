@@ -102,5 +102,8 @@ spec:
       - name: init-postgis
         image: busybox
         command: ['sh', '-c', 'until nc -z postgis:5432; do echo waiting for postgis; sleep 2; done;']
+      - name: init-solr
+        image: busybox
+        command: ['sh', '-c', 'until nc -z solr:8983; do echo waiting for solr; sleep 2; done;']
       restartPolicy: Always
 status: {}

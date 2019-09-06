@@ -25,6 +25,8 @@ spec:
         - /bin/bash
         - /hydroshare/init-solr
         resources: {}
+        ports:
+        - containerPort: 8983
         volumeMounts:
           - mountPath: /hydroshare
             name: cs-code-disk
