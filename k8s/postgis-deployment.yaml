@@ -23,7 +23,7 @@ spec:
         name: postgis
         resources: {}
         volumeMounts:
-        - mountPath: /var/lib/postgresql/data
+        - mountPath: /var/lib/postgresql
           name: postgis-claim0
       restartPolicy: Always
       volumes:
