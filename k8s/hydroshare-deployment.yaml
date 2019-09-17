@@ -24,29 +24,29 @@ spec:
         env:
         - name: DATA_REG_API_KEY
           valueFrom:
-            configMapKeyRef:
+            secretKeyRef:
               key: DATA_REG_API_KEY
-              name: hydroshare-env
+              name: hydroshare-secret
         - name: DOI_OAUTH_TOKEN
           valueFrom:
-            configMapKeyRef:
+            secretKeyRef:
               key: DOI_OAUTH_TOKEN
-              name: hydroshare-env
+              name: hydroshare-secret
         - name: EMAIL_HOST_PASSWORD
           valueFrom:
-            configMapKeyRef:
+            secretKeyRef:
               key: EMAIL_HOST_PASSWORD
-              name: hydroshare-env
+              name: hydroshare-secret
         - name: NEVERCACHE_KEY
           valueFrom:
-            configMapKeyRef:
+            secretKeyRef:
               key: NEVERCACHE_KEY
-              name: hydroshare-env
+              name: hydroshare-secret
         - name: OAUTH_APP_KEY
           valueFrom:
-            configMapKeyRef:
+            secretKeyRef:
               key: OAUTH_APP_KEY
-              name: hydroshare-env
+              name: hydroshare-secret
         - name: OAUTH_SERVICE_SERVER_URL
           valueFrom:
             configMapKeyRef:
@@ -54,9 +54,9 @@ spec:
               name: hydroshare-env
         - name: PGPASSWORD
           valueFrom:
-            configMapKeyRef:
+            secretKeyRef:
               key: PGPASSWORD
-              name: hydroshare-env
+              name: hydroshare-secret
         - name: POSTGIS_DB
           valueFrom:
             configMapKeyRef:
@@ -69,21 +69,21 @@ spec:
               name: hydroshare-env
         - name: POSTGIS_PASSWORD
           valueFrom:
-            configMapKeyRef:
+            secretKeyRef:
               key: POSTGIS_PASSWORD
-              name: hydroshare-env
+              name: hydroshare-secret
         - name: POSTGIS_PORT
           value: "5432"
         - name: POSTGIS_USER
           valueFrom:
-            configMapKeyRef:
+            secretKeyRef:
               key: POSTGIS_USER
-              name: hydroshare-env
+              name: hydroshare-secret
         - name: SECRET_KEY
           valueFrom:
-            configMapKeyRef:
+            secretKeyRef:
               key: SECRET_KEY
-              name: hydroshare-env
+              name: hydroshare-secret
         - name: SOLR_HOST
           value: solr
         - name: TMP
