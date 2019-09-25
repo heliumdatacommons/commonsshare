@@ -17,6 +17,9 @@ RUN pip install \
     haystack_queryparser \
     elasticsearch
 
+RUN mkdir /hs_tmp
+RUN mkdir /shared_tmp
+
 WORKDIR /hydroshare
 
 COPY . /hydroshare
