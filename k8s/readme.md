@@ -4,7 +4,7 @@ These yaml files for Kubernetes deployment in this directory were initially crea
 
 To deploy CommonsShare to Kubernetes, run the following command:
 ```
-kubectl create -f postgis-claim0-persistentvolumeclaim.yaml,postgis-deployment.yaml,hydroshare-service.yaml,solr-deployment.yaml,hydroshare-env-configmap.yaml,postgis-service.yaml,solr-service.yaml,hydroshare-deployment.yaml
+kubectl create -f postgis-claim0-persistentvolumeclaim.yaml,postgis-deployment.yaml,hydroshare-service.yaml,solr-deployment.yaml,hydroshare-env-configmap.yaml,hydroshar-secret.yaml,postgis-service.yaml,solr-service.yaml,hydroshare-deployment.yaml
 ```
 
 # Problems and Solutions

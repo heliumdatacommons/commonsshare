@@ -27,3 +27,4 @@ schema.xml
 .pycharm_helpers
 celerybeat.pid
 .config
+k8s/hydroshare-secret.yaml
