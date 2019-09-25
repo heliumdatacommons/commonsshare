@@ -88,7 +88,7 @@ spec:
           value: solr
         - name: TMP
           value: /hs_tmp
-        image: hongyi/cs-k8s
+        image: heliumdatastage/cs-k8s
         name: hydroshare
         ports:
         - containerPort: 8000
