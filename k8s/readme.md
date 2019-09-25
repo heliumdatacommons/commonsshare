@@ -32,3 +32,17 @@ initContainers:
 ```
 
 * minikube does not directly support loadBalancer <https://github.com/kubernetes/minikube/issues/4113>. Ended up running```minikube tunnel``` in order to emulate loadBalancer to get external ip; otherwise, will have pending external ip forever.
+
+* To build a cs-k8s image, follow the steps below:
+
+  * run commands below to have the right files ready for k8s deployment in the image:
+  ```
+  cp gunicorn_start-k8s gunicorn_start
+  cp Dockerfile-k8s Dockerfile
+  cp init-hydroshare-k8s init-hydroshare
+  cp init-postgis-k8s init-postgis
+  cp init-solr-k8s init-solr
+  ```
+  
+  * build the image by running ```docker build -t cs-k8s .``` in commonsshare directory.
+  
