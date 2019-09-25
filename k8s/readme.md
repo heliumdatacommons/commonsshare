@@ -42,6 +42,7 @@ initContainers:
   cp init-hydroshare-k8s init-hydroshare
   cp init-postgis-k8s init-postgis
   cp init-solr-k8s init-solr
+  cp pg.development-k8s.sql pg.development.sql
   ```
   
   * build the image by running ```docker build -t cs-k8s .``` in commonsshare directory.
