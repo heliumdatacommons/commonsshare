@@ -1,22 +1,16 @@
-# DEVELOPMENT - local_settings.py
-#    - This file should be copied to ~/hydroshare/hydroshare/local_settings.py
-#    - The iRODS specific contents of this file contain username and password informaiton
-#      that is used for a CommonsShare proxy user
+# local_settings.py used in k8s-deployed CommonsShare. In a manually deployed CommonsShare,
+# a backup copy of this file specific to the deployment environment should be used.
 
 import os
 from kombu import Queue, Exchange
 
-DEBUG = True
+DEBUG = False
 
 SECRET_KEY = os.environ.get('SECRET_KEY', '')
 NEVERCACHE_KEY = os.environ.get('NEVERCACHE_KEY', '')
 
 ALLOWED_HOSTS = [
-    'localhost',
-    '.commonsshare.org',  # Allow domain and subdomains
-    '.commonsshare.org.',  # Also allow FQDN and subdomains
-    '.renci.org',  # Allow domain and subdomains
-    '.renci.org.',  # Also allow FQDN and subdomains
+    '*'
 ]
 
 # for Django/Mezzanine comments and ratings to require user login
@@ -84,6 +78,7 @@ POSTGIS_VERSION=(2,1,1)
 
 # Local resource iRODS configuration
 USE_IRODS = False
+FILE_SYSTEM_ROOT = '/tmp'
 IRODS_ROOT = '/tmp'
 IRODS_ICOMMANDS_PATH = '/usr/bin'
 IRODS_HOST = ''

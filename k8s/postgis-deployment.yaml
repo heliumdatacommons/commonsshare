@@ -1,0 +1,33 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.18.0 (06a2e56)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: postgis
+  name: postgis
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: postgis
+    spec:
+      containers:
+      - image: hydroshare/hs_postgres:9.4.7
+        name: postgis
+        resources: {}
+        volumeMounts:
+        - mountPath: /var/lib/postgresql
+          name: postgis-claim0
+      restartPolicy: Always
+      volumes:
+      - name: postgis-claim0
+        persistentVolumeClaim:
+          claimName: postgis-claim0
+status: {}

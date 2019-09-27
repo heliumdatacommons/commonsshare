@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+# init-solr
+# CommonsShare solr container intiliaization script
+
+bin/solr -f
+bin/solr create -c collection1 -d basic_configs
+cp /hydroshare/schema.xml /opt/solr/server/solr/collection1/conf/schema.xml
+sed -i '/<schemaFactory class="ManagedIndexSchemaFactory">/,+4d' /opt/solr/server/solr/collection1/conf/solrconfig.xml
+rm /opt/solr/server/solr/collection1/conf/managed-schema
+

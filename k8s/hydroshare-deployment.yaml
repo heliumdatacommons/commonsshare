@@ -1,0 +1,109 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.18.0 (06a2e56)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: hydroshare
+  name: hydroshare
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: hydroshare
+    spec:
+      containers:
+      - args:
+        - /bin/bash
+        - init-hydroshare
+        env:
+        - name: DATA_REG_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: DATA_REG_API_KEY
+              name: hydroshare-secret
+        - name: DOI_OAUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: DOI_OAUTH_TOKEN
+              name: hydroshare-secret
+        - name: EMAIL_HOST_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: EMAIL_HOST_PASSWORD
+              name: hydroshare-secret
+        - name: NEVERCACHE_KEY
+          valueFrom:
+            secretKeyRef:
+              key: NEVERCACHE_KEY
+              name: hydroshare-secret
+        - name: OAUTH_APP_KEY
+          valueFrom:
+            secretKeyRef:
+              key: OAUTH_APP_KEY
+              name: hydroshare-secret
+        - name: OAUTH_SERVICE_SERVER_URL
+          valueFrom:
+            configMapKeyRef:
+              key: OAUTH_SERVICE_SERVER_URL
+              name: hydroshare-env
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: PGPASSWORD
+              name: hydroshare-secret
+        - name: POSTGIS_DB
+          valueFrom:
+            configMapKeyRef:
+              key: POSTGIS_DB
+              name: hydroshare-env
+        - name: POSTGIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: POSTGIS_HOST
+              name: hydroshare-env
+        - name: POSTGIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: POSTGIS_PASSWORD
+              name: hydroshare-secret
+        - name: POSTGIS_PORT
+          value: "5432"
+        - name: POSTGIS_USER
+          valueFrom:
+            secretKeyRef:
+              key: POSTGIS_USER
+              name: hydroshare-secret
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: SECRET_KEY
+              name: hydroshare-secret
+        - name: SOLR_HOST
+          value: solr
+        - name: TMP
+          value: /hs_tmp
+        image: heliumdatastage/cs-k8s
+        name: hydroshare
+        ports:
+        - containerPort: 8000
+        resources: {}
+        securityContext:
+          capabilities:
+            add:
+            - SYS_ADMIN
+          privileged: true
+      initContainers:
+      - name: init-postgis
+        image: busybox
+        command: ['sh', '-c', 'until nc -z postgis:5432; do echo waiting for postgis; sleep 2; done;']
+      - name: init-solr
+        image: busybox
+        command: ['sh', '-c', 'until nc -z solr:8983; do echo waiting for solr; sleep 2; done;']
+      restartPolicy: Always
+status: {}

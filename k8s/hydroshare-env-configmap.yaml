@@ -1,0 +1,11 @@
+apiVersion: v1
+data:
+  OAUTH_SERVICE_SERVER_URL: https://heliumplus-icat.commonsshare.org/
+  POSTGIS_DB: postgres
+  POSTGIS_HOST: postgis
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: hydroshare-env
+  name: hydroshare-env

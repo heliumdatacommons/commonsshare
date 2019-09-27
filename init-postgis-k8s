@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+# init-postgis
+# CommonsShare container db intiliaization script
+
+psql -U postgres -c "REVOKE CONNECT ON DATABASE postgres FROM public;"
+psql -U postgres -c "SELECT pid, pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = current_database() AND pid <> pg_backend_pid();"
+

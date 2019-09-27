@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+# init-hydroshare
+# CommonsShare container intiliaization script
+
+dropdb -U postgres -h postgis postgres
+psql -U postgres -h postgis -d template1 -w -c 'CREATE EXTENSION postgis;'
+psql -U postgres -h postgis -d template1 -w -c 'CREATE EXTENSION hstore;'
+createdb -U postgres -h postgis postgres --encoding UNICODE --template=template1
+psql -U postgres -h postgis -d postgres -w -c 'SET client_min_messages TO WARNING;'
+psql -U postgres -h postgis -d postgres -q -f pg.development.sql
+python manage.py collectstatic -v0 --noinput
+python manage.py migrate sites --noinput
+python manage.py migrate --fake-initial --noinput
+python manage.py fix_permissions
+python manage.py rebuild_index --noinput
+curl "solr:8983/solr/admin/cores?action=RELOAD&core=collection1"
+python manage.py rebuild_index --noinput
+/usr/local/bin/gunicorn hydroshare.wsgi:application --workers 2 --bind=0.0.0.0:8000 --worker-class gevent --timeout 300 --name commonsshare
+

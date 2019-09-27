@@ -1,0 +1,1 @@
+kubectl $1 -f postgis-claim0-persistentvolumeclaim.yaml,postgis-deployment.yaml,hydroshare-service.yaml,solr-deployment.yaml,hydroshare-env-configmap.yaml,hydroshare-secret.yaml,postgis-service.yaml,solr-service.yaml,hydroshare-deployment.yaml
