@@ -22,11 +22,15 @@ preflight_nginx() {
     if [ "${USE_SSL,,}" = true ]; then
         yes | cp -rf ${NGINX_CONFIG_DIRECTORY}/hydroshare-ssl-nginx.conf ${NGINX_CONFIG_DIRECTORY}/hs-nginx.conf
         sed -i 's/FQDN_OR_IP/'${FQDN_OR_IP}'/g' ${NGINX_CONFIG_DIRECTORY}/hs-nginx.conf
+        sed -i 's/FQDN_CNAME/'${FQDN_CNAME}'/g' ${NGINX_CONFIG_DIRECTORY}/hs-nginx.conf
         sed -i 's/SSL_CERT_FILE/'${SSL_CERT_FILE}'/g' ${NGINX_CONFIG_DIRECTORY}/hs-nginx.conf
+        sed -i 's/SSL_CERT_CNAME_FILE/'${SSL_CERT_CNAME_FILE}'/g' ${NGINX_CONFIG_DIRECTORY}/hs-nginx.conf
         sed -i 's/SSL_KEY_FILE/'${SSL_KEY_FILE}'/g' ${NGINX_CONFIG_DIRECTORY}/hs-nginx.conf;
+        sed -i 's/SSL_KEY_CNAME_FILE/'${SSL_KEY_CNAME_FILE}'/g' ${NGINX_CONFIG_DIRECTORY}/hs-nginx.conf;
     else
         yes | cp -rf ${NGINX_CONFIG_DIRECTORY}/hydroshare-nginx.conf ${NGINX_CONFIG_DIRECTORY}/hs-nginx.conf
         sed -i 's/FQDN_OR_IP/'${FQDN_OR_IP}'/g' ${NGINX_CONFIG_DIRECTORY}/hs-nginx.conf;
+        sed -i 's/FQDN_CNAME/'${FQDN_CNAME}'/g' ${NGINX_CONFIG_DIRECTORY}/hs-nginx.conf;
     fi
     # Configure access based on USE_HTTP_AUTH
     if [ "${USE_HTTP_AUTH,,}" = true ]; then
