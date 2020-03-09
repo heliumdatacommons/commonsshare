@@ -144,7 +144,7 @@ Need to run ```curl -H "Authorization: Basic <admin_key>" "https://<user_auth_se
 
 ### Installation instructions for data registration service
 
-Refer to [data registration service installation instructions](https://github.com/heliumdatacommons/auth_microservice/blob/master/README.md) for detailed step-by-step installation guide.
+Refer to [data registration service installation instructions](https://github.com/heliumdatacommons/data_registration_service/blob/master/README.md) for detailed step-by-step installation guide.
 
 Supplemental notes:
 
