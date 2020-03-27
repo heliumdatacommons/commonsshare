@@ -703,6 +703,22 @@ footer .form-control:focus {
 footer .sbtn {
 	margin-bottom: 5px;
 }
+footer .external-links > .container > .row {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    margin-top: 2rem;
+}
+@media only screen and (min-width: 1080px) {
+   footer .external-links > .container > .row {
+        flex-direction: row;
+    }
+}
+footer .external-links > .container > .row > a {
+    padding: 1rem;
+    text-align: center;
+}
 
 /* Login Header*/
 
