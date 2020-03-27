@@ -193,116 +193,18 @@
     <!-- Foooter
     ================== -->
     <footer>
-        <div class="container">
+        <div class="container external-links">
             <div class="row">
-                <div class="col-md-2 col-sm-2 margin-top-15">
-                    <a class="navbar-brand" href="/"><img id="img-brand-logo" src="{{ STATIC_URL }}img/logo-2-footer.png"
-                                                      alt="{{ settings.SITE_TITLE }}"/></a>
-                </div>
-                <!-- Contact Us
-                =================  -->
-                <div class="col-md-2 col-sm-2">
-                    <div class="content social">
-                        <ul>
-                        <h1><li><a href="mailto:help@commonsshare.org?Subject=Contact%20us" target="_top"><i class="fa fa-question-circle-o" aria-hidden="true"></i></a></li></h1>
-                        </ul>
-                    </div>
-                </div>
-                <!-- Social icons
-                ===================== -->
-                <div class="col-md-2 col-sm-2">
-                    {% editable siteconf.col2_heading siteconf.twitter_link siteconf.facebook_link siteconf.pinterest_link siteconf.youtube_link siteconf.github_link siteconf.linkedin_link siteconf.vk_link siteconf.gplus_link %}
-                    <div class="headline"><h3>{{ siteconf.col2_heading }}</h3></div>
-                    {% endeditable %}
-                    <div class="content social">
-                        {% editable siteconf.col2_content %}
-                        {{ siteconf.col2_content|richtext_filters|safe }}
-                        {% endeditable %}
-                        {% if siteconf.has_social_network_links %}
-                        <ul>{% if siteconf.twitter_link %}
-                            <li>
-                                <a href="{{ siteconf.twitter_link }}" target="_blank"><i class="fa fa-twitter"></i></a>
-                            </li>
-                            {% endif %}
-                            {% if siteconf.facebook_link %}
-                            <li>
-                                <a href="{{ siteconf.facebook_link }}" target="_blank"><i class="fa fa-facebook"></i></a>
-                            </li>
-                            {% endif %}
-                            {% if siteconf.pinterest_link %}
-                            <li>
-                                <a href="{{ siteconf.pinterest_link }}" target="_blank"><i class="fa fa-pinterest"></i></a>
-                            </li>
-                            {% endif %}
-                            {% if siteconf.youtube_link %}
-                            <li>
-                                <a href="{{ siteconf.youtube_link }}" target="_blank"><i class="fa fa-youtube"></i></a>
-                            </li>
-                            {% endif %}
-                            {% if siteconf.github_link %}
-                            <li>
-                                <a href="{{ siteconf.github_link }}" target="_blank"><i class="fa fa-github"></i></a>
-                            </li>
-                            {% endif %}
-                            {% if siteconf.linkedin_link %}
-                            <li>
-                                <a href="{{ siteconf.linkedin_link }}" target="_blank"><i class="fa fa-linkedin"></i></a>
-                            </li>
-                            {% endif %}
-                            {% if siteconf.vk_link %}
-                            <li>
-                                <a href="{{ siteconf.vk_link }}" target="_blank"><i class="fa fa-vk"></i></a>
-                            </li>
-                            {% endif %}
-                            {% if siteconf.gplus_link %}
-                            <li>
-                                <a href="{{ siteconf.gplus_link }}" target="_blank"><i class="fa fa-google-plus"></i></a>
-                            </li>
-                            {% endif %}
-                        </ul>
-                        {% endif %}
-                        <div class="clearfix"></div>
-                    </div>
-                </div>
-                <!-- Subscribe
-                =============== -->
-                <div class="col-md-3 col-sm-3">
-                    {% editable siteconf.col3_heading siteconf.col3_content %}
-                    <div class="headline"><h3>{{ siteconf.col3_heading }}</h3></div>
-                    <div class="content">
-                        {{ siteconf.col3_content|richtext_filters|safe }}
-                    </div>
-                    {% endeditable %}
-                </div>
-                <div class="col-md-3 col-sm-3 margin-top-15">
-                    <a class="navbar-brand" href="/"><img id="img-brand-logo-big" src="{{ STATIC_URL }}img/logo-3-footer.png"
-                                                      alt="{{ settings.SITE_TITLE }}"/></a>
-                </div>
+                <a href="https://biodatacatalyst.nhlbi.nih.gov/accessibility" target="_blank" rel="noopener noreferrer">Accessibility</a>
+                <a href="https://biodatacatalyst.nhlbi.nih.gov/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+                <a href="https://osp.od.nih.gov/scientific-sharing/policies/" target="_blank" rel="noopener noreferrer">Data Sharing Policy</a>
+                <a href="https://www.nhlbi.nih.gov/about/foia-fee-for-service-office" target="_blank" rel="noopener noreferrer">Freedom of Information Act (FOIA)</a>
             </div>
-        </div>
-        <!-- Legal
-        ============= -->
-        <div class="legal">
-            <div class="container">
-                <div class="row">
-                    <div class="col-md-12">
-                        {% editable siteconf.copyright %}
-                        <p>{{ siteconf.render_copyright }} | <a href="/terms-of-use">Terms Of Use</a> | <a href="/privacy">Statement of Privacy</a> | <a href="{% url "sitemap" %}">Site Map</a></p>
-                        {% endeditable %}
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- External Links
-        ======================== -->
-        <div class="external-links">
-            <div class="container">
-                <div class="row">
-                    <a href="https://www.hhs.gov/" target="_blank" rel="noopener noreferrer">U.S. Department of Health & Human Services</a>
-                    <a href="https://www.nih.gov/" target="_blank" rel="noopener noreferrer">National Institutes of Health</a>
-                    <a href="https://www.nhlbi.nih.gov/" target="_blank" rel="noopener noreferrer">National Heart, Lung, and Blood Institute</a>
-                    <a href="https://www.usa.gov/" target="_blank" rel="noopener noreferrer">USA.gov</a>
-                </div>
+            <div class="row">
+                <a href="https://www.hhs.gov/" target="_blank" rel="noopener noreferrer">U.S. Department of Health & Human Services</a>
+                <a href="https://www.nih.gov/" target="_blank" rel="noopener noreferrer">National Institutes of Health</a>
+                <a href="https://www.nhlbi.nih.gov/" target="_blank" rel="noopener noreferrer">National Heart, Lung, and Blood Institute</a>
+                <a href="https://www.usa.gov/" target="_blank" rel="noopener noreferrer">USA.gov</a>
             </div>
         </div>
     </footer>
